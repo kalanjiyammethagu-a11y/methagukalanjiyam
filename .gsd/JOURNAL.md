@@ -38,3 +38,22 @@
   3. Visual browser verification: `browser_subagent` inspected `http://localhost:3000` — verified responsive header, Tamil logo "மெதகு களஞ்சியம்", spotlight search, real catalog featured books, categories, and footer. Zero console errors.
   4. Screenshots captured: `homepage_top_1792222979431.png`, `homepage_footer_1792223025515.png`.
 
+---
+
+## Phase 2: Data Layer (Migrations, RLS, Client & Types)
+
+### Commit `bfc90c8` — feat(phase-2): data layer with Supabase schema, RLS, search functions, TypeScript types, and Zod validators
+- **Status:** Complete ✅
+- **Proof:**
+  1. SQL Migrations:
+     - `001_initial_schema.sql` (12 tables, custom enums for order status, payment status, courier provider, and post type).
+     - `002_rls_policies.sql` (security definer `is_admin()`, policies for profiles, orders, books, blogs).
+     - `003_functions.sql` (triggers for timestamps, tracking URLs, inventory deduction, atomic stock reservation with row locks, Tamil/Tanglish search, analytics view).
+     - `004_seed_data.sql` (pre-seeding categories, settings, books).
+  2. Client Utilities & Middleware:
+     - Strict typed `createBrowserClient`, `createServerClient` with Next.js 15 cookies, `createAdminClient`, and session refresh middleware.
+     - Type definitions in `src/types/database.ts`.
+     - Zod validators in `src/lib/validators/` for books, orders, blogs, auth.
+  3. Compiler & Build Verification:
+     - `npm run build` completed with code 0 in 7.8s with strict type checking passing.
+

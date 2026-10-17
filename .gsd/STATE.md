@@ -8,14 +8,29 @@
 
 ## Current Position
 
-- **Phase:** 1 (Foundation) → COMPLETE ✅
+- **Phase:** 2 (Data Layer) → COMPLETE ✅
 - **SPEC Status:** `FINALIZED` (includes Blog with multi-image gallery, keyword taxonomy, Tanglish search, and atomic stock locks)
 - **ROADMAP Status:** `FINALIZED` (12 phases, decomposed into actionable waves)
-- **Next Phase:** Phase 2 (Data Layer — Supabase SQL schema migrations, RLS policies, search functions, and client utilities)
+- **Next Phase:** Phase 3 (Auth & Profiles — Supabase Auth actions, login/register UI, profile management)
 
 ---
 
 ## Completed Phases & Waves
+
+### Phase 2: Data Layer (Completed 2026-10-17)
+- **Wave 2.1 (Database Schema & Migrations):**
+  - `001_initial_schema.sql`: 12 core tables (`profiles`, `categories`, `books`, `addresses`, `orders`, `order_items`, `cart_items`, `blogs`, `blog_books`, `supporters`, `videos`, `site_settings`).
+  - `002_rls_policies.sql`: Complete Row Level Security policy matrix for users and admins with security definer `is_admin()`.
+  - `003_functions.sql`: `update_updated_at`, `generate_order_number`, `generate_tracking_url` (India Post, ST Courier, Professional Courier), `decrement_stock_on_order`, `reserve_stock_for_checkout` (atomic row-locking), `search_books` (Tamil/Tanglish), `search_blogs`, `get_related_blogs`, and `monthly_analytics` materialized view.
+  - `004_seed_data.sql`: Seed categories, site settings, and initial books.
+  - (Commit `bfc90c8`)
+- **Wave 2.2 (Client Utilities & TypeScript Types):**
+  - `src/types/database.ts`: Complete TypeScript types matching Supabase schema.
+  - `src/lib/supabase/`: `client.ts` (browser), `server.ts` (SSR with async cookies), `admin.ts` (service role), `middleware.ts` (session refresh).
+  - `src/middleware.ts`: Next.js request routing through Supabase auth.
+  - `src/lib/validators/`: Zod schemas for `book.ts`, `order.ts`, `blog.ts`, `auth.ts`.
+- **Empirical Validation:**
+  - Production build: `npm run build` compiled all routes and middleware with code 0 in 7.8s with strict type-checking passing.
 
 ### Phase 1: Foundation (Completed 2026-10-17)
 - **Wave 1.1 (Scaffold):** Next.js 15, TypeScript 5.8, Tailwind CSS v4, `@supabase/supabase-js`, `@supabase/ssr`, `sharp`, `zod`, `zustand`, `lucide-react`. (Commit `e0ec580`)
