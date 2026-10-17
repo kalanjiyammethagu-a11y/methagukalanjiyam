@@ -8,10 +8,22 @@
 
 ## Current Position
 
-- **Phase:** 0 (Planning & Architectural Design) → Complete
-- **SPEC Status:** `FINALIZED` (includes Blog with multi-image gallery & keyword taxonomy)
+- **Phase:** 1 (Foundation) → COMPLETE ✅
+- **SPEC Status:** `FINALIZED` (includes Blog with multi-image gallery, keyword taxonomy, Tanglish search, and atomic stock locks)
 - **ROADMAP Status:** `FINALIZED` (12 phases, decomposed into actionable waves)
-- **Next Phase:** Phase 1 (Foundation — Scaffold, Tailwind v4 design system, layout shell)
+- **Next Phase:** Phase 2 (Data Layer — Supabase SQL schema migrations, RLS policies, search functions, and client utilities)
+
+---
+
+## Completed Phases & Waves
+
+### Phase 1: Foundation (Completed 2026-10-17)
+- **Wave 1.1 (Scaffold):** Next.js 15, TypeScript 5.8, Tailwind CSS v4, `@supabase/supabase-js`, `@supabase/ssr`, `sharp`, `zod`, `zustand`, `lucide-react`. (Commit `e0ec580`)
+- **Wave 1.2 (Design System):** Tailwind v4 glassmorphic design tokens, `globals.css`, UI primitives (`Button`, `Badge`, `GlassPanel`, `Input`, `Skeleton`, `cn` helper). (Commit `1bf78e8`)
+- **Wave 1.3 (Layout Shell):** Responsive glassmorphic `Header`, `MobileNav` drawer, `Footer` with trust badges, Apple Spotlight-style `SearchBar`, root `layout.tsx` with Google Fonts, and `page.tsx` homepage. (Commit `a7ab279`)
+- **Empirical Validation:**
+  - Production build: `npm run build` compiled 4/4 static pages with 0 errors (First Load JS: 106 KB).
+  - Visual verification: Automated browser inspection on `http://localhost:3000` with zero console errors and full glassmorphic rendering.
 
 ---
 
@@ -24,10 +36,11 @@
 | Image & Hosting | Cloudflare Pages + Cloudflare R2 | S3-compatible, edge CDN, zero egress |
 | Image Pipeline | Sharp | Auto-compress to WebP/AVIF (85% quality) |
 | CSS | Tailwind CSS v4 | Frosted glassmorphism design tokens |
-| Payments | Razorpay | Test mode first, webhook verification |
+| Payments | Razorpay | Test mode first, webhook verification, UPI Intent |
 | Language | Full bilingual (Tamil + English) | `next-intl` with language toggle |
-| Search Engine | PostgreSQL `tsvector` + `pg_trgm` | Full-text + fuzzy Tamil/English search |
-| Blog Feature | Multi-image gallery + keyword taxonomy | Cross-linking bookstore books |
+| Search Engine | PostgreSQL `tsvector` + `pg_trgm` | Full-text + fuzzy Tamil/Tanglish search |
+| Publications Engine | Unified articles & news updates | Multi-image gallery + keyword taxonomy + book cross-linking |
+| Concurrency Lock | Row-level locking (`SELECT ... FOR UPDATE`) | 10-minute stock reservation to prevent double-selling rare books |
 
 ---
 
@@ -35,14 +48,20 @@
 
 - [SPEC.md](file:///m:/Personal/Workspace/Book/.gsd/SPEC.md) — Canonical specification (Schema, RLS, APIs, Feature Specs)
 - [ROADMAP.md](file:///m:/Personal/Workspace/Book/.gsd/ROADMAP.md) — 12-Phase roadmap with task breakdown
-- [transformation_plan.md](file:///C:/Users/madha/.gemini/antigravity-ide/brain/a92c1906-b688-49e0-93ca-27c33dc7f4ae/transformation_plan.md) — Visual overview and mockups
+- [ARCHITECTURE.md](file:///m:/Personal/Workspace/Book/.gsd/ARCHITECTURE.md) — System topology & cognitive neural map
+- [JOURNAL.md](file:///m:/Personal/Workspace/Book/.gsd/JOURNAL.md) — Empirical verification records
 
 ---
 
-## Immediate Next Steps (Phase 1)
+## Immediate Next Steps (Phase 2: Data Layer)
 
-1. Initialize Next.js 15 project with App Router, TypeScript, Tailwind CSS v4.
-2. Configure path aliases, dependencies (`@supabase/supabase-js`, `@supabase/ssr`, `sharp`, `zod`, `zustand`).
-3. Set up fonts (Fraunces, Inter, Noto Sans Tamil) & glassmorphism theme tokens in `globals.css`.
-4. Build UI primitives (`GlassPanel`, `Button`, `Input`, `Badge`, `Skeleton`, `Toast`, `Modal`).
-5. Assemble layout shell (`Header`, `Footer`, `MobileNav`, `SearchBar`, root `layout.tsx`).
+1. Create SQL migration scripts in `supabase/migrations/`:
+   - `001_initial_schema.sql` (profiles, categories, books, addresses, orders, order_items, cart_items, blogs, blog_books, supporters, videos, site_settings)
+   - `002_rls_policies.sql` (strict Row Level Security for customer privacy and admin access)
+   - `003_functions.sql` (search_books with Tanglish support, search_blogs, get_related_blogs, reserve_stock_for_checkout, auto tracking URLs, monthly analytics)
+   - `004_seed_data.sql` (import 20+ books from `data/books.json` and default categories)
+2. Setup Supabase client utilities:
+   - `src/lib/supabase/client.ts` (Browser client)
+   - `src/lib/supabase/server.ts` (Server client with cookies)
+   - `src/lib/supabase/admin.ts` (Service role client)
+   - `src/types/database.ts` (TypeScript types matching schema)
