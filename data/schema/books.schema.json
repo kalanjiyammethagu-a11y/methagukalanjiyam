@@ -1,0 +1,128 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BookSeedData",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "slug",
+      "title",
+      "titleEn",
+      "author",
+      "authorEn",
+      "price",
+      "categoryTa",
+      "categoryEn",
+      "categorySlug",
+      "image",
+      "stock",
+      "descriptionTa",
+      "descriptionEn",
+      "createdAt",
+      "updatedAt"
+    ],
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "slug": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      },
+      "title": {
+        "type": "string",
+        "minLength": 1
+      },
+      "titleEn": {
+        "type": "string",
+        "minLength": 1
+      },
+      "author": {
+        "type": "string",
+        "minLength": 1
+      },
+      "authorEn": {
+        "type": "string",
+        "minLength": 1
+      },
+      "price": {
+        "type": "number",
+        "minimum": 0
+      },
+      "discountPrice": {
+        "type": [
+          "number",
+          "null"
+        ],
+        "minimum": 0
+      },
+      "categoryTa": {
+        "type": "string"
+      },
+      "categoryEn": {
+        "type": "string"
+      },
+      "categorySlug": {
+        "type": "string",
+        "enum": [
+          "history",
+          "memoirs",
+          "archives",
+          "biographies",
+          "political"
+        ]
+      },
+      "image": {
+        "type": "string",
+        "pattern": "^/images/books/.+\\.(webp|png|jpg)$"
+      },
+      "stock": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "year": {
+        "type": "string"
+      },
+      "pages": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "publisher": {
+        "type": "string"
+      },
+      "publisherEn": {
+        "type": "string"
+      },
+      "descriptionTa": {
+        "type": "string"
+      },
+      "descriptionEn": {
+        "type": "string"
+      },
+      "quoteTa": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "quoteEn": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "featured": {
+        "type": "boolean"
+      },
+      "createdAt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "updatedAt": {
+        "type": "string",
+        "format": "date-time"
+      }
+    }
+  }
+}

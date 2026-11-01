@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BlogSeedData",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "id",
+      "slug",
+      "titleTa",
+      "titleEn",
+      "coverImage",
+      "categoryTa",
+      "categoryEn",
+      "readingTimeMinutes",
+      "authorTa",
+      "authorEn",
+      "htmlContentTa",
+      "publishedAt",
+      "createdAt",
+      "updatedAt"
+    ],
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "slug": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      },
+      "titleTa": {
+        "type": "string",
+        "minLength": 1
+      },
+      "titleEn": {
+        "type": "string",
+        "minLength": 1
+      },
+      "subtitleTa": {
+        "type": "string"
+      },
+      "subtitleEn": {
+        "type": "string"
+      },
+      "coverImage": {
+        "type": "string",
+        "pattern": "^/images/blogs/.+\\.(webp|png|jpg)$"
+      },
+      "categoryTa": {
+        "type": "string"
+      },
+      "categoryEn": {
+        "type": "string"
+      },
+      "readingTimeMinutes": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "authorTa": {
+        "type": "string"
+      },
+      "authorEn": {
+        "type": "string"
+      },
+      "htmlContentTa": {
+        "type": "string",
+        "minLength": 10
+      },
+      "htmlContentEn": {
+        "type": "string"
+      },
+      "relatedBookSlugs": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "publishedAt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "createdAt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "updatedAt": {
+        "type": "string",
+        "format": "date-time"
+      }
+    }
+  }
+}
