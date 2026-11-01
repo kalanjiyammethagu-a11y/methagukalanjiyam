@@ -12,6 +12,10 @@ node_modules/
 out/
 build/
 dist/
+*.tsbuildinfo
+
+# Reversible Cleanup Archive (preserve removed files for review)
+/_cleanup_review/
 
 # Environment files
 .env
