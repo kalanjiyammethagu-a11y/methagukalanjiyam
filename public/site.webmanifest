@@ -1,0 +1,16 @@
+{
+  "name": "மேதகு களஞ்சியம் — Methagu Kalanjiyam",
+  "short_name": "Methagu Kalanjiyam",
+  "description": "அரிய வரலாற்று ஆவணங்கள், விடுதலைப் போராட்ட நூல்கள் மற்றும் வரலாற்றுப் பதிவுகளின் இணையக் காப்பகம்",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAFAF9",
+  "theme_color": "#0A6847",
+  "icons": [
+    {
+      "src": "/icons/favicon.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    }
+  ]
+}

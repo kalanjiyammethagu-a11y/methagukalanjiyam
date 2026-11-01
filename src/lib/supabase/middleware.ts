@@ -36,20 +36,30 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
+  // If Supabase is placeholder (prepared backend / demo showcase mode),
+  // allow showcasing /admin and /account directly with rich mock data as requested.
+  const isDemoMode =
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder");
+
+  if (isDemoMode) {
+    return supabaseResponse;
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Route protection for /admin
-  if (request.nextUrl.pathname.startsWith("/admin") && !request.nextUrl.pathname.startsWith("/admin/login")) {
+  // Route protection for /admin in production mode
+  if (request.nextUrl.pathname.startsWith("/admin") && !request.nextUrl.pathname.startsWith("/login")) {
     if (!user) {
       const url = request.nextUrl.clone();
-      url.pathname = "/admin/login";
+      url.pathname = "/login";
       return NextResponse.redirect(url);
     }
   }
 
-  // Route protection for /account
+  // Route protection for /account in production mode
   if (request.nextUrl.pathname.startsWith("/account")) {
     if (!user) {
       const url = request.nextUrl.clone();

@@ -5,25 +5,29 @@
   --color-surface-tint: #F5F3EF;
   --color-surface-card: #FFFFFF;
   --color-ink: #111111;
-  --color-ink-muted: #666666;
-  --color-ink-light: #999999;
+  --color-ink-muted: #555555;
+  --color-ink-light: #6E6E6E;
   --color-accent: #0A6847;
   --color-accent-hover: #085438;
   --color-accent-light: #E8F5E9;
-  --color-gold: #B8860B;
+  --color-gold: #996515;
   --color-gold-light: #FFF8E1;
   --color-obsidian: #121212;
   --color-obsidian-surface: #1E1E1E;
   --color-obsidian-border: rgba(255, 255, 255, 0.08);
 
-  --font-serif: var(--font-fraunces), Georgia, serif;
+  --font-serif: var(--font-fraunces), "Playfair Display", Georgia, serif;
   --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
-  --font-tamil: var(--font-noto-tamil), "Noto Sans Tamil", sans-serif;
+  --font-tamil: var(--font-noto-tamil), "Latha", "Tamil Sangam MN", "Mukta Malar", "InaiMathi", "Vijaya", system-ui, sans-serif;
+  --font-tamil-serif: var(--font-noto-serif-tamil), "Bamini", "Tamil Sangam MN", Georgia, serif;
 }
 
 :root {
   --background: #FAFAF9;
   --foreground: #111111;
+  --card-bg: #FFFFFF;
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  color-scheme: light;
 }
 
 body {
@@ -32,6 +36,51 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  caret-color: #0A6847;
+  overflow-x: hidden;
+}
+
+button, a, select, input {
+  touch-action: manipulation;
+}
+
+/* Typographic optical rhythm & balance across all headings */
+h1, h2, h3, h4, h5, h6 {
+  text-wrap: balance;
+  letter-spacing: -0.005em;
+}
+
+p {
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+}
+
+::selection {
+  background: rgba(10, 104, 71, 0.18);
+  color: #0A6847;
+}
+
+/* Custom Editorial Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #F5F3EF;
+}
+::-webkit-scrollbar-thumb {
+  background: #D3CDC2;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #0A6847;
+}
+
+/* Accessible focus ring */
+:focus-visible {
+  outline: 2px solid #0A6847;
+  outline-offset: 2px;
 }
 
 /* ============================================================
@@ -39,25 +88,25 @@ body {
    ============================================================ */
 
 .glass-panel {
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.7);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.02);
 }
 
 .glass-panel-subtle {
-  background: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.55);
   backdrop-filter: blur(12px) saturate(160%);
   -webkit-backdrop-filter: blur(12px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.45);
 }
 
 .glass-panel-dark {
-  background: rgba(22, 22, 24, 0.78);
+  background: rgba(22, 22, 24, 0.88);
   backdrop-filter: blur(24px) saturate(190%);
   -webkit-backdrop-filter: blur(24px) saturate(190%);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
 }
 
@@ -68,26 +117,102 @@ body {
 }
 
 .glass-card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px -15px rgba(10, 104, 71, 0.12),
-              0 0 0 1px rgba(10, 104, 71, 0.18);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 36px -12px rgba(10, 104, 71, 0.14),
+              0 0 0 1px rgba(10, 104, 71, 0.2);
 }
 
 /* ============================================================
-   TYPOGRAPHY & ACCENTS
+   OPTICAL TEXT PLACEMENT & ACCESSIBLE FONT SCALING
    ============================================================ */
+html[data-font-size="normal"] {
+  font-size: 16px;
+}
+html[data-font-size="large"] {
+  font-size: 18px;
+}
+html[data-font-size="extra-large"] {
+  font-size: 20px;
+}
 
+/* Enhanced Tamil Line Height, Ligatures, & Optical Placement */
 .font-tamil {
   font-family: var(--font-tamil);
+  line-height: 1.7;
+  letter-spacing: 0.01em;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Archival & Literary Editorial Tamil Serif */
+.font-tamil-serif {
+  font-family: var(--font-tamil-serif);
   line-height: 1.6;
+  letter-spacing: 0.005em;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Latin Editorial Serif */
+.font-serif-editorial {
+  font-family: var(--font-serif);
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+
+/* Reading Longform Prose Helper */
+.prose-tamil {
+  font-family: var(--font-tamil);
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  letter-spacing: 0.008em;
+  color: #262626;
+  text-rendering: optimizeLegibility;
+}
+
+.prose-tamil p {
+  margin-bottom: 1.25rem;
+  text-wrap: pretty;
+}
+
+/* Reading Theme Overrides */
+html[data-theme="white"] body {
+  --background: #FFFFFF;
+}
+
+html[data-theme="night"] body {
+  --background: #121212;
+  --foreground: #F5F5F5;
+  --card-bg: #1E1E1E;
+  color: #F5F5F5;
+  background-color: #121212;
+}
+
+html[data-theme="night"] .glass-panel {
+  background: rgba(28, 28, 30, 0.88);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #F5F5F5;
+}
+
+html[data-theme="night"] .text-\[\#111111\] {
+  color: #FFFFFF !important;
+}
+
+html[data-theme="night"] .text-\[\#444444\],
+html[data-theme="night"] .text-\[\#555555\],
+html[data-theme="night"] .text-\[\#666666\] {
+  color: #B5B5B5 !important;
 }
 
 .text-gold {
-  color: #B8860B;
+  color: #996515;
 }
 
 .bg-gold {
-  background-color: #B8860B;
+  background-color: #996515;
 }
 
 /* Custom Scrollbar */
@@ -101,10 +226,51 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.18);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================================
+   MOTION SENSITIVITY & KEYFRAMES
+   ============================================================ */
+@keyframes progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.animate-progress {
+  animation: progress 6s linear forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-card-hover:hover {
+    transform: none;
+    box-shadow: 0 6px 18px 0 rgba(10, 104, 71, 0.12);
+  }
+
+  .animate-spin {
+    animation-duration: 2.5s !important;
+  }
+
+  .animate-pulse {
+    animation: none !important;
+    opacity: 0.65;
+  }
+
+  .animate-progress {
+    animation: none !important;
+    width: 100% !important;
+  }
+
+  * {
+    scroll-behavior: auto !important;
+  }
 }
