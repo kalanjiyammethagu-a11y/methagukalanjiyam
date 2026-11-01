@@ -14,7 +14,7 @@ ON CONFLICT (slug) DO NOTHING;
 
 -- Seed Site Settings
 INSERT INTO site_settings (key, value) VALUES
-  ('general', '{"site_name": "மெதகு களஞ்சியம்", "site_tagline": "Rare Tamil Literature & National Archives", "contact_phone": "+918248654946", "whatsapp_number": "918248654946", "support_email": "contact@methagukalanjiyam.in"}'::jsonb),
+  ('general', '{"site_name": "மேதகு களஞ்சியம்", "site_tagline": "Rare Tamil Literature & National Archives", "contact_phone": "+918248654946", "whatsapp_number": "918248654946", "support_email": "contact@methagukalanjiyam.in"}'::jsonb),
   ('shipping', '{"standard_shipping_fee": 40.00, "free_shipping_threshold": 500.00, "default_courier": "st_courier"}'::jsonb),
   ('payment', '{"razorpay_enabled": true, "cod_enabled": false}'::jsonb)
 ON CONFLICT (key) DO NOTHING;
