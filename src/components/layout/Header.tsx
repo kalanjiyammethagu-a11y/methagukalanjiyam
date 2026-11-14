@@ -24,6 +24,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [searchModalOpen, setSearchModalOpen] = React.useState(false);
+  const [scrolled, setScrolled] = React.useState(false);
   const { locale, setLocale, openSettings, wishlist } = useLanguage();
   const { totalItems } = useCart();
   const isTa = locale === "ta";
@@ -32,6 +33,16 @@ export function Header({ onOpenSearch }: HeaderProps) {
   if (pathname?.startsWith("/admin")) {
     return null;
   }
+
+  // Handle subtle elevation on scroll
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 16);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleOpenSearch = () => {
     if (onOpenSearch) {
@@ -71,19 +82,27 @@ export function Header({ onOpenSearch }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-[var(--z-sticky)] w-full transition-all duration-200">
-        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 pt-2 sm:pt-3">
+      <header
+        className={`sticky top-0 z-[var(--z-sticky)] w-full transition-all duration-300 ${
+          scrolled ? "py-1.5 sm:py-2" : "py-2 sm:py-3"
+        }`}
+      >
+        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
           <div
             suppressHydrationWarning
-            className="rounded-2xl px-3 sm:px-4 lg:px-5 py-2 sm:py-2.5 flex items-center justify-between gap-2 lg:gap-4 shadow-sm border border-[var(--color-border-subtle)] bg-[var(--color-surface-card)]/95 backdrop-blur-xl"
+            className={`rounded-2xl px-3 sm:px-4 lg:px-5 py-2 flex items-center justify-between gap-2 lg:gap-4 border transition-all duration-300 ${
+              scrolled
+                ? "bg-[var(--color-surface-card)]/95 backdrop-blur-xl border-[var(--color-border-strong)]/60 shadow-md shadow-black/4"
+                : "bg-[var(--color-surface-card)]/90 backdrop-blur-lg border-[var(--color-border-subtle)] shadow-xs"
+            }`}
           >
-            {/* Logo / Bilingual Brand */}
+            {/* Brand Logo & Editorial Wordmark */}
             <Link
               href="/"
               className="flex items-center gap-2.5 sm:gap-3 group transition-transform active:scale-98 motion-reduce:active:scale-100 min-h-[44px] shrink-0"
               aria-label={isTa ? "மேதகு களஞ்சியம் — முகப்பு" : "Methagu Kalanjiyam — Home"}
             >
-              <div className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full overflow-hidden border border-[var(--color-border-strong)] shadow-2xs bg-white shrink-0 group-hover:scale-105 motion-reduce:group-hover:scale-100 transition-transform">
+              <div className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full overflow-hidden border border-[var(--color-border-strong)] ring-2 ring-[var(--color-accent)]/15 shadow-2xs bg-white shrink-0 group-hover:scale-105 motion-reduce:group-hover:scale-100 transition-transform">
                 <Image
                   src="/icons/favicon.png"
                   alt={isTa ? "மேதகு களஞ்சியம் லோகோ" : "Methagu Kalanjiyam Logo"}
@@ -96,13 +115,13 @@ export function Header({ onOpenSearch }: HeaderProps) {
               <div className="flex flex-col text-left">
                 <span
                   className={`font-bold text-sm sm:text-base lg:text-lg tracking-tight text-[var(--color-ink-primary)] leading-tight transition-colors group-hover:text-[var(--color-accent)] whitespace-nowrap ${
-                    isTa ? "font-tamil" : "font-sans"
+                    isTa ? "font-tamil font-bold" : "font-sans font-extrabold"
                   }`}
                 >
                   {isTa ? "மேதகு களஞ்சியம்" : "Methagu Kalanjiyam"}
                 </span>
                 <span
-                  className={`hidden 2xl:block text-[9px] sm:text-[10px] tracking-wider uppercase text-[var(--color-ink-muted)] font-semibold leading-none mt-0.5 whitespace-nowrap ${
+                  className={`hidden 2xl:block text-[9px] sm:text-[10px] tracking-wider uppercase text-[var(--color-accent)] font-semibold leading-none mt-0.5 whitespace-nowrap ${
                     isTa ? "font-tamil" : "font-sans"
                   }`}
                 >
@@ -111,7 +130,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
               </div>
             </Link>
 
-            {/* Desktop Navigation Links with Active State */}
+            {/* Desktop Editorial Navigation Links */}
             <nav
               className="hidden lg:flex items-center gap-1 xl:gap-1.5"
               aria-label={isTa ? "முதன்மை வழிசெலுத்தல்" : "Main Navigation"}
@@ -125,12 +144,13 @@ export function Header({ onOpenSearch }: HeaderProps) {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-colors min-h-[38px] flex items-center whitespace-nowrap ${
+                    aria-current={isActive ? "page" : undefined}
+                    className={`px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all min-h-[38px] flex items-center whitespace-nowrap ${
                       isTa ? "font-tamil" : "font-sans"
                     } ${
                       isActive
-                        ? "bg-[var(--color-accent-light)] text-[var(--color-accent)] font-semibold shadow-2xs"
-                        : "text-[var(--color-ink-secondary)] hover:text-[var(--color-ink-primary)] hover:bg-[var(--color-surface-subtle)]"
+                        ? "bg-[var(--color-accent-light)] text-[var(--color-accent)] font-bold shadow-2xs"
+                        : "text-[var(--color-ink-secondary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-surface-subtle)]"
                     }`}
                   >
                     <span>{isTa ? link.labelTa : link.labelEn}</span>
@@ -139,30 +159,30 @@ export function Header({ onOpenSearch }: HeaderProps) {
               })}
             </nav>
 
-            {/* Action Toolbar */}
+            {/* Harmonious Action Toolbar */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              {/* Search Trigger */}
+              {/* Spotlight Search Command Trigger */}
               <button
                 type="button"
                 onClick={handleOpenSearch}
-                aria-label={isTa ? "நூல்களைத் தேடுக (Search books) — ⌘K" : "Search books — ⌘K"}
-                className="min-h-[44px] min-w-[44px] h-10 px-2.5 xl:px-3 rounded-xl bg-[var(--color-surface-subtle)] hover:bg-[var(--color-border-hairline)] text-[var(--color-ink-secondary)] hover:text-[var(--color-ink-primary)] flex items-center justify-center gap-2 text-xs font-medium transition-all active:scale-95 motion-reduce:active:scale-100 cursor-pointer"
+                aria-label={isTa ? "நூல்களைத் தேடுக (Search archives) — ⌘K" : "Search archives — ⌘K"}
+                className="min-h-[44px] min-w-[44px] h-10 px-2.5 xl:px-3 rounded-xl bg-[var(--color-surface-subtle)] hover:bg-[var(--color-border-hairline)] border border-[var(--color-border-hairline)] hover:border-[var(--color-border-strong)] text-[var(--color-ink-secondary)] hover:text-[var(--color-ink-primary)] flex items-center justify-center gap-2 text-xs font-medium transition-all active:scale-95 motion-reduce:active:scale-100 cursor-pointer shadow-2xs"
                 title={isTa ? "தேடல் (⌘K)" : "Search (⌘K)"}
               >
                 <Search className="h-4 w-4 text-[var(--color-accent)] shrink-0" />
                 <span className={`hidden xl:inline-block ${isTa ? "font-tamil" : "font-sans"}`}>
                   {isTa ? "தேடுக..." : "Search..."}
                 </span>
-                <kbd className="hidden 2xl:inline-flex items-center text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 text-[var(--color-ink-muted)]">
+                <kbd className="hidden 2xl:inline-flex items-center text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 text-[var(--color-ink-muted)] border border-black/5">
                   ⌘K
                 </kbd>
               </button>
 
-              {/* Segmented Language Switcher (Visible on sm+) */}
+              {/* Segmented Bilingual Language Switcher */}
               <div
                 role="group"
                 aria-label={isTa ? "மொழித் தேர்வு" : "Language Selector"}
-                className="hidden sm:flex h-10 p-1 rounded-xl bg-[var(--color-surface-subtle)] border border-[var(--color-border-hairline)] items-center gap-0.5 shrink-0"
+                className="hidden sm:flex h-10 p-1 rounded-xl bg-[var(--color-surface-subtle)] border border-[var(--color-border-hairline)] items-center gap-0.5 shrink-0 shadow-2xs"
               >
                 <button
                   type="button"
@@ -171,10 +191,11 @@ export function Header({ onOpenSearch }: HeaderProps) {
                   aria-label="தமிழுக்கு மாற்றுக"
                   className={`min-h-[32px] h-8 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center font-tamil cursor-pointer ${
                     isTa
-                      ? "bg-[var(--color-surface-card)] text-[var(--color-accent)] shadow-2xs"
+                      ? "bg-[var(--color-surface-card)] text-[var(--color-accent)] shadow-2xs ring-1 ring-black/5"
                       : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink-primary)]"
                   }`}
                 >
+                  <span className="text-[var(--color-accent)] mr-1">அ</span>
                   <span>தமிழ்</span>
                 </button>
                 <button
@@ -184,7 +205,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
                   aria-label="Switch to English"
                   className={`min-h-[32px] h-8 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center font-sans cursor-pointer ${
                     !isTa
-                      ? "bg-[var(--color-surface-card)] text-[var(--color-accent)] shadow-2xs"
+                      ? "bg-[var(--color-surface-card)] text-[var(--color-accent)] shadow-2xs ring-1 ring-black/5"
                       : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink-primary)]"
                   }`}
                 >
@@ -192,33 +213,33 @@ export function Header({ onOpenSearch }: HeaderProps) {
                 </button>
               </div>
 
-              {/* Reading Settings Trigger */}
+              {/* Reading & Display Settings Trigger */}
               <button
                 type="button"
                 onClick={openSettings}
-                aria-label={isTa ? "தள & வாசிப்பு அமைப்புகள்" : "Reading Settings"}
-                className="min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl bg-[var(--color-surface-subtle)] hover:bg-[var(--color-border-hairline)] text-[var(--color-ink-secondary)] hover:text-[var(--color-accent)] flex items-center justify-center transition-colors cursor-pointer"
-                title={isTa ? "அமைப்புகள்" : "Settings"}
+                aria-label={isTa ? "தள & வாசிப்பு அமைப்புகள்" : "Reading & Display Settings"}
+                className="min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl bg-[var(--color-surface-subtle)] hover:bg-[var(--color-border-hairline)] border border-[var(--color-border-hairline)] text-[var(--color-ink-secondary)] hover:text-[var(--color-accent)] flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+                title={isTa ? "வாசிப்பு அமைப்புகள்" : "Reading Settings"}
               >
                 <Sliders className="h-4 w-4" />
               </button>
 
-              {/* Reader Library & Saved Items */}
+              {/* Reader Library & Saved Bookmarks */}
               <Link
                 href="/account"
-                aria-label={isTa ? "வாசகர் அரங்கம் & நூலகம்" : "Reader Library"}
-                className="relative hidden sm:flex min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl bg-[var(--color-surface-subtle)] hover:bg-[var(--color-border-hairline)] text-[var(--color-ink-secondary)] hover:text-[var(--color-accent)] items-center justify-center transition-colors cursor-pointer shrink-0"
-                title={isTa ? "வாசகர் அரங்கம்" : "Reader Library"}
+                aria-label={isTa ? "வாசகர் அரங்கம் & சேமிக்கப்பட்ட நூல்கள்" : "Reader Library & Saved Items"}
+                className="relative hidden sm:flex min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl bg-[var(--color-surface-subtle)] hover:bg-[var(--color-border-hairline)] border border-[var(--color-border-hairline)] text-[var(--color-ink-secondary)] hover:text-[var(--color-accent)] items-center justify-center transition-colors cursor-pointer shrink-0 shadow-2xs"
+                title={isTa ? "சேமிக்கப்பட்டவை" : "Saved Items"}
               >
                 <BookmarkRibbonIcon className="h-4 w-4" />
                 {wishlist.length > 0 && (
-                  <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-[var(--color-accent)] text-white text-[10px] font-mono font-bold flex items-center justify-center shadow-xs">
+                  <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-[var(--color-accent)] text-white text-[10px] font-mono font-bold flex items-center justify-center shadow-xs ring-2 ring-[var(--color-surface-card)]">
                     {wishlist.length}
                   </span>
                 )}
               </Link>
 
-              {/* Hero Cart Action Button */}
+              {/* Hero Shopping Cart Action */}
               <Link
                 href="/cart"
                 aria-label={
@@ -226,11 +247,11 @@ export function Header({ onOpenSearch }: HeaderProps) {
                     ? `கூடை (${totalItems} நூல்கள்)`
                     : `Shopping Cart (${totalItems} items)`
                 }
-                className="relative min-h-[44px] h-10 px-3 sm:px-3.5 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white flex items-center justify-center gap-1.5 sm:gap-2 text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
+                className="relative min-h-[44px] h-10 px-3 sm:px-3.5 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white flex items-center justify-center gap-1.5 sm:gap-2 text-xs font-bold transition-all shadow-sm shadow-[var(--color-accent)]/20 cursor-pointer active:scale-95 shrink-0"
                 title={isTa ? "கூடை" : "Cart"}
               >
                 <ShoppingBag className="h-4 w-4 text-white shrink-0" />
-                <span className={`hidden sm:inline ${isTa ? "font-tamil" : "font-sans"}`}>
+                <span className={`hidden sm:inline ${isTa ? "font-tamil font-bold" : "font-sans font-bold"}`}>
                   {isTa ? "கூடை" : "Cart"}
                 </span>
                 {totalItems > 0 && (
@@ -240,11 +261,11 @@ export function Header({ onOpenSearch }: HeaderProps) {
                 )}
               </Link>
 
-              {/* Mobile Drawer Menu Toggle */}
+              {/* Mobile Drawer Navigation Toggle */}
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl bg-[var(--color-surface-subtle)] hover:bg-[var(--color-border-hairline)] flex items-center justify-center text-[var(--color-ink-primary)] active:scale-95 transition-all cursor-pointer"
+                className="lg:hidden min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl bg-[var(--color-surface-subtle)] hover:bg-[var(--color-border-hairline)] border border-[var(--color-border-hairline)] flex items-center justify-center text-[var(--color-ink-primary)] active:scale-95 transition-all cursor-pointer shadow-2xs"
                 aria-label={isTa ? "வழிசெலுத்தல் பட்டியினை திறக்குக" : "Open Navigation Menu"}
                 aria-expanded={mobileMenuOpen}
                 aria-controls="mobile-navigation-drawer"
@@ -256,7 +277,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
         </div>
       </header>
 
-      {/* Mobile Drawer Navigation */}
+      {/* Synchronized Mobile Drawer Navigation */}
       <MobileNav
         isOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
