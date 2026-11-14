@@ -24,18 +24,15 @@ export function Header({ onOpenSearch }: HeaderProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [searchModalOpen, setSearchModalOpen] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
   const { locale, setLocale, openSettings, wishlist } = useLanguage();
   const { totalItems } = useCart();
   const isTa = locale === "ta";
 
-  // Hide public header on dedicated admin console routes
-  if (pathname?.startsWith("/admin")) {
-    return null;
-  }
-
-  // Handle subtle elevation on scroll
+  // Ensure client-side only dynamic values do not cause SSR hydration mismatch
   React.useEffect(() => {
+    setMounted(true);
     const handleScroll = () => {
       setScrolled(window.scrollY > 16);
     };
@@ -43,6 +40,16 @@ export function Header({ onOpenSearch }: HeaderProps) {
     handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Safe SSR-consistent values
+  const isScrolled = mounted && scrolled;
+  const cartCount = mounted ? totalItems : 0;
+  const wishlistCount = mounted ? wishlist.length : 0;
+
+  // Hide public header on dedicated admin console routes
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
 
   const handleOpenSearch = () => {
     if (onOpenSearch) {
@@ -83,15 +90,16 @@ export function Header({ onOpenSearch }: HeaderProps) {
   return (
     <>
       <header
+        suppressHydrationWarning
         className={`sticky top-0 z-[var(--z-sticky)] w-full transition-all duration-300 ${
-          scrolled ? "py-1.5 sm:py-2" : "py-2.5 sm:py-3.5"
+          isScrolled ? "py-1.5 sm:py-2" : "py-2.5 sm:py-3.5"
         }`}
       >
         <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
           <div
             suppressHydrationWarning
             className={`rounded-2xl px-3.5 sm:px-5 lg:px-6 flex items-center justify-between gap-3 lg:gap-6 border transition-all duration-300 ${
-              scrolled
+              isScrolled
                 ? "py-2 bg-[var(--color-surface-card)]/98 backdrop-blur-2xl border-[var(--color-border-subtle)] shadow-md shadow-black/5"
                 : "py-2.5 bg-[var(--color-surface-card)]/92 backdrop-blur-xl border-[var(--color-border-subtle)]/80 shadow-xs"
             }`}
@@ -232,8 +240,8 @@ export function Header({ onOpenSearch }: HeaderProps) {
                 title={isTa ? "சேமிக்கப்பட்டவை" : "Saved Items"}
               >
                 <BookmarkRibbonIcon className="h-4 w-4" />
-                {wishlist.length > 0 && (
-                  <span className="absolute 1 top-1 right-1 h-2 w-2 rounded-full bg-[var(--color-accent)] ring-2 ring-[var(--color-surface-card)]" />
+                {wishlistCount > 0 && (
+                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-[var(--color-accent)] ring-2 ring-[var(--color-surface-card)]" />
                 )}
               </Link>
 
@@ -242,8 +250,8 @@ export function Header({ onOpenSearch }: HeaderProps) {
                 href="/cart"
                 aria-label={
                   isTa
-                    ? `கூடை (${totalItems} நூல்கள்)`
-                    : `Shopping Cart (${totalItems} items)`
+                    ? `கூடை (${cartCount} நூல்கள்)`
+                    : `Shopping Cart (${cartCount} items)`
                 }
                 className="relative min-h-[44px] h-10 px-3.5 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white flex items-center justify-center gap-2 text-xs font-bold transition-all shadow-sm shadow-[var(--color-accent)]/20 cursor-pointer active:scale-95 shrink-0"
                 title={isTa ? "கூடை" : "Cart"}
@@ -252,9 +260,9 @@ export function Header({ onOpenSearch }: HeaderProps) {
                 <span className={`hidden sm:inline ${isTa ? "font-tamil font-bold" : "font-sans font-bold"}`}>
                   {isTa ? "கூடை" : "Cart"}
                 </span>
-                {totalItems > 0 && (
+                {cartCount > 0 && (
                   <span className="h-5 min-w-[20px] px-1.5 rounded-full bg-white text-[var(--color-accent)] text-[11px] font-mono font-extrabold flex items-center justify-center shadow-2xs">
-                    {totalItems}
+                    {cartCount}
                   </span>
                 )}
               </Link>
