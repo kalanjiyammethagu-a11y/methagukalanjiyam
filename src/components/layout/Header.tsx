@@ -84,19 +84,19 @@ export function Header({ onOpenSearch }: HeaderProps) {
     <>
       <header
         className={`sticky top-0 z-[var(--z-sticky)] w-full transition-all duration-300 ${
-          scrolled ? "py-1.5 sm:py-2" : "py-2 sm:py-3"
+          scrolled ? "py-1.5 sm:py-2" : "py-2.5 sm:py-3.5"
         }`}
       >
         <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
           <div
             suppressHydrationWarning
-            className={`rounded-2xl px-3 sm:px-4 lg:px-5 py-2 flex items-center justify-between gap-2 lg:gap-4 border transition-all duration-300 ${
+            className={`rounded-2xl px-3.5 sm:px-5 lg:px-6 flex items-center justify-between gap-3 lg:gap-6 border transition-all duration-300 ${
               scrolled
-                ? "bg-[var(--color-surface-card)]/95 backdrop-blur-xl border-[var(--color-border-strong)]/60 shadow-md shadow-black/4"
-                : "bg-[var(--color-surface-card)]/90 backdrop-blur-lg border-[var(--color-border-subtle)] shadow-xs"
+                ? "py-2 bg-[var(--color-surface-card)]/98 backdrop-blur-2xl border-[var(--color-border-subtle)] shadow-md shadow-black/5"
+                : "py-2.5 bg-[var(--color-surface-card)]/92 backdrop-blur-xl border-[var(--color-border-subtle)]/80 shadow-xs"
             }`}
           >
-            {/* Brand Logo & Editorial Wordmark */}
+            {/* Left: Brand Logo & Editorial Wordmark */}
             <Link
               href="/"
               className="flex items-center gap-2.5 sm:gap-3 group transition-transform active:scale-98 motion-reduce:active:scale-100 min-h-[44px] shrink-0"
@@ -130,9 +130,9 @@ export function Header({ onOpenSearch }: HeaderProps) {
               </div>
             </Link>
 
-            {/* Desktop Editorial Navigation Links */}
+            {/* Center: Editorial Navigation Links */}
             <nav
-              className="hidden lg:flex items-center gap-1 xl:gap-1.5"
+              className="hidden lg:flex items-center gap-1 xl:gap-2"
               aria-label={isTa ? "முதன்மை வழிசெலுத்தல்" : "Main Navigation"}
             >
               {navLinks.map((link) => {
@@ -150,7 +150,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
                     } ${
                       isActive
                         ? "bg-[var(--color-accent-light)] text-[var(--color-accent)] font-bold shadow-2xs"
-                        : "text-[var(--color-ink-secondary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-surface-subtle)]"
+                        : "text-[var(--color-ink-secondary)] hover:text-[var(--color-ink-primary)] hover:bg-black/[0.04] dark:hover:bg-white/[0.05]"
                     }`}
                   >
                     <span>{isTa ? link.labelTa : link.labelEn}</span>
@@ -159,14 +159,14 @@ export function Header({ onOpenSearch }: HeaderProps) {
               })}
             </nav>
 
-            {/* Harmonious Action Toolbar */}
+            {/* Right: Streamlined Action Toolbar (Apple / Stripe Design Hierarchy) */}
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-              {/* Spotlight Search Command Trigger */}
+              {/* 1. Sleek Search Command Trigger */}
               <button
                 type="button"
                 onClick={handleOpenSearch}
-                aria-label={isTa ? "நூல்களைத் தேடுக (Search archives) — ⌘K" : "Search archives — ⌘K"}
-                className="min-h-[44px] min-w-[44px] h-10 px-2.5 xl:px-3 rounded-xl bg-[var(--color-surface-subtle)] hover:bg-[var(--color-border-hairline)] border border-[var(--color-border-hairline)] hover:border-[var(--color-border-strong)] text-[var(--color-ink-secondary)] hover:text-[var(--color-ink-primary)] flex items-center justify-center gap-2 text-xs font-medium transition-all active:scale-95 motion-reduce:active:scale-100 cursor-pointer shadow-2xs"
+                aria-label={isTa ? "நூல்களைத் தேடுக — ⌘K" : "Search archives — ⌘K"}
+                className="min-h-[44px] min-w-[44px] h-10 px-2.5 xl:px-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] border border-black/[0.08] dark:border-white/[0.1] hover:border-black/[0.16] text-[var(--color-ink-secondary)] hover:text-[var(--color-ink-primary)] flex items-center justify-center gap-2 text-xs font-medium transition-all active:scale-95 motion-reduce:active:scale-100 cursor-pointer shadow-2xs"
                 title={isTa ? "தேடல் (⌘K)" : "Search (⌘K)"}
               >
                 <Search className="h-4 w-4 text-[var(--color-accent)] shrink-0" />
@@ -178,18 +178,18 @@ export function Header({ onOpenSearch }: HeaderProps) {
                 </kbd>
               </button>
 
-              {/* Segmented Bilingual Language Switcher */}
+              {/* 2. Micro-Segmented Language Switcher */}
               <div
                 role="group"
                 aria-label={isTa ? "மொழித் தேர்வு" : "Language Selector"}
-                className="hidden sm:flex h-10 p-1 rounded-xl bg-[var(--color-surface-subtle)] border border-[var(--color-border-hairline)] items-center gap-0.5 shrink-0 shadow-2xs"
+                className="hidden sm:flex h-10 p-0.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.08] dark:border-white/[0.1] items-center gap-0.5 shrink-0 shadow-2xs"
               >
                 <button
                   type="button"
                   onClick={() => setLocale("ta")}
                   aria-pressed={isTa}
                   aria-label="தமிழுக்கு மாற்றுக"
-                  className={`min-h-[32px] h-8 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center font-tamil cursor-pointer ${
+                  className={`min-h-[34px] h-[34px] px-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center font-tamil cursor-pointer ${
                     isTa
                       ? "bg-[var(--color-surface-card)] text-[var(--color-accent)] shadow-2xs ring-1 ring-black/5"
                       : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink-primary)]"
@@ -203,7 +203,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
                   onClick={() => setLocale("en")}
                   aria-pressed={!isTa}
                   aria-label="Switch to English"
-                  className={`min-h-[32px] h-8 px-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center font-sans cursor-pointer ${
+                  className={`min-h-[34px] h-[34px] px-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center font-sans cursor-pointer ${
                     !isTa
                       ? "bg-[var(--color-surface-card)] text-[var(--color-accent)] shadow-2xs ring-1 ring-black/5"
                       : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink-primary)]"
@@ -213,33 +213,31 @@ export function Header({ onOpenSearch }: HeaderProps) {
                 </button>
               </div>
 
-              {/* Reading & Display Settings Trigger */}
+              {/* 3. Ghost Settings Icon Button */}
               <button
                 type="button"
                 onClick={openSettings}
                 aria-label={isTa ? "தள & வாசிப்பு அமைப்புகள்" : "Reading & Display Settings"}
-                className="min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl bg-[var(--color-surface-subtle)] hover:bg-[var(--color-border-hairline)] border border-[var(--color-border-hairline)] text-[var(--color-ink-secondary)] hover:text-[var(--color-accent)] flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
+                className="min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl text-[var(--color-ink-secondary)] hover:text-[var(--color-accent)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] flex items-center justify-center transition-colors cursor-pointer"
                 title={isTa ? "வாசிப்பு அமைப்புகள்" : "Reading Settings"}
               >
                 <Sliders className="h-4 w-4" />
               </button>
 
-              {/* Reader Library & Saved Bookmarks */}
+              {/* 4. Ghost Reader Library / Wishlist Icon Button */}
               <Link
                 href="/account"
                 aria-label={isTa ? "வாசகர் அரங்கம் & சேமிக்கப்பட்ட நூல்கள்" : "Reader Library & Saved Items"}
-                className="relative hidden sm:flex min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl bg-[var(--color-surface-subtle)] hover:bg-[var(--color-border-hairline)] border border-[var(--color-border-hairline)] text-[var(--color-ink-secondary)] hover:text-[var(--color-accent)] items-center justify-center transition-colors cursor-pointer shrink-0 shadow-2xs"
+                className="relative hidden sm:flex min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl text-[var(--color-ink-secondary)] hover:text-[var(--color-accent)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] items-center justify-center transition-colors cursor-pointer shrink-0"
                 title={isTa ? "சேமிக்கப்பட்டவை" : "Saved Items"}
               >
                 <BookmarkRibbonIcon className="h-4 w-4" />
                 {wishlist.length > 0 && (
-                  <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-[var(--color-accent)] text-white text-[10px] font-mono font-bold flex items-center justify-center shadow-xs ring-2 ring-[var(--color-surface-card)]">
-                    {wishlist.length}
-                  </span>
+                  <span className="absolute 1 top-1 right-1 h-2 w-2 rounded-full bg-[var(--color-accent)] ring-2 ring-[var(--color-surface-card)]" />
                 )}
               </Link>
 
-              {/* Hero Shopping Cart Action */}
+              {/* 5. Hero Shopping Cart Button (Single Filled Accent CTA) */}
               <Link
                 href="/cart"
                 aria-label={
@@ -247,7 +245,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
                     ? `கூடை (${totalItems} நூல்கள்)`
                     : `Shopping Cart (${totalItems} items)`
                 }
-                className="relative min-h-[44px] h-10 px-3 sm:px-3.5 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white flex items-center justify-center gap-1.5 sm:gap-2 text-xs font-bold transition-all shadow-sm shadow-[var(--color-accent)]/20 cursor-pointer active:scale-95 shrink-0"
+                className="relative min-h-[44px] h-10 px-3.5 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white flex items-center justify-center gap-2 text-xs font-bold transition-all shadow-sm shadow-[var(--color-accent)]/20 cursor-pointer active:scale-95 shrink-0"
                 title={isTa ? "கூடை" : "Cart"}
               >
                 <ShoppingBag className="h-4 w-4 text-white shrink-0" />
@@ -261,11 +259,11 @@ export function Header({ onOpenSearch }: HeaderProps) {
                 )}
               </Link>
 
-              {/* Mobile Drawer Navigation Toggle */}
+              {/* 6. Mobile Drawer Menu Toggle */}
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl bg-[var(--color-surface-subtle)] hover:bg-[var(--color-border-hairline)] border border-[var(--color-border-hairline)] flex items-center justify-center text-[var(--color-ink-primary)] active:scale-95 transition-all cursor-pointer shadow-2xs"
+                className="lg:hidden min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl text-[var(--color-ink-primary)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] flex items-center justify-center active:scale-95 transition-all cursor-pointer"
                 aria-label={isTa ? "வழிசெலுத்தல் பட்டியினை திறக்குக" : "Open Navigation Menu"}
                 aria-expanded={mobileMenuOpen}
                 aria-controls="mobile-navigation-drawer"
