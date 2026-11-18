@@ -73,6 +73,23 @@ export function HeroSlider({
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
+  // Deep-link / query param support (?slide=0..3)
+  React.useEffect(() => {
+    if (!emblaApi || typeof window === "undefined") return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const slideParam = params.get("slide");
+      if (slideParam !== null) {
+        const targetIdx = parseInt(slideParam, 10);
+        if (!isNaN(targetIdx) && targetIdx >= 0 && targetIdx < slides.length) {
+          emblaApi.scrollTo(targetIdx, true);
+        }
+      }
+    } catch {
+      // Ignore URL parsing errors
+    }
+  }, [emblaApi, slides.length]);
+
   // Sync selected index with Embla and restart progress animation key
   const onSelect = React.useCallback(() => {
     if (!emblaApi) return;
@@ -217,9 +234,10 @@ export function HeroSlider({
                       />
                     </picture>
 
-                    {/* Dual-Layered Directional Optical Scrim for Text Legibility (WCAG AAA) */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/92 via-black/45 to-transparent pointer-events-none" />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/25 to-transparent pointer-events-none" />
+                    {/* Directional Progressive Scrims for Text Legibility (WCAG AAA) */}
+                    <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.96)_0%,rgba(0,0,0,0.82)_35%,rgba(0,0,0,0.42)_70%,transparent_100%)] pointer-events-none" />
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.92)_0%,rgba(0,0,0,0.65)_40%,rgba(0,0,0,0.20)_75%,transparent_100%)] pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 w-full sm:w-4/5 lg:w-3/5 h-4/5 bg-[radial-gradient(ellipse_at_bottom_left,rgba(0,0,0,0.65)_0%,rgba(0,0,0,0.25)_50%,transparent_75%)] pointer-events-none" />
                   </div>
 
                   {/* Editorial Left-Aligned Caption Block */}
@@ -236,7 +254,7 @@ export function HeroSlider({
                         )}
                       >
                         <span className="h-[1px] w-5 sm:w-6 bg-emerald-400/80 inline-block" />
-                        <span className="text-[10px] sm:text-xs font-semibold tracking-[0.2em] uppercase font-mono text-emerald-300 drop-shadow-xs">
+                        <span className="text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase font-mono text-emerald-300 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
                           {isTa ? slide.eyebrowTa : slide.eyebrowEn}
                         </span>
                       </div>
@@ -245,7 +263,7 @@ export function HeroSlider({
                       {index === 0 ? (
                         <h1
                           className={cn(
-                            "text-[clamp(1.75rem,3.2vw,2.75rem)] leading-[1.14] font-medium font-serif font-tamil-serif text-white tracking-[-0.015em] drop-shadow-sm transition-all duration-700 delay-[80ms] ease-out",
+                            "text-[clamp(1.75rem,3.2vw,2.75rem)] leading-[1.14] font-semibold font-serif font-tamil-serif text-white tracking-[-0.015em] drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)] transition-all duration-700 delay-[80ms] ease-out",
                             isActive
                               ? "opacity-100 translate-y-0"
                               : "opacity-0 translate-y-3 pointer-events-none",
@@ -257,7 +275,7 @@ export function HeroSlider({
                       ) : (
                         <h2
                           className={cn(
-                            "text-[clamp(1.75rem,3.2vw,2.75rem)] leading-[1.14] font-medium font-serif font-tamil-serif text-white tracking-[-0.015em] drop-shadow-sm transition-all duration-700 delay-[80ms] ease-out",
+                            "text-[clamp(1.75rem,3.2vw,2.75rem)] leading-[1.14] font-semibold font-serif font-tamil-serif text-white tracking-[-0.015em] drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)] transition-all duration-700 delay-[80ms] ease-out",
                             isActive
                               ? "opacity-100 translate-y-0"
                               : "opacity-0 translate-y-3 pointer-events-none",
@@ -271,7 +289,7 @@ export function HeroSlider({
                       {/* Subtitle / Narrative Description */}
                       <p
                         className={cn(
-                          "text-[clamp(0.875rem,1.15vw,1.05rem)] text-white/75 font-normal leading-relaxed max-w-2xl font-tamil transition-all duration-700 delay-[160ms] ease-out",
+                          "text-[clamp(0.875rem,1.15vw,1.05rem)] text-white/95 font-medium leading-relaxed max-w-2xl font-tamil drop-shadow-[0_1px_4px_rgba(0,0,0,0.85)] transition-all duration-700 delay-[160ms] ease-out",
                           isActive
                             ? "opacity-100 translate-y-0"
                             : "opacity-0 translate-y-3 pointer-events-none",
@@ -302,7 +320,7 @@ export function HeroSlider({
                         {slide.ctaSecondaryHref && (
                           <Link
                             href={slide.ctaSecondaryHref}
-                            className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-white/80 hover:text-white transition-colors relative group py-2 min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-sm"
+                            className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-white hover:text-emerald-300 transition-colors relative group py-2 min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-sm drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]"
                           >
                             <span>
                               {isTa ? slide.ctaSecondaryLabelTa : slide.ctaSecondaryLabelEn}

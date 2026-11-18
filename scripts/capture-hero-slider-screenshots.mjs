@@ -5,9 +5,12 @@ import path from "node:path";
 const PORT = 3089;
 const BROWSER_PATH = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
 const OUTPUT_DIR = path.resolve(process.cwd(), "screenshots");
+const ARTIFACT_DIR = path.resolve("C:\\Users\\madha\\.gemini\\antigravity\\brain\\52ccce1b-fadc-48a3-8d75-215141fc2e85\\screenshots");
 
-if (!fs.existsSync(OUTPUT_DIR)) {
-  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+for (const dir of [OUTPUT_DIR, ARTIFACT_DIR]) {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
 }
 
 function sleep(ms) {
@@ -75,25 +78,41 @@ async function run() {
     await waitForServer(`http://127.0.0.1:${PORT}/`);
     console.log("[Setup] Server is ready! Capturing screenshots...\n");
 
-    // Allow Next.js client hydration and initial image decode
-    await sleep(2000);
-
+    // 1. Viewport Breakpoints (with Slide 1)
     const breakpoints = [
-      { label: "360px", width: 360, height: 740, desc: "Mobile Viewport (360px)" },
-      { label: "768px", width: 768, height: 1024, desc: "Tablet Viewport (768px)" },
-      { label: "1280px", width: 1280, height: 800, desc: "Desktop Viewport (1280px)" },
-      { label: "1920px", width: 1920, height: 1080, desc: "Widescreen Viewport (1920px)" },
-      { label: "landscape-phone", width: 844, height: 390, desc: "Landscape Phone Viewport (844x390px)" },
+      { label: "360px", width: 360, height: 740, desc: "Mobile Viewport (360px)", url: `http://127.0.0.1:${PORT}/?slide=0` },
+      { label: "768px", width: 768, height: 1024, desc: "Tablet Viewport (768px)", url: `http://127.0.0.1:${PORT}/?slide=0` },
+      { label: "1280px", width: 1280, height: 800, desc: "Desktop Viewport (1280px)", url: `http://127.0.0.1:${PORT}/?slide=0` },
+      { label: "1920px", width: 1920, height: 1080, desc: "Widescreen Viewport (1920px)", url: `http://127.0.0.1:${PORT}/?slide=0` },
     ];
 
     for (const bp of breakpoints) {
       const fileOut = path.join(OUTPUT_DIR, `hero-slider-${bp.label}.png`);
+      const artifactOut = path.join(ARTIFACT_DIR, `hero-slider-${bp.label}.png`);
       console.log(`[Capture] ${bp.desc} -> ${path.basename(fileOut)}`);
-      await captureScreenshot(`http://127.0.0.1:${PORT}/`, fileOut, bp.width, bp.height);
-      await sleep(800);
+      await captureScreenshot(bp.url, fileOut, bp.width, bp.height);
+      fs.copyFileSync(fileOut, artifactOut);
+      await sleep(500);
     }
 
-    console.log("\n[Success] All responsive hero slider screenshots captured in " + OUTPUT_DIR);
+    // 2. Each Slide Active at 1280px Desktop
+    const slides = [
+      { id: "1", title: "Flagship Archives", url: `http://127.0.0.1:${PORT}/?slide=0` },
+      { id: "2", title: "Thileepan Satyagraha", url: `http://127.0.0.1:${PORT}/?slide=1` },
+      { id: "3", title: "Katunayake Victory", url: `http://127.0.0.1:${PORT}/?slide=2` },
+      { id: "4", title: "Leader Thoughts", url: `http://127.0.0.1:${PORT}/?slide=3` },
+    ];
+
+    for (const slide of slides) {
+      const fileOut = path.join(OUTPUT_DIR, `hero-slider-slide-${slide.id}.png`);
+      const artifactOut = path.join(ARTIFACT_DIR, `hero-slider-slide-${slide.id}.png`);
+      console.log(`[Capture] Slide ${slide.id}: ${slide.title} -> ${path.basename(fileOut)}`);
+      await captureScreenshot(slide.url, fileOut, 1280, 800);
+      fs.copyFileSync(fileOut, artifactOut);
+      await sleep(500);
+    }
+
+    console.log("\n[Success] All responsive and per-slide hero screenshots captured successfully!");
   } catch (err) {
     console.error("[FATAL ERROR]", err);
   } finally {
@@ -103,4 +122,3 @@ async function run() {
 }
 
 run();
-

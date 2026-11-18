@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, AlertCircle, Loader2, ArrowRight, RefreshCw, Mail } from "lucide-react";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const queryStatus = searchParams.get("status");
@@ -211,6 +211,20 @@ export default function VerifyEmailPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-[80vh] flex items-center justify-center p-8">
+          <div className="w-8 h-8 rounded-full border-2 border-[#0A6847] border-t-transparent animate-spin" />
+        </div>
+      }
+    >
+      <VerifyEmailContent />
+    </React.Suspense>
   );
 }
 
