@@ -7,6 +7,8 @@ export interface DeliveryAddressInfo {
   pincode?: string;
 }
 
+export const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "916384654946";
+
 export function getWhatsAppOrderUrl(
   bookTitle: string,
   price: number,
@@ -31,10 +33,10 @@ export function getWhatsAppOrderUrl(
     }
   }
 
-  return `https://wa.me/916384654946?text=${encodeURIComponent(text)}`;
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
 }
 
 export function getGeneralWhatsAppUrl(customMessage?: string): string {
   const text = customMessage || `வணக்கம் மேதகு களஞ்சியம், நான் புத்தகங்களை வாங்க விரும்புகிறேன்.`;
-  return `https://wa.me/916384654946?text=${encodeURIComponent(text)}`;
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
 }

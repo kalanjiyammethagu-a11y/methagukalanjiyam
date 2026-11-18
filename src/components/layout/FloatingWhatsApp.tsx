@@ -6,6 +6,7 @@ import { MessageCircle } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
 import { cn } from "@/lib/utils";
+import { WHATSAPP_NUMBER } from "@/lib/whatsapp";
 
 export function FloatingWhatsApp() {
   const pathname = usePathname();
@@ -38,13 +39,13 @@ export function FloatingWhatsApp() {
 
       {/* Floating Action Button */}
       <a
-        href={`https://wa.me/916384654946?text=${message}`}
+        href={`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`}
         target="_blank"
         rel="noopener noreferrer"
         aria-label={
           isTa
-            ? "வாட்ஸ்அப் (WhatsApp) வழியாக நூல்களை வாங்குக — +91 63846 54946"
-            : "Chat & Order on WhatsApp (+91 63846 54946)"
+            ? `வாட்ஸ்அப் (WhatsApp) வழியாக நூல்களை வாங்குக — +${WHATSAPP_NUMBER}`
+            : `Chat & Order on WhatsApp (+${WHATSAPP_NUMBER})`
         }
         className="h-14 w-14 rounded-full bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white flex items-center justify-center shadow-2xl shadow-emerald-900/40 border-2 border-white transition-all duration-300 min-h-[48px] min-w-[48px]"
       >
