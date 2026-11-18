@@ -400,6 +400,30 @@ export interface Database {
           updated_at?: string;
         };
       };
+      razorpay_events: {
+        Row: {
+          id: string;
+          event_id: string;
+          event_type: string;
+          payload: Json;
+          processed_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          event_id: string;
+          event_type: string;
+          payload: Json;
+          processed_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          event_id?: string;
+          event_type?: string;
+          payload?: Json;
+          processed_at?: string;
+        };
+      };
     };
   };
 }

@@ -25,37 +25,37 @@ export function Badge({
   ...props
 }: BadgeProps) {
   const baseStyles =
-    "inline-flex items-center gap-1.5 rounded-full font-semibold tracking-wide transition-colors";
+    "inline-flex items-center gap-1.5 rounded-full font-semibold tracking-wide transition-colors font-tamil select-none";
 
   const sizeStyles = {
     sm: "px-2 py-0.5 text-[11px]",
     md: "px-2.5 py-0.5 text-xs",
-    lg: "px-3.5 py-1 text-xs",
+    lg: "px-3.5 py-1 text-xs sm:text-sm",
   };
 
   const variants = {
     in_stock:
-      "bg-emerald-50 text-emerald-800 border border-emerald-300/70 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/60",
+      "bg-emerald-50 text-emerald-800 border border-emerald-300/70 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60",
     success:
-      "bg-emerald-50 text-[#0A6847] border border-emerald-300/70 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/60",
+      "bg-emerald-50 text-[var(--color-accent)] border border-emerald-300/70 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60",
     glass:
-      "bg-white/80 text-[#111111] border border-black/10 backdrop-blur-md shadow-2xs dark:bg-zinc-800/80 dark:text-zinc-200 dark:border-zinc-700",
+      "bg-[var(--color-surface-card)] text-[var(--color-ink-primary)] border border-[var(--color-border-subtle)] shadow-2xs",
     sold_out:
-      "bg-rose-50 text-rose-800 border border-rose-300/70 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800/60",
+      "bg-rose-50 text-rose-800 border border-rose-300/70 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60",
     category:
-      "bg-[#F5F3EF] text-[#222222] border border-black/8 hover:border-black/20 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700",
+      "bg-[var(--color-surface-subtle)] text-[var(--color-ink-primary)] border border-[var(--color-border-hairline)] hover:border-[var(--color-accent)]",
     pending:
-      "bg-amber-50 text-amber-900 border border-amber-300/70 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800/60",
+      "bg-amber-50 text-amber-900 border border-amber-300/70 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60",
     dispatched:
-      "bg-sky-50 text-sky-900 border border-sky-300/70 dark:bg-sky-950/50 dark:text-sky-300 dark:border-sky-800/60",
+      "bg-sky-50 text-sky-900 border border-sky-300/70 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/60",
     delivered:
-      "bg-emerald-50 text-emerald-800 border border-emerald-300/70 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800/60",
+      "bg-emerald-50 text-emerald-800 border border-emerald-300/70 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60",
     cancelled:
-      "bg-zinc-100 text-zinc-700 border border-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700",
+      "bg-[var(--color-surface-subtle)] text-[var(--color-ink-muted)] border border-[var(--color-border-hairline)]",
     gold:
-      "bg-amber-50 text-[#7D5300] border border-amber-300/80 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-700/60",
+      "bg-amber-50 text-amber-900 border border-amber-300/80 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700/60",
     neutral:
-      "bg-black/6 text-[#222222] border border-black/8 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700",
+      "bg-[var(--color-surface-subtle)] text-[var(--color-ink-primary)] border border-[var(--color-border-hairline)]",
   };
 
   return (

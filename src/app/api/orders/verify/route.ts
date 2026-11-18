@@ -4,6 +4,8 @@ import { verifyPaymentSignature } from "@/lib/razorpay";
 import { verifyPaymentSchema } from "@/lib/validators/order";
 import { VerifyPaymentApiResponse } from "@/types/razorpay";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

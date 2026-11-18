@@ -5,6 +5,8 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { FloatingWhatsApp } from "@/components/layout/FloatingWhatsApp";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { CartProvider } from "@/context/CartContext";
+import { safeJsonLdStringify } from "@/lib/sanitize";
 import { SettingsModal } from "@/components/layout/SettingsModal";
 
 const inter = Inter({
@@ -62,7 +64,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/images/brand/images/brand/banner-1200.webp",
+        url: "/images/brand/banner-1200.webp",
         width: 1200,
         height: 675,
         alt: "மேதகு களஞ்சியம் பதாகை",
@@ -73,7 +75,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "மேதகு களஞ்சியம் — Rare Tamil Literature",
     description: "அரிய தமிழ் வரலாற்று நூல்கள் & தேசிய ஆவணப் பெட்டகம்",
-    images: ["/images/brand/images/brand/banner-1200.webp"],
+    images: ["/images/brand/banner-1200.webp"],
   },
   robots: {
     index: true,
@@ -108,8 +110,8 @@ export default function RootLayout({
         name: "மேதகு களஞ்சியம்",
         alternateName: "Methagu Kalanjiyam",
         url: "https://methagukalanjiyam.in",
-        logo: "https://methagukalanjiyam.in/images/brand/images/brand/logo.webp",
-        image: "https://methagukalanjiyam.in/images/brand/images/brand/banner-1200.webp",
+        logo: "https://methagukalanjiyam.in/images/brand/logo.webp",
+        image: "https://methagukalanjiyam.in/images/brand/banner-1200.webp",
         description: "Rare Tamil Literature & Historical National Archives Bookstore.",
         telephone: "+91-6384654946",
         address: {
@@ -163,7 +165,7 @@ export default function RootLayout({
 
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: safeJsonLdStringify(jsonLd) }}
         />
       </head>
       <body
@@ -171,25 +173,27 @@ export default function RootLayout({
         className="min-h-screen flex flex-col bg-surface text-ink antialiased selection:bg-accent/15 selection:text-accent"
       >
         <LanguageProvider>
-          {/* Skip to Main Content Link for Keyboard Accessibility (WCAG 2.4.1) */}
-          <a
-            href="#main-content"
-            className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-[#0A6847] focus:text-white focus:rounded-xl focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-white font-tamil text-sm font-semibold"
-          >
-            முக்கிய உள்ளடக்கத்திற்குச் செல்க (Skip to main content)
-          </a>
+          <CartProvider>
+            {/* Skip to Main Content Link for Keyboard Accessibility (WCAG 2.4.1) */}
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2.5 focus:bg-[#0A6847] focus:text-white focus:rounded-xl focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-white font-tamil text-sm font-semibold"
+            >
+              முக்கிய உள்ளடக்கத்திற்குச் செல்க (Skip to main content)
+            </a>
 
-          <Header />
-          <main id="main-content" className="flex-1 focus:outline-none" tabIndex={-1}>
-            {children}
-          </main>
-          <Footer />
+            <Header />
+            <main id="main-content" className="flex-1 focus:outline-none" tabIndex={-1}>
+              {children}
+            </main>
+            <Footer />
 
-          {/* Platform Settings Modal */}
-          <SettingsModal />
+            {/* Platform Settings Modal */}
+            <SettingsModal />
 
-          {/* Floating WhatsApp Action on Every Page */}
-          <FloatingWhatsApp />
+            {/* Floating WhatsApp Action on Every Page */}
+            <FloatingWhatsApp />
+          </CartProvider>
         </LanguageProvider>
       </body>
     </html>

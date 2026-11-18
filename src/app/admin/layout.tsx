@@ -37,6 +37,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [notificationOpen, setNotificationOpen] = React.useState(false);
 
+  // Dedicated minimal layout for admin login (no sidebar, no navbar, no marketing chrome)
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
+
   const navItems = [
     {
       href: "/admin",
@@ -148,7 +153,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               >
                 <div className="relative h-10 w-10 rounded-2xl overflow-hidden border border-black/12 shadow-xs bg-white shrink-0">
                   <Image
-                    src="/icons/icons/favicon.png"
+                    src="/icons/favicon.png"
                     alt="மேதகு களஞ்சியம் லோகோ"
                     width={40}
                     height={40}

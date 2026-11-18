@@ -21,8 +21,15 @@ export async function createClient() {
           }>
         ) {
           try {
+            const isProduction = process.env.NODE_ENV === "production";
             cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
+              cookieStore.set(name, value, {
+                ...options,
+                path: options?.path || "/",
+                sameSite: (options?.sameSite as any) || "lax",
+                httpOnly: options?.httpOnly ?? true,
+                secure: isProduction,
+              })
             );
           } catch {
             // Handled in Server Components where cookies cannot be set directly

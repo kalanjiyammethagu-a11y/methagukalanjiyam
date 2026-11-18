@@ -48,7 +48,7 @@
 |------|----------|------|
 | Framework | Next.js 15 (App Router, Server Actions, TypeScript) | Modern SSR/RSC |
 | Database & Auth | Supabase PostgreSQL + Supabase Auth | Free tier DB, RLS security |
-| Image & Hosting | Cloudflare Pages + Cloudflare R2 | S3-compatible, edge CDN, zero egress |
+| Image & Hosting | Next.js Static Assets (`/public/images`) + Edge CDN | Self-contained, zero external storage dependencies |
 | Image Pipeline | Sharp | Auto-compress to WebP/AVIF (85% quality) |
 | CSS | Tailwind CSS v4 | Frosted glassmorphism design tokens |
 | Payments | Razorpay | Test mode first, webhook verification, UPI Intent |

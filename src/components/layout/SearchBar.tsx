@@ -175,7 +175,7 @@ export function SearchBar({ isOpen, onClose }: SearchBarProps) {
                     key={b.id}
                     href={`/books/${b.slug}`}
                     onClick={onClose}
-                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#0A6847]/5 border border-transparent hover:border-[#0A6847]/20 transition-all group"
+                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#0A6847]/5 border border-transparent hover:border-[#0A6847]/20 transition-all group min-h-[48px]"
                   >
                     <div className="flex items-center gap-3">
                       <div className="relative w-10 aspect-[3/4] rounded-md overflow-hidden bg-black/5 shrink-0 border border-black/10">

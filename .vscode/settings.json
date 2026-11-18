@@ -1,0 +1,13 @@
+{
+  "antigravity.cliPath": "",
+  "liveServer.settings.port": 5501,
+  "github.copilot.chat.mcp.servers": {
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@executeautomation/playwright-mcp-server"
+      ]
+    }
+  }
+}

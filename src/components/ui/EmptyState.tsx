@@ -34,34 +34,34 @@ export function EmptyState({
   const renderedIcon = React.isValidElement(icon)
     ? icon
     : typeof icon === "function" || typeof icon === "object"
-    ? React.createElement(icon as React.ComponentType<{ className?: string }>, { className: "h-10 w-10" })
+    ? React.createElement(icon as React.ComponentType<{ className?: string }>, { className: "h-10 w-10 text-[var(--color-accent)]" })
     : icon;
 
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center text-center py-16 sm:py-24 px-6",
+        "flex flex-col items-center justify-center text-center py-16 sm:py-24 px-6 rounded-3xl",
         className
       )}
     >
-      {/* Icon */}
-      <div className="h-20 w-20 rounded-3xl bg-[#F5F3EF] flex items-center justify-center text-[#555555] mb-6">
+      {/* Icon Container */}
+      <div className="h-20 w-20 rounded-3xl bg-[var(--color-surface-subtle)] border border-[var(--color-border-hairline)] flex items-center justify-center text-[var(--color-ink-secondary)] mb-6 shadow-2xs">
         {renderedIcon}
       </div>
 
       {/* Title */}
-      <h3 className="text-lg sm:text-xl font-bold text-[#111111] font-tamil mb-2">
+      <h3 className="text-lg sm:text-xl font-bold text-[var(--color-ink-primary)] font-tamil mb-2">
         {locale === "ta" ? titleTa : titleEn}
       </h3>
 
       {/* Description */}
       {(descriptionTa || descriptionEn) && (
-        <p className="text-sm text-[#555555] font-medium max-w-sm font-tamil mb-8 leading-relaxed">
+        <p className="text-sm text-[var(--color-ink-secondary)] font-medium max-w-sm font-tamil mb-8 leading-relaxed">
           {locale === "ta" ? (descriptionTa || descriptionEn) : (descriptionEn || descriptionTa)}
         </p>
       )}
 
-      {/* CTA */}
+      {/* Action CTA */}
       {(actionLabelTa || actionLabelEn) && (
         actionHref ? (
           <Button href={actionHref} variant="primary" size="md">

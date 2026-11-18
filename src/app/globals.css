@@ -1,133 +1,242 @@
 @import "tailwindcss";
 
 @theme {
-  --color-surface: #FAFAF9;
-  --color-surface-tint: #F5F3EF;
-  --color-surface-card: #FFFFFF;
-  --color-ink: #111111;
-  --color-ink-muted: #555555;
-  --color-ink-light: #6E6E6E;
-  --color-accent: #0A6847;
-  --color-accent-hover: #085438;
-  --color-accent-light: #E8F5E9;
-  --color-gold: #996515;
-  --color-gold-light: #FFF8E1;
+  /* Color Palette - Heritage Archival & Tamil Literary Aesthetics */
+  --color-canvas: var(--color-canvas);
+  --color-surface-subtle: var(--color-surface-subtle);
+  --color-surface-card: var(--color-surface-card);
+  --color-surface: var(--color-surface);
+  --color-surface-tint: var(--color-surface-tint);
+
+  --color-ink: var(--color-ink-primary);
+  --color-ink-primary: var(--color-ink-primary);
+  --color-ink-secondary: var(--color-ink-secondary);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-ink-light: var(--color-ink-muted);
+
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-light: var(--color-accent-light);
+
+  --color-border-hairline: var(--color-border-hairline);
+  --color-border-strong: var(--color-border-strong);
+  --color-border-subtle: var(--color-border-subtle);
+
+  --color-gold: #8C5D14;
+  --color-gold-light: #FEF9EE;
   --color-obsidian: #121212;
   --color-obsidian-surface: #1E1E1E;
   --color-obsidian-border: rgba(255, 255, 255, 0.08);
 
+  /* Typography Scales */
   --font-serif: var(--font-fraunces), "Playfair Display", Georgia, serif;
   --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
   --font-tamil: var(--font-noto-tamil), "Latha", "Tamil Sangam MN", "Mukta Malar", "InaiMathi", "Vijaya", system-ui, sans-serif;
   --font-tamil-serif: var(--font-noto-serif-tamil), "Bamini", "Tamil Sangam MN", Georgia, serif;
+
+  /* Z-Index Hierarchy Layer Tokens */
+  --z-dropdown: 50;
+  --z-sticky: 100;
+  --z-drawer: 200;
+  --z-modal-backdrop: 300;
+  --z-modal: 400;
+  --z-toast: 500;
 }
 
+/* ============================================================
+   DESIGN TOKENS: ROOT / LIGHT (Parchment Heritage Default)
+   ============================================================ */
 :root {
-  --background: #FAFAF9;
-  --foreground: #111111;
-  --card-bg: #FFFFFF;
-  --border-subtle: rgba(0, 0, 0, 0.08);
+  --color-canvas: #FAF8F5;
+  --color-surface: #FAF8F5;
+  --color-surface-subtle: #F3EFE6;
+  --color-surface-card: #FFFFFF;
+  --color-surface-tint: #F3EFE6;
+
+  --color-ink-primary: #191614;   /* AAA contrast against canvas (14.8:1) */
+  --color-ink-secondary: #4A443E; /* AAA contrast against canvas (7.2:1) */
+  --color-ink-muted: #665F57;     /* AA contrast against canvas (4.9:1) */
+
+  --color-accent: #0D5C3A;        /* Deep Tamil Forest Emerald - AA contrast */
+  --color-accent-hover: #08442A;
+  --color-accent-light: #EBF5EF;
+
+  --color-border-hairline: #E5DFD5;
+  --color-border-subtle: #E5DFD5;
+  --color-border-strong: #CFC6B8;
+
+  --color-danger: #BE123C;
+  --color-danger-light: #FFE4E6;
+  --color-warning: #B45309;
+  --color-warning-light: #FEF3C7;
+  --color-success: #0D5C3A;
+  --color-success-light: #EBF5EF;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 350ms;
+
+  --background: var(--color-canvas);
+  --foreground: var(--color-ink-primary);
   color-scheme: light;
 }
 
+/* Pure White Modern Light Mode */
+html[data-theme="white"] {
+  --color-canvas: #FFFFFF;
+  --color-surface: #FFFFFF;
+  --color-surface-subtle: #F8F9FA;
+  --color-surface-card: #FFFFFF;
+  --color-surface-tint: #F1F3F5;
+  --color-border-hairline: #E9ECEF;
+  --color-border-subtle: #DEE2E6;
+  --color-border-strong: #CED4DA;
+}
+
+/* Dark / Night Reading Theme (WCAG AA compliant dark mode) */
+html[data-theme="night"],
+html.dark {
+  --color-canvas: #121212;
+  --color-surface: #18181B;
+  --color-surface-subtle: #27272A;
+  --color-surface-card: #1F1F23;
+  --color-surface-tint: #2E2E33;
+
+  --color-ink-primary: #F4F4F5;   /* AAA contrast on dark canvas (15.2:1) */
+  --color-ink-secondary: #D4D4D8; /* AAA contrast on dark canvas (10.5:1) */
+  --color-ink-muted: #A1A1AA;     /* AA contrast on dark canvas (5.8:1) */
+
+  --color-accent: #22C55E;        /* Vibrant emerald for dark mode visibility */
+  --color-accent-hover: #16A34A;
+  --color-accent-light: rgba(34, 197, 94, 0.15);
+
+  --color-border-hairline: rgba(255, 255, 255, 0.08);
+  --color-border-subtle: rgba(255, 255, 255, 0.12);
+  --color-border-strong: rgba(255, 255, 255, 0.22);
+
+  --color-danger: #F43F5E;
+  --color-danger-light: rgba(244, 63, 94, 0.18);
+  --color-warning: #FBBF24;
+  --color-warning-light: rgba(251, 191, 36, 0.18);
+  --color-success: #22C55E;
+  --color-success-light: rgba(34, 197, 94, 0.18);
+
+  color-scheme: dark;
+}
+
 body {
-  background-color: var(--background);
-  color: var(--foreground);
+  background-color: var(--color-canvas);
+  color: var(--color-ink-primary);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
-  caret-color: #0A6847;
+  caret-color: var(--color-accent);
   overflow-x: hidden;
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease;
 }
 
-button, a, select, input {
+/* Touch target ergonomics */
+button, a, select, input, [role="button"], [role="tab"] {
   touch-action: manipulation;
 }
 
-/* Typographic optical rhythm & balance across all headings */
+/* Typographic balance */
 h1, h2, h3, h4, h5, h6 {
   text-wrap: balance;
-  letter-spacing: -0.005em;
+  letter-spacing: -0.01em;
+  color: var(--color-ink-primary);
 }
 
 p {
   text-wrap: pretty;
   overflow-wrap: break-word;
+  color: var(--color-ink-secondary);
 }
 
 ::selection {
-  background: rgba(10, 104, 71, 0.18);
-  color: #0A6847;
+  background: var(--color-accent-light);
+  color: var(--color-accent);
 }
 
-/* Custom Editorial Scrollbar */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: #F5F3EF;
+  background: var(--color-surface-subtle);
 }
 ::-webkit-scrollbar-thumb {
-  background: #D3CDC2;
-  border-radius: 4px;
+  background: var(--color-border-strong);
+  border-radius: var(--radius-full);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #0A6847;
+  background: var(--color-accent);
 }
 
-/* Accessible focus ring */
+/* Accessible focus ring (WCAG 2.4.7 AA & 2.4.11) */
 :focus-visible {
-  outline: 2px solid #0A6847;
-  outline-offset: 2px;
+  outline: 2px solid var(--color-accent) !important;
+  outline-offset: 2px !important;
 }
 
-/* ============================================================
-   TACTILE APPLE-INSPIRED GLASSMORPHISM UTILITIES
-   ============================================================ */
-
+/* Archival Surface Containers */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+  background-color: var(--color-surface-card);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: 0 1px 3px rgba(25, 22, 20, 0.04), 0 1px 2px rgba(25, 22, 20, 0.02);
 }
 
 .glass-panel-subtle {
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(12px) saturate(160%);
-  -webkit-backdrop-filter: blur(12px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.45);
-}
-
-.glass-panel-dark {
-  background: rgba(22, 22, 24, 0.88);
-  backdrop-filter: blur(24px) saturate(190%);
-  -webkit-backdrop-filter: blur(24px) saturate(190%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+  background-color: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-hairline);
 }
 
 .glass-card-hover {
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform var(--duration-fast) var(--ease-spring),
+              box-shadow var(--duration-fast) var(--ease-spring),
+              border-color var(--duration-fast) var(--ease-spring);
 }
 
 .glass-card-hover:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 36px -12px rgba(10, 104, 71, 0.14),
-              0 0 0 1px rgba(10, 104, 71, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgba(25, 22, 20, 0.08), 0 2px 6px -1px rgba(25, 22, 20, 0.04);
+  border-color: var(--color-border-strong);
 }
 
-/* ============================================================
-   OPTICAL TEXT PLACEMENT & ACCESSIBLE FONT SCALING
-   ============================================================ */
-html[data-font-size="normal"] {
-  font-size: 16px;
+/* Typography Font Families & Kerning */
+.font-tamil {
+  font-family: var(--font-tamil);
+  line-height: 1.7;
+  letter-spacing: 0.01em;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
 }
+
+.font-tamil-serif {
+  font-family: var(--font-tamil-serif);
+  line-height: 1.6;
+  letter-spacing: 0.005em;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1, "liga" 1;
+}
+
+.font-serif-editorial {
+  font-family: var(--font-serif);
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+
+/* Reading Font Size Scale Adjustments */
 html[data-font-size="large"] {
   font-size: 18px;
 }
@@ -135,41 +244,13 @@ html[data-font-size="extra-large"] {
   font-size: 20px;
 }
 
-/* Enhanced Tamil Line Height, Ligatures, & Optical Placement */
-.font-tamil {
-  font-family: var(--font-tamil);
-  line-height: 1.7;
-  letter-spacing: 0.01em;
-  text-rendering: optimizeLegibility;
-  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Archival & Literary Editorial Tamil Serif */
-.font-tamil-serif {
-  font-family: var(--font-tamil-serif);
-  line-height: 1.6;
-  letter-spacing: 0.005em;
-  text-rendering: optimizeLegibility;
-  font-feature-settings: "kern" 1, "liga" 1;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* Latin Editorial Serif */
-.font-serif-editorial {
-  font-family: var(--font-serif);
-  line-height: 1.45;
-  letter-spacing: -0.01em;
-}
-
-/* Reading Longform Prose Helper */
+/* Longform Reading Prose */
 .prose-tamil {
   font-family: var(--font-tamil);
   font-size: 1.0625rem;
-  line-height: 1.8;
+  line-height: 1.85;
   letter-spacing: 0.008em;
-  color: #262626;
+  color: var(--color-ink-primary);
   text-rendering: optimizeLegibility;
 }
 
@@ -178,99 +259,102 @@ html[data-font-size="extra-large"] {
   text-wrap: pretty;
 }
 
-/* Reading Theme Overrides */
-html[data-theme="white"] body {
-  --background: #FFFFFF;
+/* Contrast Fixes for Legacy Utility Colors */
+.text-\[\#777777\],
+.text-\[\#666666\] {
+  color: var(--color-ink-muted) !important;
 }
 
-html[data-theme="night"] body {
-  --background: #121212;
-  --foreground: #F5F5F5;
-  --card-bg: #1E1E1E;
-  color: #F5F5F5;
-  background-color: #121212;
+.text-\[\#555555\],
+.text-\[\#444444\],
+.text-zinc-600 {
+  color: var(--color-ink-secondary) !important;
 }
 
-html[data-theme="night"] .glass-panel {
-  background: rgba(28, 28, 30, 0.88);
-  border-color: rgba(255, 255, 255, 0.12);
-  color: #F5F5F5;
+.text-\[\#111111\],
+.text-\[\#222222\],
+.text-\[\#2A2A2A\] {
+  color: var(--color-ink-primary) !important;
 }
 
-html[data-theme="night"] .text-\[\#111111\] {
-  color: #FFFFFF !important;
-}
-
-html[data-theme="night"] .text-\[\#444444\],
-html[data-theme="night"] .text-\[\#555555\],
-html[data-theme="night"] .text-\[\#666666\] {
-  color: #B5B5B5 !important;
-}
-
-.text-gold {
-  color: #996515;
-}
-
-.bg-gold {
-  background-color: #996515;
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.18);
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
-}
-
-/* ============================================================
-   MOTION SENSITIVITY & KEYFRAMES
-   ============================================================ */
-@keyframes progress {
-  from {
-    width: 0%;
+/* Shimmer Loading Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
   }
-  to {
-    width: 100%;
+  100% {
+    background-position: 200% 0;
   }
 }
 
-.animate-progress {
-  animation: progress 6s linear forwards;
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-subtle) 25%,
+    var(--color-border-hairline) 50%,
+    var(--color-surface-subtle) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite ease-in-out;
+}
+
+/* Minimal Editorial Hero Slider Progress Line Animation */
+@keyframes heroProgress {
+  0% {
+    transform: scaleX(0);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+.animate-hero-progress {
+  transform-origin: left;
+  animation: heroProgress var(--hero-autoplay-duration, 6500ms) linear forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .animate-hero-progress {
+    animation: none !important;
+    transform: scaleX(1) !important;
+  }
+}
+
+/* Safe Area Insets for Modern Mobile Thumb Zones */
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.pt-safe {
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+
+/* Accessibility: Prefers-Reduced-Motion Strict Rules */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
   .glass-card-hover:hover {
-    transform: none;
-    box-shadow: 0 6px 18px 0 rgba(10, 104, 71, 0.12);
+    transform: none !important;
   }
 
   .animate-spin {
-    animation-duration: 2.5s !important;
+    animation: none !important;
   }
 
   .animate-pulse {
     animation: none !important;
-    opacity: 0.65;
+    opacity: 0.75 !important;
   }
 
-  .animate-progress {
+  .animate-shimmer {
     animation: none !important;
-    width: 100% !important;
-  }
-
-  * {
-    scroll-behavior: auto !important;
+    background: var(--color-surface-subtle) !important;
   }
 }

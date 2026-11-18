@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/Button";
 import { useLanguage } from "@/context/LanguageContext";
 import { getBookBySlug } from "@/data/books";
 import { formatINR } from "@/lib/utils";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 /* Full rich articles database extracted from feeds.html & feed-item.html */
 interface ArticleDetailData {
@@ -389,7 +390,7 @@ export default function ArticleDetailPage() {
               [&>h2]:text-xl sm:[&>h2]:text-2xl [&>h2]:font-bold [&>h2]:font-tamil-serif [&>h2]:text-[#111111] [&>h2]:pt-6 [&>h2]:border-b [&>h2]:border-black/8 [&>h2]:pb-2.5 [&>h2]:text-balance
               [&>p]:leading-[1.85] [&>p]:text-[#2c2c2c] [&>p]:text-pretty
               [&>b]:text-[#111111] [&>strong]:text-[#111111] [&>strong]:font-semibold"
-            dangerouslySetInnerHTML={{ __html: content }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
           />
         </div>
 

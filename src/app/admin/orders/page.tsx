@@ -16,17 +16,49 @@ import {
   Calendar,
   AlertCircle,
   XCircle,
+  RefreshCw,
+  Loader2,
 } from "lucide-react";
 import { mockOrders } from "@/data/admin-mock";
 import type { AdminOrder, OrderStatus } from "@/types/admin";
 import { formatINR } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
 
+function mapSupabaseOrder(o: any): AdminOrder {
+  const addr = o.shipping_address || {};
+  return {
+    id: o.id,
+    orderNumber: o.order_number,
+    customerName: addr.full_name || o.guest_phone || "Customer",
+    customerPhone: addr.phone || o.guest_phone || "",
+    customerCity: addr.city || "Tamil Nadu",
+    customerState: addr.state || "Tamil Nadu",
+    items: (o.order_items || []).map((oi: any) => ({
+      bookId: oi.book_id || oi.id,
+      title: oi.title,
+      titleEn: oi.title,
+      quantity: oi.quantity,
+      price: Number(oi.price),
+    })),
+    subtotal: Number(o.subtotal || 0),
+    shipping: Number(o.shipping_fee || 0),
+    total: Number(o.total_amount || 0),
+    status: (o.status || "pending") as OrderStatus,
+    paymentMethod: o.payment_status === "paid" ? "upi" : "whatsapp_cod",
+    trackingNumber: o.tracking_number || undefined,
+    courierPartner: o.courier || undefined,
+    notes: o.customer_notes || o.admin_notes || undefined,
+    createdAt: o.created_at || new Date().toISOString(),
+    updatedAt: o.updated_at || new Date().toISOString(),
+  };
+}
+
 export default function AdminOrdersPage() {
   const { locale } = useLanguage();
   const isTa = locale === "ta";
 
-  const [orders, setOrders] = React.useState<AdminOrder[]>(mockOrders);
+  const [orders, setOrders] = React.useState<AdminOrder[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState<string>("all");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [toastMessage, setToastMessage] = React.useState<string | null>(null);
@@ -34,6 +66,31 @@ export default function AdminOrdersPage() {
   // Selected order modal / drawer
   const [selectedOrder, setSelectedOrder] = React.useState<AdminOrder | null>(null);
   const [trackingInput, setTrackingInput] = React.useState("");
+  const [updating, setUpdating] = React.useState(false);
+
+  const fetchOrders = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/orders");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.orders && Array.isArray(data.orders)) {
+          setOrders(data.orders.map(mapSupabaseOrder));
+        }
+      } else {
+        // Fallback to mockOrders if unauthenticated in dev
+        setOrders(mockOrders);
+      }
+    } catch {
+      setOrders(mockOrders);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   // Lock body scroll and dismiss on Escape
   React.useEffect(() => {
@@ -60,45 +117,83 @@ export default function AdminOrdersPage() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus, updatedAt: new Date().toISOString() } : o))
-    );
-    if (selectedOrder?.id === orderId) {
-      setSelectedOrder((prev) => prev ? { ...prev, status: newStatus } : null);
+  const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
+    setUpdating(true);
+    try {
+      const res = await fetch("/api/admin/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, status: newStatus }),
+      });
+      if (res.ok) {
+        setOrders((prev) =>
+          prev.map((o) => (o.id === orderId ? { ...o, status: newStatus, updatedAt: new Date().toISOString() } : o))
+        );
+        if (selectedOrder?.id === orderId) {
+          setSelectedOrder((prev) => (prev ? { ...prev, status: newStatus } : null));
+        }
+        showToast(isTa ? `ஆர்டர் நிலை மாற்றப்பட்டது: ${newStatus}` : `Order status updated to ${newStatus}`);
+      } else {
+        showToast("Error updating order status in database");
+      }
+    } catch {
+      showToast("Network error updating order");
+    } finally {
+      setUpdating(false);
     }
-    showToast(isTa ? `ஆர்டர் நிலை மாற்றப்பட்டது: ${newStatus}` : `Order status updated to ${newStatus}`);
   };
 
-  const handleSaveTracking = (orderId: string) => {
+  const handleSaveTracking = async (orderId: string) => {
     if (!trackingInput.trim()) return;
-    setOrders((prev) =>
-      prev.map((o) =>
-        o.id === orderId
-          ? {
-              ...o,
-              trackingNumber: trackingInput,
-              courierPartner: "ST Courier",
-              status: o.status === "pending" || o.status === "confirmed" ? "shipped" : o.status,
-              updatedAt: new Date().toISOString(),
-            }
-          : o
-      )
-    );
-    if (selectedOrder?.id === orderId) {
-      setSelectedOrder((prev) =>
-        prev
-          ? {
-              ...prev,
-              trackingNumber: trackingInput,
-              courierPartner: "ST Courier",
-              status: "shipped",
-            }
-          : null
-      );
+    setUpdating(true);
+    try {
+      const res = await fetch("/api/admin/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId,
+          trackingNumber: trackingInput.trim(),
+          courier: "ST Courier",
+          status: "shipped",
+        }),
+      });
+
+      if (res.ok) {
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.id === orderId
+              ? {
+                  ...o,
+                  trackingNumber: trackingInput.trim(),
+                  courierPartner: "ST Courier",
+                  status: "shipped",
+                  updatedAt: new Date().toISOString(),
+                }
+              : o
+          )
+        );
+        if (selectedOrder?.id === orderId) {
+          setSelectedOrder((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  trackingNumber: trackingInput.trim(),
+                  courierPartner: "ST Courier",
+                  status: "shipped",
+                }
+              : null
+          );
+        }
+        showToast(isTa ? `அஞ்சல் கண்காணிப்பு எண் சேர்க்கப்பட்டது: ${trackingInput}` : `Tracking ID saved: ${trackingInput}`);
+        setTrackingInput("");
+      } else {
+        showToast("Error saving tracking ID to database");
+      }
+    } catch {
+      showToast("Network error saving tracking");
+    } finally {
+      setUpdating(false);
     }
-    showToast(isTa ? `அஞ்சல் கண்காணிப்பு எண் சேர்க்கப்பட்டது: ${trackingInput}` : `Tracking ID saved: ${trackingInput}`);
-    setTrackingInput("");
   };
 
   // Filter orders

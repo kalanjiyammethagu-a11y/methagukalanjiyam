@@ -15,3 +15,4 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_razorpay_order_id
 CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_razorpay_payment_id
   ON public.orders (razorpay_payment_id)
   WHERE razorpay_payment_id IS NOT NULL;
+

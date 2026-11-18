@@ -142,3 +142,38 @@ Once saved, the book will automatically:
 - **All Routes Status:** `HTTP 200 OK` across `/`, `/books`, `/books/[slug]`, `/blog`, `/blog/[slug]`, `/videos`, `/supporters`, `/certificate`, `/terms`, `/privacy`.
 - **TypeScript & Build:** Passed with 0 errors via `npm run build`.
 - **Responsive Viewports:** Verified at 360px (mobile), 768px (tablet), 1280px (desktop).
+
+---
+
+## 6. Authentication & Security Architecture
+
+### A. Dedicated Admin Gate (Two-Step Verification)
+- **Route:** `/admin/login` (isolated minimal layout with no public chrome).
+- **Two-Step Verification:**
+  1. Step 1: Administrator email & password authentication.
+  2. Step 2: 6-digit CSPRNG OTP sent to the administrator's email via Resend (10-minute expiry, max 5 attempts, single-use, 60s resend cooldown).
+- **Session Control:** Shorter admin session lifetime (2-hour idle / 8-hour absolute timeout) with strict server-side session revocation in `admin_sessions`.
+- **Public UI Isolation:** Zero admin links in public navigation or footer. Admin routes are set to `noindex, nofollow` via meta robots and `robots.txt`.
+
+### B. Manual Admin Provisioning (SQL-Free CLI Script)
+Administrators can **only** be created or updated through the secure CLI script. Public registration endpoints cannot create or elevate users to admin status.
+
+```bash
+# Interactive mode (prompts for email and masked password):
+npm run admin:create
+
+# Non-interactive / CI provisioning via environment variables:
+ADMIN_EMAIL=security@domain.com ADMIN_PASSWORD="StrongPassword123!" npm run admin:create
+
+# Reset credentials / re-assert an existing administrator:
+npm run admin:create -- --overwrite
+
+# Production provisioning requires explicit flag:
+npm run admin:create -- --force-production
+```
+
+### C. User Registration with Email Verification (Resend)
+- **Routes:** `/signup` (multi-step progress wizard with live password strength meters) and `/verify-email`.
+- **Unverified State:** New signups are created as `unverified` (`email_confirm: false`). Unverified users cannot log in or access protected features.
+- **Account Enumeration Defense:** Submitting an existing email returns an identical success response while dispatching an internal "Account already exists" notification to the registered inbox.
+- **Single-Use Confirmation Token:** 24-hour cryptographic token stored hashed with SHA-256 in `user_verification_tokens`.

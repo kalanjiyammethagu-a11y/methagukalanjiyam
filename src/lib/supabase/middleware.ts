@@ -7,9 +7,17 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes("placeholder")) {
+    // If Supabase credentials are missing or placeholder, proceed without session lookup
+    return supabaseResponse;
+  }
+
   const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -22,6 +30,12 @@ export async function updateSession(request: NextRequest) {
             options?: Parameters<typeof supabaseResponse.cookies.set>[2];
           }>
         ) {
+          const isProduction = process.env.NODE_ENV === "production";
+          const isHttps =
+            request.headers.get("x-forwarded-proto") === "https" ||
+            request.nextUrl.protocol === "https:";
+          const isSecure = isProduction || isHttps;
+
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
@@ -29,41 +43,57 @@ export async function updateSession(request: NextRequest) {
             request,
           });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, {
+              ...options,
+              path: options?.path || "/",
+              sameSite: (options?.sameSite as any) || "lax",
+              httpOnly: options?.httpOnly ?? true,
+              secure: isSecure,
+            })
           );
         },
       },
     }
   );
 
-  // If Supabase is placeholder (prepared backend / demo showcase mode),
-  // allow showcasing /admin and /account directly with rich mock data as requested.
-  const isDemoMode =
-    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder");
-
-  if (isDemoMode) {
-    return supabaseResponse;
-  }
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Route protection for /admin in production mode
-  if (request.nextUrl.pathname.startsWith("/admin") && !request.nextUrl.pathname.startsWith("/login")) {
-    if (!user) {
+  const pathname = request.nextUrl.pathname;
+
+  // 1. Strict Two-Step Verification RBAC for /admin routes
+  if (pathname.startsWith("/admin")) {
+    // Whitelist dedicated admin login gate
+    if (pathname === "/admin/login") {
+      return supabaseResponse;
+    }
+
+    // Require verified two-step admin session cookie
+    const adminSessionToken = request.cookies.get("mk_admin_session")?.value;
+    if (!adminSessionToken) {
       const url = request.nextUrl.clone();
-      url.pathname = "/login";
+      url.pathname = "/admin/login";
       return NextResponse.redirect(url);
+    }
+
+    // Basic structure check: payload.signature
+    const parts = adminSessionToken.split(".");
+    if (parts.length !== 2 || !parts[0] || !parts[1]) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/admin/login";
+      const redirectRes = NextResponse.redirect(url);
+      redirectRes.cookies.set("mk_admin_session", "", { path: "/admin", maxAge: 0 });
+      return redirectRes;
     }
   }
 
-  // Route protection for /account in production mode
-  if (request.nextUrl.pathname.startsWith("/account")) {
+  // 2. Route protection for /account
+  if (pathname.startsWith("/account")) {
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
+      url.searchParams.set("redirectTo", pathname);
       return NextResponse.redirect(url);
     }
   }

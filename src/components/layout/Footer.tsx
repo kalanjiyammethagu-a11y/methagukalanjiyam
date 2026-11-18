@@ -75,27 +75,27 @@ export function Footer() {
             <div className="flex items-center gap-3">
               <div className="relative h-10 w-10 rounded-full overflow-hidden border border-black/12 shadow-xs bg-white shrink-0">
                 <Image
-                  src="/icons/icons/favicon.png"
+                  src="/icons/favicon.png"
                   alt="மேதகு களஞ்சியம்"
                   width={40}
                   height={40}
                   className="w-full h-full object-cover"
                 />
               </div>
-              <span className="font-bold text-base font-tamil text-[#111111]">
+              <span className="font-bold text-base font-tamil text-[#191614]">
                 மேதகு களஞ்சியம்
               </span>
             </div>
-            <p className="text-xs text-[#444444] leading-relaxed font-tamil font-medium">
+            <p className="text-xs text-[#4A443E] leading-relaxed font-tamil font-medium">
               தமிழீழ விடுதலைப் போராட்ட வரலாறுகள், தேசிய ஆவணங்கள் மற்றும் அரிய தமிழ் இலக்கியப் பெட்டகம்.
             </p>
             <div>
               <a
                 href="tel:+918248654946"
-                className="inline-flex items-center gap-2.5 text-xs font-bold text-[#222222] hover:text-[#0A6847] transition-colors min-h-[44px]"
+                className="inline-flex items-center gap-2.5 text-xs font-bold text-[#191614] hover:text-[#0D5C3A] transition-colors min-h-[44px]"
                 aria-label="Call +91 82486 54946"
               >
-                <Phone className="h-4 w-4 text-[#0A6847]" aria-hidden="true" />
+                <Phone className="h-4 w-4 text-[#0D5C3A]" aria-hidden="true" />
                 <span>+91 82486 54946</span>
               </a>
             </div>
@@ -103,27 +103,27 @@ export function Footer() {
 
           {/* Quick Links */}
           <div className="space-y-3 font-tamil">
-            <h5 className="text-xs font-bold uppercase tracking-wider text-[#111111]">
+            <h5 className="text-xs font-bold uppercase tracking-wider text-[#191614]">
               பிரிவுகள்
             </h5>
-            <ul className="space-y-1 text-xs text-[#333333] font-medium">
+            <ul className="space-y-1 text-xs text-[#2B2723] font-medium">
               <li>
-                <Link href="/books?category=history" className="hover:text-[#0A6847] transition-colors py-1 block">
+                <Link href="/books?category=history" className="hover:text-[#0D5C3A] transition-colors py-1.5 block">
                   வரலாறு & ஆவணங்கள்
                 </Link>
               </li>
               <li>
-                <Link href="/books?category=literature" className="hover:text-[#0A6847] transition-colors py-1 block">
+                <Link href="/books?category=literature" className="hover:text-[#0D5C3A] transition-colors py-1.5 block">
                   தமிழ் நாவல்கள் & கவிதைகள்
                 </Link>
               </li>
               <li>
-                <Link href="/books?category=biography" className="hover:text-[#0A6847] transition-colors py-1 block">
+                <Link href="/books?category=biography" className="hover:text-[#0D5C3A] transition-colors py-1.5 block">
                   தலைவர்கள் & வாழ்க்கை வரலாறு
                 </Link>
               </li>
               <li>
-                <Link href="/blog" className="hover:text-[#0A6847] transition-colors py-1 block">
+                <Link href="/blog" className="hover:text-[#0D5C3A] transition-colors py-1.5 block">
                   களஞ்சியப் பதிவுகள்
                 </Link>
               </li>
@@ -132,28 +132,23 @@ export function Footer() {
 
           {/* Organization */}
           <div className="space-y-3 font-tamil">
-            <h5 className="text-xs font-bold uppercase tracking-wider text-[#111111]">
+            <h5 className="text-xs font-bold uppercase tracking-wider text-[#191614]">
               நிறுவனம்
             </h5>
-            <ul className="space-y-1 text-xs text-[#333333] font-medium">
+            <ul className="space-y-1 text-xs text-[#2B2723] font-medium">
               <li>
-                <Link href="/supporters" className="hover:text-[#0A6847] transition-colors py-1 block">
+                <Link href="/supporters" className="hover:text-[#0D5C3A] transition-colors py-1.5 block">
                   ஆதரவாளர்கள்
                 </Link>
               </li>
               <li>
-                <Link href="/certificate" className="hover:text-[#0A6847] transition-colors py-1 block">
+                <Link href="/certificate" className="hover:text-[#0D5C3A] transition-colors py-1.5 block">
                   பதிவுச் சான்றிதழ்
                 </Link>
               </li>
               <li>
-                <Link href="/videos" className="hover:text-[#0A6847] transition-colors py-1 block">
+                <Link href="/videos" className="hover:text-[#0D5C3A] transition-colors py-1.5 block">
                   வீடியோ ஆவணங்கள்
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin" className="hover:text-[#0A6847] transition-colors py-1 block">
-                  நிர்வாகி உள்நுழைவு (Admin)
                 </Link>
               </li>
             </ul>
@@ -161,17 +156,17 @@ export function Footer() {
 
           {/* Legal & Policies */}
           <div className="space-y-3 font-tamil">
-            <h5 className="text-xs font-bold uppercase tracking-wider text-[#111111]">
+            <h5 className="text-xs font-bold uppercase tracking-wider text-[#191614]">
               கொள்கைகள்
             </h5>
-            <ul className="space-y-1 text-xs text-[#333333] font-medium">
+            <ul className="space-y-1 text-xs text-[#2B2723] font-medium">
               <li>
-                <Link href="/privacy" className="hover:text-[#0A6847] transition-colors py-1 block">
+                <Link href="/privacy" className="hover:text-[#0D5C3A] transition-colors py-1.5 block">
                   தனியுரிமைக் கொள்கை (Privacy)
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="hover:text-[#0A6847] transition-colors py-1 block">
+                <Link href="/terms" className="hover:text-[#0D5C3A] transition-colors py-1.5 block">
                   விதிமுறைகள் & நிபந்தனைகள் (Terms)
                 </Link>
               </li>
@@ -181,11 +176,11 @@ export function Footer() {
         </div>
 
         {/* Copyright */}
-        <div className="mt-12 pt-6 border-t border-black/8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-medium text-[#444444]">
+        <div className="mt-12 pt-6 border-t border-black/8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-medium text-[#4A443E]">
           <p>© {new Date().getFullYear()} methagukalanjiyam.in. அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.</p>
           <p className="flex items-center gap-1.5 font-tamil">
             <span>தமிழுக்கும் தமிழினத்திற்கும் சமர்ப்பணம்</span>
-            <ArchivalWaxSealIcon className="h-3.5 w-3.5 text-[#0A6847]" aria-hidden="true" />
+            <ArchivalWaxSealIcon className="h-3.5 w-3.5 text-[#0D5C3A]" aria-hidden="true" />
           </p>
         </div>
       </div>

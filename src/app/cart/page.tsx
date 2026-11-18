@@ -3,6 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ShoppingBag,
   Trash2,
@@ -81,6 +82,7 @@ function ProgressSteps({ current, locale }: { current: number; locale: "ta" | "e
 }
 
 export default function CartPage() {
+  const router = useRouter();
   const {
     locale,
     shippingRegion,
@@ -218,6 +220,20 @@ export default function CartPage() {
     setOrderError(null);
 
     try {
+      // Resolve user authentication state
+      let isGuest = true;
+      try {
+        const sessionRes = await fetch("/api/auth/session");
+        if (sessionRes.ok) {
+          const sessionData = await sessionRes.json();
+          if (sessionData?.authenticated && sessionData?.user?.id) {
+            isGuest = false;
+          }
+        }
+      } catch {
+        isGuest = true;
+      }
+
       const res = await fetch("/api/orders/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -238,7 +254,7 @@ export default function CartPage() {
             state: addressForm.districtState || "Tamil Nadu",
             pincode: addressForm.pincode,
           },
-          is_guest_checkout: true,
+          is_guest_checkout: isGuest,
           guest_phone: addressForm.phone,
         }),
       });
@@ -755,8 +771,13 @@ export default function CartPage() {
                         }
                         buttonClassName="w-full min-h-[48px] bg-[#0A6847] hover:bg-[#085036] text-white font-bold rounded-2xl"
                         onSuccess={() => {
+                          const orderNum = createdOrder?.orderNumber;
                           clearCart();
-                          setPaymentSuccess(true);
+                          if (orderNum) {
+                            router.push(`/orders/${orderNum}`);
+                          } else {
+                            setPaymentSuccess(true);
+                          }
                         }}
                         onFailure={(err) => {
                           setOrderError(err.error?.description || "Payment failed");
@@ -789,7 +810,7 @@ export default function CartPage() {
 
                     {/* WhatsApp Checkout Option */}
                     <a
-                      href={`https://wa.me/916384654946?text=${encodeURIComponent(
+                      href={`https://wa.me/918248654946?text=${encodeURIComponent(
                         `வணக்கம் மேதகு களஞ்சியம்,\nநான் பின்வரும் நூல்களை வாங்க விரும்புகிறேன்:\n${items
                           .map(
                             (item) =>

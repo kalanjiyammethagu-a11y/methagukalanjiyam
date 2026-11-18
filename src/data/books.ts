@@ -25,7 +25,7 @@ export interface BookItem {
 
 export const allBooks: BookItem[] = [
   {
-    id: "1",
+    id: "b0000000-0000-0000-0000-000000000001",
     title: "கட்டுநாயக்கா தாக்குதல் வெற்றி",
     titleEn: "Katunayake Air Base Victory",
     author: "சாந்தி நேசக்கரம்",
@@ -48,7 +48,7 @@ export const allBooks: BookItem[] = [
     descriptionEn: "Katunayake is a village and international airbase, but to Eelam Tamils, it represents an indelible battlefield achievement where 14 Black Tigers altered history on July 24, 2001.",
   },
   {
-    id: "2",
+    id: "b0000000-0000-0000-0000-000000000002",
     title: "நெஞ்சுரம்",
     titleEn: "Nenjuram — Fortitude of Spirit",
     author: "துளசிச்செல்வன் (தேவராஜா ராஜ்மதன்)",
@@ -71,7 +71,7 @@ export const allBooks: BookItem[] = [
     descriptionEn: "The true might of the struggle is born from the unwavering fortitude of its fighters. The authentic historical chronicles of fighters resisting against overwhelming odds.",
   },
   {
-    id: "3",
+    id: "b0000000-0000-0000-0000-000000000003",
     title: "திசை தவறாக்கணை தளபதிவிநாயகம்",
     titleEn: "The Unswerving Arrow — Commander Vinayagam",
     author: "சாந்தி நேசக்கரம்",
@@ -94,7 +94,7 @@ export const allBooks: BookItem[] = [
     descriptionEn: "The definitive monograph on Senior Intelligence Commander Vinayagam, architect of key strategic operations and lifelong freedom fighter.",
   },
   {
-    id: "4",
+    id: "b0000000-0000-0000-0000-000000000004",
     title: "நிறையாப் பெருவெளி",
     titleEn: "Niraiyaa Peruveli — The Boundless Expanse",
     author: "சாந்தி நேசக்கரம்",
@@ -116,7 +116,7 @@ export const allBooks: BookItem[] = [
     descriptionEn: "A compelling documentary narrative capturing public resilience and the frontline experiences of the Tamil national movement.",
   },
   {
-    id: "5",
+    id: "b0000000-0000-0000-0000-000000000005",
     title: "உயிரணை",
     titleEn: "Uyiranai — The Shield of Life",
     author: "சாந்தி நேசக்கரம்",
@@ -138,7 +138,7 @@ export const allBooks: BookItem[] = [
     descriptionEn: "Gripping battlefield accounts of fighters who served as the ultimate shield for their civilians and fellow cadres.",
   },
   {
-    id: "6",
+    id: "b0000000-0000-0000-0000-000000000006",
     title: "அமுதுண்ட வாய்கள் மூடிய உதடுகள்",
     titleEn: "Amudhundha Vaaygal — Echoes of Truth",
     author: "துளசிச்செல்வன்",
@@ -160,7 +160,7 @@ export const allBooks: BookItem[] = [
     descriptionEn: "An evocative collection of untold sacrifices and heartfelt reflections from the frontline archives.",
   },
   {
-    id: "7",
+    id: "b0000000-0000-0000-0000-000000000007",
     title: "அறிவரண் தளபதி பொட்டு அம்மான்",
     titleEn: "Intelligence Commander Pottu Amman",
     author: "சாந்தி நேசக்கரம்",
@@ -182,7 +182,7 @@ export const allBooks: BookItem[] = [
     descriptionEn: "An authentic biographical overview of Intelligence Chief Pottu Amman, his analytical mindset and contributions to national defense.",
   },
   {
-    id: "8",
+    id: "b0000000-0000-0000-0000-000000000008",
     title: "பேராற்றலோன் குமரன்",
     titleEn: "Peraattralon Kumaran — The Mighty Force",
     author: "துளசிச்செல்வன்",
@@ -204,7 +204,7 @@ export const allBooks: BookItem[] = [
     descriptionEn: "A dedicated monograph honoring the battlefield prowess and legacy of Commander Kumaran.",
   },
   {
-    id: "9",
+    id: "b0000000-0000-0000-0000-000000000009",
     title: "புறநானூற்று வீரன்",
     titleEn: "Purananooru Veeran — The Warrior of Purananuru",
     author: "திருமுருகன்காளிலிங்கம்",
@@ -227,7 +227,7 @@ export const allBooks: BookItem[] = [
     descriptionEn: "A masterwork documenting the historic Elephant Pass campaign, drawing parallels between ancient Sangam heroism and modern liberation warfare.",
   },
   {
-    id: "10",
+    id: "b0000000-0000-0000-0000-000000000010",
     title: "கண்டேன் கண்டேன் தலைவரை கண்டேன்",
     titleEn: "I Saw, I Saw — I Saw the Leader",
     author: "பேரா.அறிவரசன்",
@@ -249,7 +249,7 @@ export const allBooks: BookItem[] = [
     descriptionEn: "A firsthand travelogue by Prof. Arivarasan capturing his personal interactions with National Leader V. Prabhakaran in Vanni.",
   },
   {
-    id: "11",
+    id: "b0000000-0000-0000-0000-000000000011",
     title: "மேதகு செயல்மொழி",
     titleEn: "Methagu Seyalmozhi — Words of Action",
     author: "இரா.பொ.இரவிசந்திரன்",
@@ -271,7 +271,7 @@ export const allBooks: BookItem[] = [
     descriptionEn: "An analytical study of Leader Prabhakaran's leadership philosophy, discipline, and execution principles.",
   },
   {
-    id: "12",
+    id: "b0000000-0000-0000-0000-000000000012",
     title: "தீலீபனுடன் 12 நாட்கள்",
     titleEn: "12 Days with Thileepan",
     author: "கவிஞர் மு.வே.யோ.வாஞ்சிநாதன்",
@@ -294,7 +294,7 @@ export const allBooks: BookItem[] = [
     descriptionEn: "The moving firsthand account of Lt. Col. Thileepan's historic non-violent fast unto death at Nallur, Jaffna in September 1987.",
   },
   {
-    id: "13",
+    id: "b0000000-0000-0000-0000-000000000013",
     title: "வரலாற்று தலைவனின் வழிகாட்டல்",
     titleEn: "Guidance of the Historical Leader",
     author: "சு.ரவி",
@@ -316,7 +316,7 @@ export const allBooks: BookItem[] = [
     descriptionEn: "A comprehensive anthology of policy speeches, Heroes' Day declarations, and political guidance delivered by the leadership.",
   },
   {
-    id: "14",
+    id: "b0000000-0000-0000-0000-000000000014",
     title: "தமிழீழ விடுதலைப் போரும், விடுதலைப் புலிகளும்",
     titleEn: "Tamil Eelam Liberation War & LTTE",
     author: "மாணவர் ஒருங்கிணைப்புக்குழு",
@@ -338,7 +338,7 @@ export const allBooks: BookItem[] = [
     descriptionEn: "A foundational study detailing the origins of armed resistance in Tamil Eelam and the evolution of the liberation movement.",
   },
   {
-    id: "15",
+    id: "b0000000-0000-0000-0000-000000000015",
     title: "தோழர் தமிழரசன் மூன்று அறிக்கைகள்",
     titleEn: "Comrade Tamilarasan — Three Reports",
     author: "நந்தகுமார்",
@@ -360,7 +360,7 @@ export const allBooks: BookItem[] = [
     descriptionEn: "The historical collection of three landmark political manifestos authored by Comrade Tamilarasan on Tamil nationalism.",
   },
   {
-    id: "16",
+    id: "b0000000-0000-0000-0000-000000000016",
     title: "மக்கள் துணையோடு மரணத்தை வென்றேன்",
     titleEn: "I Conquered Death with People's Support",
     author: "புலவர் கலியபெருமாள்",
@@ -382,7 +382,7 @@ export const allBooks: BookItem[] = [
     descriptionEn: "The gripping autobiography of revolutionary Pulavar Kaliyaperumal and his legal struggle against capital punishment.",
   },
   {
-    id: "17",
+    id: "b0000000-0000-0000-0000-000000000017",
     title: "மாமனிதர் திருவேங்கடம் வேலுப்பிள்ளை",
     titleEn: "The Great Man Thiruvenkadam Velupillai",
     author: "பேரா.அறிவரசன்",
@@ -404,7 +404,7 @@ export const allBooks: BookItem[] = [
     descriptionEn: "A respectful tribute to Thiruvenkadam Velupillai, honoring his life principles and guidance to young Prabhakaran.",
   },
   {
-    id: "18",
+    id: "b0000000-0000-0000-0000-000000000018",
     title: "தமிழர் படையின் சாதனை சமர்",
     titleEn: "Historic Battles of the Tamil Force",
     author: "சு.ரவி",
@@ -426,7 +426,7 @@ export const allBooks: BookItem[] = [
     descriptionEn: "A detailed account of military campaigns executed by the armed wings of the Tamil national liberation army.",
   },
   {
-    id: "19",
+    id: "b0000000-0000-0000-0000-000000000019",
     title: "திலீபம்",
     titleEn: "Thileepam — The Flame of Sacrifice",
     author: "மாணவர் ஒருங்கிணைப்புக்குழு",
@@ -448,7 +448,7 @@ export const allBooks: BookItem[] = [
     descriptionEn: "A solemn tribute detailing the five demands presented during Thileepan's hunger strike and its lasting legacy in Tamil history.",
   },
   {
-    id: "20",
+    id: "b0000000-0000-0000-0000-000000000020",
     title: "மேதகு களஞ்சிய ஆவணக் குறிப்புகள்",
     titleEn: "Methagu Kalanjiyam Archival Notes",
     author: "மேதகு களஞ்சியம் ஆசிரியர் குழு",

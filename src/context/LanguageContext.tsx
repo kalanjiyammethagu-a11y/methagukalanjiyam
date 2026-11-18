@@ -33,10 +33,11 @@ interface LanguageContextType {
   shippingRegion: ShippingRegion;
   setShippingRegion: (region: ShippingRegion) => void;
   
-  // Delivery Address
+  // Delivery Address & Privacy
   deliveryAddress: UserDeliveryAddress;
   setDeliveryAddress: (address: UserDeliveryAddress) => void;
   getFormattedAddress: () => string;
+  clearSensitiveStorage: () => void;
 
   // Saved Bookmarks / Wishlist
   wishlist: string[];
@@ -77,6 +78,7 @@ const LanguageContext = React.createContext<LanguageContextType>({
   deliveryAddress: defaultAddress,
   setDeliveryAddress: () => {},
   getFormattedAddress: () => "",
+  clearSensitiveStorage: () => {},
   wishlist: [],
   toggleWishlist: () => {},
   isInWishlist: () => false,
@@ -198,6 +200,15 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     return `${deliveryAddress.fullName}, ${deliveryAddress.doorStreet}, ${deliveryAddress.cityArea}, ${deliveryAddress.districtState} - ${deliveryAddress.pincode} (தொலைபேசி: ${deliveryAddress.phone})`;
   }, [deliveryAddress]);
 
+  const clearSensitiveStorage = React.useCallback(() => {
+    try {
+      localStorage.removeItem("mk_delivery_address");
+      setDeliveryAddressState(defaultAddress);
+    } catch (e) {
+      console.error("Failed to clear sensitive storage:", e);
+    }
+  }, []);
+
   const hideToast = React.useCallback(() => {
     if (toastTimerRef.current) {
       clearTimeout(toastTimerRef.current);
@@ -294,6 +305,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         deliveryAddress,
         setDeliveryAddress,
         getFormattedAddress,
+        clearSensitiveStorage,
         wishlist,
         toggleWishlist,
         isInWishlist,

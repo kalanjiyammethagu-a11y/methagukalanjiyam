@@ -155,15 +155,6 @@ export function MobileNav({
       icon: BookmarkRibbonIcon,
       badge: wishlist.length > 0 ? wishlist.length.toString() : null,
     },
-    {
-      href: "/admin",
-      labelTa: "நிர்வாகத் தளம் (மாதிரி)",
-      labelEn: "Admin Portal (Demo)",
-      subTa: "நேரடி காட்சிப்படுத்தல் மையம்",
-      subEn: "Showcase Management HQ",
-      icon: ShieldCheck,
-      isSpecial: true,
-    },
   ];
 
   return (
@@ -271,9 +262,7 @@ export function MobileNav({
                   href={item.href}
                   onClick={onClose}
                   className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all min-h-[44px] ${
-                    item.isSpecial
-                      ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-900 border border-amber-500/25 mt-1"
-                      : isActive
+                    isActive
                       ? "bg-[var(--color-accent-light)] text-[var(--color-accent)] font-bold shadow-2xs"
                       : "text-[var(--color-ink-primary)] hover:bg-[var(--color-surface-subtle)] active:scale-98"
                   }`}
@@ -281,9 +270,7 @@ export function MobileNav({
                   <div className="flex items-center gap-3 min-w-0">
                     <div
                       className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
-                        item.isSpecial
-                          ? "bg-amber-500/20 text-amber-800"
-                          : isActive
+                        isActive
                           ? "bg-[var(--color-accent)] text-white"
                           : "bg-[var(--color-surface-subtle)] text-[var(--color-accent)]"
                       }`}

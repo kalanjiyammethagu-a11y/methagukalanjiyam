@@ -8,6 +8,12 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 
+-- Immutable helper for generated columns
+CREATE OR REPLACE FUNCTION immutable_array_to_string(arr text[], sep text)
+RETURNS text LANGUAGE sql IMMUTABLE PARALLEL SAFE AS $$
+  SELECT array_to_string(arr, sep);
+$$;
+
 -- Custom Types & Enums
 DO $$ BEGIN
   CREATE TYPE order_status AS ENUM (
@@ -90,7 +96,7 @@ CREATE TABLE IF NOT EXISTS books (
   search_vector TSVECTOR GENERATED ALWAYS AS (
     setweight(to_tsvector('simple', coalesce(title, '')), 'A') ||
     setweight(to_tsvector('simple', coalesce(author, '')), 'B') ||
-    setweight(to_tsvector('simple', coalesce(array_to_string(transliteration_keywords, ' '), '')), 'A') ||
+    setweight(to_tsvector('simple', coalesce(immutable_array_to_string(transliteration_keywords, ' '), '')), 'A') ||
     setweight(to_tsvector('simple', coalesce(description, '')), 'C')
   ) STORED,
   
@@ -226,8 +232,8 @@ CREATE TABLE IF NOT EXISTS blogs (
   search_vector     TSVECTOR GENERATED ALWAYS AS (
     setweight(to_tsvector('simple', coalesce(title, '')), 'A') ||
     setweight(to_tsvector('simple', coalesce(excerpt, '')), 'B') ||
-    setweight(to_tsvector('simple', coalesce(array_to_string(keywords, ' '), '')), 'A') ||
-    setweight(to_tsvector('simple', coalesce(array_to_string(transliteration_keywords, ' '), '')), 'B')
+    setweight(to_tsvector('simple', coalesce(immutable_array_to_string(keywords, ' '), '')), 'A') ||
+    setweight(to_tsvector('simple', coalesce(immutable_array_to_string(transliteration_keywords, ' '), '')), 'B')
   ) STORED,
   
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),

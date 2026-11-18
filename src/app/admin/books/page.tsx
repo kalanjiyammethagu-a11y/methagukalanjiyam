@@ -23,11 +23,39 @@ import type { AdminBook, BookStatus } from "@/types/admin";
 import { formatINR } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
 
+function mapSupabaseBook(b: any): AdminBook {
+  const cat = b.categories || {};
+  return {
+    id: b.id,
+    title: b.title,
+    titleEn: b.slug ? b.slug.replace(/-/g, " ") : b.title,
+    author: b.author,
+    authorEn: b.author,
+    price: Number(b.price || 0),
+    discountPrice: b.discount_price ? Number(b.discount_price) : null,
+    categoryTa: cat.name_ta || "வரலாறு",
+    categoryEn: cat.name_en || "History",
+    categorySlug: cat.slug || "history",
+    image: b.cover_front || "/images/books/book-placeholder.webp",
+    stock: Number(b.stock || 0),
+    slug: b.slug,
+    pages: b.pages,
+    publisher: b.publisher,
+    descriptionTa: b.description || "",
+    descriptionEn: b.description || "",
+    status: (b.stock <= 0 ? "out_of_stock" : b.stock <= 5 ? "low_stock" : "in_stock") as BookStatus,
+    salesCount: b.view_count || 0,
+    createdAt: b.created_at || new Date().toISOString(),
+    updatedAt: b.updated_at || new Date().toISOString(),
+  };
+}
+
 export default function AdminBooksPage() {
   const { locale } = useLanguage();
   const isTa = locale === "ta";
 
-  const [books, setBooks] = React.useState<AdminBook[]>(mockAdminBooks);
+  const [books, setBooks] = React.useState<AdminBook[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState<string>("all");
   const [selectedStatus, setSelectedStatus] = React.useState<string>("all");
@@ -36,6 +64,7 @@ export default function AdminBooksPage() {
   // Add / Edit Modal state
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [editingBook, setEditingBook] = React.useState<AdminBook | null>(null);
+  const [saving, setSaving] = React.useState(false);
 
   // Form fields
   const [formData, setFormData] = React.useState({
@@ -50,6 +79,29 @@ export default function AdminBooksPage() {
     categorySlug: "history",
     image: "/images/books/book-20.webp",
   });
+
+  const fetchBooks = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/books");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.books && Array.isArray(data.books)) {
+          setBooks(data.books.map(mapSupabaseBook));
+        }
+      } else {
+        setBooks(mockAdminBooks);
+      }
+    } catch {
+      setBooks(mockAdminBooks);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchBooks();
+  }, [fetchBooks]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -110,71 +162,125 @@ export default function AdminBooksPage() {
     }
   }, [isModalOpen]);
 
-  const handleSaveBook = (e: React.FormEvent) => {
+  const handleSaveBook = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title) return;
+    setSaving(true);
 
-    if (editingBook) {
-      // Update
-      setBooks((prev) =>
-        prev.map((b) =>
-          b.id === editingBook.id
-            ? {
-                ...b,
-                ...formData,
-                status: (formData.stock <= 0
-                  ? "out_of_stock"
-                  : formData.stock <= 5
-                  ? "low_stock"
-                  : "in_stock") as BookStatus,
-                updatedAt: new Date().toISOString(),
-              }
-            : b
-        )
-      );
-      showToast(isTa ? "நூல் விவரங்கள் புதுப்பிக்கப்பட்டன!" : "Book updated successfully!");
-    } else {
-      // Create new
-      const newBook: AdminBook = {
-        id: `book-${Date.now()}`,
-        ...formData,
-        slug: formData.titleEn.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-        status: (formData.stock <= 0
-          ? "out_of_stock"
-          : formData.stock <= 5
-          ? "low_stock"
-          : "in_stock") as BookStatus,
-        salesCount: 0,
-        descriptionTa: "புதிய அரிய நூல் ஆவணம்.",
-        descriptionEn: "New rare historical catalog entry.",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setBooks((prev) => [newBook, ...prev]);
-      showToast(isTa ? "புதிய நூல் சேர்க்கப்பட்டது!" : "New book added to catalog!");
+    try {
+      if (editingBook) {
+        // Update database
+        const res = await fetch("/api/admin/books", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: editingBook.id,
+            title: formData.title,
+            author: formData.author,
+            price: Number(formData.price),
+            stock: Number(formData.stock),
+            cover_front: formData.image,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setBooks((prev) =>
+            prev.map((b) =>
+              b.id === editingBook.id
+                ? {
+                    ...b,
+                    ...formData,
+                    status: (formData.stock <= 0
+                      ? "out_of_stock"
+                      : formData.stock <= 5
+                      ? "low_stock"
+                      : "in_stock") as BookStatus,
+                    updatedAt: new Date().toISOString(),
+                  }
+                : b
+            )
+          );
+          showToast(isTa ? "நூல் விவரங்கள் புதுப்பிக்கப்பட்டன!" : "Book updated successfully!");
+        } else {
+          showToast("Failed to update book in database");
+        }
+      } else {
+        // Create in database
+        const res = await fetch("/api/admin/books", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: formData.title,
+            author: formData.author,
+            price: Number(formData.price),
+            stock: Number(formData.stock),
+            cover_front: formData.image,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.book) {
+            setBooks((prev) => [mapSupabaseBook(data.book), ...prev]);
+          }
+          showToast(isTa ? "புதிய நூல் சேர்க்கப்பட்டது!" : "New book added to catalog!");
+        } else {
+          showToast("Failed to create book in database");
+        }
+      }
+    } catch {
+      showToast("Network error saving book");
+    } finally {
+      setSaving(false);
+      setIsModalOpen(false);
     }
-    setIsModalOpen(false);
   };
 
-  const handleDeleteBook = (bookId: string, title: string) => {
-    if (confirm(isTa ? `"${title}" நூலை நீக்க விரும்புகிறீர்களா?` : `Delete "${title}"?`)) {
-      setBooks((prev) => prev.filter((b) => b.id !== bookId));
-      showToast(isTa ? "நூல் நீக்கப்பட்டது!" : "Book removed from catalog!");
+  const handleDeleteBook = async (bookId: string, title: string) => {
+    if (!confirm(isTa ? `"${title}" நூலை நீக்க விரும்புகிறீர்களா?` : `Delete "${title}"?`)) return;
+
+    try {
+      const res = await fetch(`/api/admin/books?id=${bookId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setBooks((prev) => prev.filter((b) => b.id !== bookId));
+        showToast(isTa ? "நூல் நீக்கப்பட்டது!" : "Book removed from catalog!");
+      } else {
+        showToast("Failed to delete book from database");
+      }
+    } catch {
+      showToast("Network error deleting book");
     }
   };
 
-  const handleAdjustStock = (bookId: string, delta: number) => {
-    setBooks((prev) =>
-      prev.map((b) => {
-        if (b.id !== bookId) return b;
-        const newStock = Math.max(0, b.stock + delta);
-        return {
-          ...b,
-          stock: newStock,
-          status: (newStock <= 0 ? "out_of_stock" : newStock <= 5 ? "low_stock" : "in_stock") as BookStatus,
-        };
-      })
-    );
+  const handleAdjustStock = async (bookId: string, delta: number) => {
+    const book = books.find((b) => b.id === bookId);
+    if (!book) return;
+    const newStock = Math.max(0, book.stock + delta);
+
+    try {
+      const res = await fetch("/api/admin/books", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: bookId, stock: newStock }),
+      });
+      if (res.ok) {
+        setBooks((prev) =>
+          prev.map((b) => {
+            if (b.id !== bookId) return b;
+            return {
+              ...b,
+              stock: newStock,
+              status: (newStock <= 0 ? "out_of_stock" : newStock <= 5 ? "low_stock" : "in_stock") as BookStatus,
+            };
+          })
+        );
+      }
+    } catch {
+      showToast("Failed to adjust stock");
+    }
   };
 
   // Filter books
