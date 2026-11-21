@@ -98,84 +98,59 @@ async function analyze() {
       const normXFromLeft = loc.x;
 
       // 1. Current Scrim Model:
-      // Vertical: from-black/92 via-black/45 (at y=0.5) to-transparent
-      let currVertAlpha = 0;
-      if (normYFromBottom <= 0.5) {
-        currVertAlpha = 0.92 - (normYFromBottom / 0.5) * (0.92 - 0.45);
-      } else {
-        currVertAlpha = 0.45 - ((normYFromBottom - 0.5) / 0.5) * 0.45;
+      // 1. BEFORE: Dark ink color cascade hijacking (#191614 for H1, #4A443E for Subtitle)
+      // combined with the crushed 3-layer heavy overlay
+      const hijackedHeadlineColor = [25, 22, 20]; // #191614
+      const hijackedSubtitleColor = [74, 68, 62]; // #4A443E
+      
+      // Heavy 3-layer scrim background:
+      const heavyVert = normYFromBottom <= 0.35 ? (0.96 - (normYFromBottom / 0.35) * 0.14) : (0.82 - ((normYFromBottom - 0.35) / 0.35) * 0.40);
+      const heavyHoriz = normXFromLeft <= 0.40 ? (0.92 - (normXFromLeft / 0.40) * 0.27) : (0.65 - ((normXFromLeft - 0.40) / 0.35) * 0.45);
+      const heavyCombinedAlpha = Math.min(0.99, 1 - (1 - Math.max(0, heavyVert)) * (1 - Math.max(0, heavyHoriz)) * 0.7);
+      const beforeBg = blend([rawR, rawG, rawB], [0, 0, 0], heavyCombinedAlpha);
+
+      const beforeHeadlineContrast = getContrastRatio(beforeBg, hijackedHeadlineColor);
+      const beforeSubContrast = getContrastRatio(beforeBg, hijackedSubtitleColor);
+      const beforeEyebrowContrast = getContrastRatio(beforeBg, [110, 231, 183]);
+
+      // 2. AFTER: Soft directional gradient scrim + Pure White text (#FFFFFF / #FFFFFF@95%)
+      // Vertical: from-black/72 via-black/32 at 42% to-transparent at 78%
+      let softVertAlpha = 0;
+      if (normYFromBottom <= 0.42) {
+        softVertAlpha = 0.72 - (normYFromBottom / 0.42) * (0.72 - 0.32);
+      } else if (normYFromBottom <= 0.78) {
+        softVertAlpha = 0.32 - ((normYFromBottom - 0.42) / 0.36) * 0.32;
       }
-      currVertAlpha = Math.max(0, Math.min(1, currVertAlpha));
+      softVertAlpha = Math.max(0, Math.min(1, softVertAlpha));
 
-      // Horizontal: from-black/75 via-black/25 to-transparent
-      let currHorizAlpha = 0;
-      if (normXFromLeft <= 0.5) {
-        currHorizAlpha = 0.75 - (normXFromLeft / 0.5) * (0.75 - 0.25);
-      } else {
-        currHorizAlpha = 0.25 - ((normXFromLeft - 0.5) / 0.5) * 0.25;
-      }
-      currHorizAlpha = Math.max(0, Math.min(1, currHorizAlpha));
-
-      // Combined current scrim
-      const currScrimAlpha = 1 - (1 - currVertAlpha) * (1 - currHorizAlpha);
-      const currBg = blend([rawR, rawG, rawB], [0, 0, 0], currScrimAlpha);
-
-      // Contrast BEFORE:
-      // Headline (White #FFFFFF)
-      const currHeadlineContrast = getContrastRatio(currBg, [255, 255, 255]);
-      // Subtitle (White/75 -> blend white with 0.75 alpha over currBg)
-      const currSubFg = blend(currBg, [255, 255, 255], 0.75);
-      const currSubContrast = getContrastRatio(currBg, currSubFg);
-      // Eyebrow (Emerald 300: #6ee7b7 = [110, 231, 183])
-      const currEyebrowContrast = getContrastRatio(currBg, [110, 231, 183]);
-
-      // 2. Enhanced Optical Scrim Model (Proposed Fix):
-      // Multi-stop progressive gradient:
-      // Vertical: from-black/96 via-black/82 at 35% via-black/45 at 70% to-transparent
-      let newVertAlpha = 0;
-      if (normYFromBottom <= 0.35) {
-        newVertAlpha = 0.96 - (normYFromBottom / 0.35) * (0.96 - 0.82);
-      } else if (normYFromBottom <= 0.70) {
-        newVertAlpha = 0.82 - ((normYFromBottom - 0.35) / 0.35) * (0.82 - 0.45);
-      } else {
-        newVertAlpha = 0.45 - ((normYFromBottom - 0.70) / 0.30) * 0.45;
-      }
-      newVertAlpha = Math.max(0, Math.min(1, newVertAlpha));
-
-      // Horizontal: from-black/92 via-black/65 at 40% via-black/25 at 75% to-transparent
-      let newHorizAlpha = 0;
-      if (normXFromLeft <= 0.40) {
-        newHorizAlpha = 0.92 - (normXFromLeft / 0.40) * (0.92 - 0.65);
+      // Horizontal: from-black/68 via-black/22 at 45% to-transparent at 75%
+      let softHorizAlpha = 0;
+      if (normXFromLeft <= 0.45) {
+        softHorizAlpha = 0.68 - (normXFromLeft / 0.45) * (0.68 - 0.22);
       } else if (normXFromLeft <= 0.75) {
-        newHorizAlpha = 0.65 - ((normXFromLeft - 0.40) / 0.35) * (0.65 - 0.25);
-      } else {
-        newHorizAlpha = 0.25 - ((normXFromLeft - 0.75) / 0.25) * 0.25;
+        softHorizAlpha = 0.22 - ((normXFromLeft - 0.45) / 0.30) * 0.22;
       }
-      newHorizAlpha = Math.max(0, Math.min(1, newHorizAlpha));
+      softHorizAlpha = Math.max(0, Math.min(1, softHorizAlpha));
 
-      // Localized subtle text-backing radial scrim (0.25 max at center-left):
-      const radialDist = Math.hypot(normXFromLeft - 0.15, normYFromBottom - 0.25);
-      const newRadialAlpha = Math.max(0, 0.35 * (1 - radialDist / 0.6));
-
-      // Combined new scrim
-      const newCombinedAlpha = 1 - (1 - newVertAlpha) * (1 - newHorizAlpha) * (1 - newRadialAlpha);
-      const newBg = blend([rawR, rawG, rawB], [0, 0, 0], newCombinedAlpha);
+      const afterScrimAlpha = 1 - (1 - softVertAlpha) * (1 - softHorizAlpha);
+      const afterBg = blend([rawR, rawG, rawB], [0, 0, 0], afterScrimAlpha);
 
       // Contrast AFTER:
-      // Headline (White #FFFFFF with drop shadow)
-      const newHeadlineContrast = getContrastRatio(newBg, [255, 255, 255]);
-      // Subtitle (Solid Zinc-100 / White 95% -> [244, 244, 245])
-      const newSubFg = blend(newBg, [255, 255, 255], 0.95);
-      const newSubContrast = getContrastRatio(newBg, newSubFg);
-      // Eyebrow (Emerald 300: #6ee7b7 = [110, 231, 183])
-      const newEyebrowContrast = getContrastRatio(newBg, [110, 231, 183]);
+      // Headline: Pure White #FFFFFF
+      const afterHeadlineContrast = getContrastRatio(afterBg, [255, 255, 255]);
+      // Subtitle: White 95%
+      const afterSubFg = blend(afterBg, [255, 255, 255], 0.95);
+      const afterSubContrast = getContrastRatio(afterBg, afterSubFg);
+      // Eyebrow: Emerald 300 #6ee7b7
+      const afterEyebrowContrast = getContrastRatio(afterBg, [110, 231, 183]);
 
       console.log(`  Location: ${loc.name.padEnd(16)} (Raw RGB: [${rawR},${rawG},${rawB}])`);
-      console.log(`    Headline (3.0:1 req) : BEFORE ${currHeadlineContrast.toFixed(2)}:1  --> AFTER ${newHeadlineContrast.toFixed(2)}:1  ${newHeadlineContrast >= 3.0 ? "PASS" : "FAIL"}`);
-      console.log(`    Subtitle (4.5:1 req) : BEFORE ${currSubContrast.toFixed(2)}:1  --> AFTER ${newSubContrast.toFixed(2)}:1  ${newSubContrast >= 4.5 ? "PASS" : "FAIL"}`);
-      console.log(`    Eyebrow  (4.5:1 req) : BEFORE ${currEyebrowContrast.toFixed(2)}:1  --> AFTER ${newEyebrowContrast.toFixed(2)}:1  ${newEyebrowContrast >= 4.5 ? "PASS" : "FAIL"}`);
+      console.log(`    Headline (3.0:1 req) : BEFORE ${beforeHeadlineContrast.toFixed(2)}:1  --> AFTER ${afterHeadlineContrast.toFixed(2)}:1  ${afterHeadlineContrast >= 3.0 ? "PASS" : "FAIL"}`);
+      console.log(`    Subtitle (4.5:1 req) : BEFORE ${beforeSubContrast.toFixed(2)}:1  --> AFTER ${afterSubContrast.toFixed(2)}:1  ${afterSubContrast >= 4.5 ? "PASS" : "FAIL"}`);
+      console.log(`    Eyebrow  (4.5:1 req) : BEFORE ${beforeEyebrowContrast.toFixed(2)}:1  --> AFTER ${afterEyebrowContrast.toFixed(2)}:1  ${afterEyebrowContrast >= 4.5 ? "PASS" : "FAIL"}`);
     }
   }
 }
 
 analyze().catch(console.error);
+

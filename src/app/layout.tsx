@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { FloatingWhatsApp } from "@/components/layout/FloatingWhatsApp";
+import { BottomNav } from "@/components/layout/BottomNav";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { CartProvider } from "@/context/CartContext";
 import { safeJsonLdStringify } from "@/lib/sanitize";
@@ -183,10 +184,13 @@ export default function RootLayout({
             </a>
 
             <Header />
-            <main id="main-content" className="flex-1 focus:outline-none" tabIndex={-1}>
+            <main id="main-content" className="flex-1 focus:outline-none pb-20 md:pb-0" tabIndex={-1}>
               {children}
             </main>
             <Footer />
+
+            {/* Mobile Ergonomic Bottom Navigation Bar (Thumb Zone) */}
+            <BottomNav />
 
             {/* Platform Settings Modal */}
             <SettingsModal />

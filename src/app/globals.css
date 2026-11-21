@@ -132,34 +132,36 @@ html.dark {
   color-scheme: dark;
 }
 
-body {
-  background-color: var(--color-canvas);
-  color: var(--color-ink-primary);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-tap-highlight-color: transparent;
-  caret-color: var(--color-accent);
-  overflow-x: hidden;
-  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease;
-}
+@layer base {
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+    caret-color: var(--color-accent);
+    overflow-x: hidden;
+    transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease;
+  }
 
-/* Touch target ergonomics */
-button, a, select, input, [role="button"], [role="tab"] {
-  touch-action: manipulation;
-}
+  /* Touch target ergonomics */
+  button, a, select, input, [role="button"], [role="tab"] {
+    touch-action: manipulation;
+  }
 
-/* Typographic balance */
-h1, h2, h3, h4, h5, h6 {
-  text-wrap: balance;
-  letter-spacing: -0.01em;
-  color: var(--color-ink-primary);
-}
+  /* Typographic balance */
+  h1, h2, h3, h4, h5, h6 {
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+    color: var(--color-ink-primary);
+  }
 
-p {
-  text-wrap: pretty;
-  overflow-wrap: break-word;
-  color: var(--color-ink-secondary);
+  p {
+    text-wrap: pretty;
+    overflow-wrap: break-word;
+    color: var(--color-ink-secondary);
+  }
 }
 
 ::selection {

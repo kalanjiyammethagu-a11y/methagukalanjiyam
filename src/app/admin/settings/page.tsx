@@ -1,34 +1,24 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
-  Settings,
   Save,
   CheckCircle2,
-  Database,
   Phone,
   Truck,
   ShieldCheck,
-  ExternalLink,
-  Copy,
-  Check,
-  RefreshCw,
   Server,
-  Lock,
+  ArrowUpRight,
 } from "lucide-react";
-import { useLanguage } from "@/context/LanguageContext";
 
 export default function AdminSettingsPage() {
-  const { locale } = useLanguage();
-  const isTa = locale === "ta";
-
   const [toastMessage, setToastMessage] = React.useState<string | null>(null);
-  const [copiedKey, setCopiedKey] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
 
   // Form states
-  const [storeName, setStoreName] = React.useState("மேதகு களஞ்சியம்");
+  const [storeName, setStoreName] = React.useState("Methagu Kalanjiyam");
   const [phone, setPhone] = React.useState("+91 82486 54946");
   const [altPhone, setAltPhone] = React.useState("+91 63846 54946");
   const [tnShippingFee, setTnShippingFee] = React.useState(60);
@@ -108,11 +98,7 @@ export default function AdminSettingsPage() {
       });
 
       if (res.ok) {
-        showToast(
-          isTa
-            ? "நிர்வாக அமைப்புகள் வெற்றிகரமாக தரவுத்தளத்தில் சேமிக்கப்பட்டன!"
-            : "Settings saved successfully to database!"
-        );
+        showToast("Settings saved successfully to database!");
       } else {
         showToast("Error updating settings in database");
       }
@@ -123,172 +109,164 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const handleCopyEnv = () => {
-    navigator.clipboard.writeText(`NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co\nNEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here`);
-    setCopiedKey(true);
-    setTimeout(() => setCopiedKey(false), 2000);
-  };
-
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Toast */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-emerald-900 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-emerald-700 animate-in fade-in slide-in-from-bottom-3 duration-300">
-          <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
-          <span className="text-xs font-bold font-tamil">{toastMessage}</span>
+        <div className="fixed bottom-6 right-6 z-50 bg-gray-900 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-gray-700 animate-in fade-in slide-in-from-bottom-3 duration-300">
+          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+          <span className="text-xs font-semibold">{toastMessage}</span>
         </div>
       )}
 
       {/* Header */}
       <div>
-        <h2 className="text-xl sm:text-2xl font-extrabold font-tamil text-zinc-900">
-          {isTa ? "களஞ்சிய நிர்வாக அமைப்புகள்" : "Store & Platform Settings"}
+        <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
+          Store & Platform Settings
         </h2>
-        <p className="text-xs text-zinc-500 font-tamil mt-1">
-          {isTa
-            ? "நிறுவன விவரங்கள், புலனம் (WhatsApp) தொடர்பு எண்கள், அஞ்சல் கட்டணங்கள் மற்றும் பின்னணி சேவையக அமைப்புகள்"
-            : "Store identity, WhatsApp routing numbers, shipping rate controls, and backend infrastructure status"}
+        <p className="text-xs text-gray-500 mt-1">
+          Store identity, WhatsApp routing numbers, shipping rate controls, and backend infrastructure status
         </p>
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
         {/* Section 1: Store Identity */}
-        <div className="bg-white rounded-2xl p-6 border border-black/8 shadow-2xs space-y-4">
-          <div className="flex items-center gap-2 border-b border-black/8 pb-3">
+        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
             <ShieldCheck className="h-5 w-5 text-[#0A6847]" />
-            <h3 className="font-bold text-base text-zinc-900 font-tamil">
-              {isTa ? "நிறுவன அடையாளம் & பதிவு விவரங்கள்" : "Store Profile & Identity"}
+            <h3 className="font-bold text-base text-gray-900">
+              Store Profile & Identity
             </h3>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-zinc-700 font-tamil">
-                {isTa ? "களஞ்சியத்தின் பெயர்" : "Store Name"}
+              <label className="text-xs font-bold text-gray-700">
+                Store Name
               </label>
               <input
                 type="text"
                 value={storeName}
                 onChange={(e) => setStoreName(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl border border-black/12 text-xs font-tamil min-h-[40px]"
+                className="w-full px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[40px]"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-zinc-700 font-tamil">
-                {isTa ? "மத்திய அரசு தொழில் பதிவு எண் (Udyam)" : "Udyam MSME Registration"}
+              <label className="text-xs font-bold text-gray-700">
+                Udyam MSME Registration
               </label>
               <input
                 type="text"
                 value={udyamId}
                 onChange={(e) => setUdyamId(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl border border-black/12 text-xs font-mono min-h-[40px]"
+                className="w-full px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs font-mono text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[40px]"
               />
             </div>
           </div>
         </div>
 
         {/* Section 2: WhatsApp Hotline & Ordering */}
-        <div className="bg-white rounded-2xl p-6 border border-black/8 shadow-2xs space-y-4">
-          <div className="flex items-center gap-2 border-b border-black/8 pb-3">
+        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
             <Phone className="h-5 w-5 text-[#0A6847]" />
-            <h3 className="font-bold text-base text-zinc-900 font-tamil">
-              {isTa ? "புலனம் (WhatsApp) உதவி & ஆர்டர் வழியமைப்பு" : "WhatsApp Dispatch & Helpline"}
+            <h3 className="font-bold text-base text-gray-900">
+              WhatsApp Dispatch & Helpline
             </h3>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-zinc-700 font-tamil">
-                {isTa ? "முதன்மை WhatsApp ஆர்டர் எண்" : "Primary Ordering Phone"}
+              <label className="text-xs font-bold text-gray-700">
+                Primary Ordering Phone (WhatsApp)
               </label>
               <input
                 type="text"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl border border-black/12 text-xs font-mono min-h-[40px]"
+                className="w-full px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs font-mono text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[40px]"
               />
-              <span className="text-[10px] text-zinc-400 font-tamil">
-                {isTa ? "தளத்தின் அனைத்து வாங்கு பொத்தான்களிலும் இந்த எண் பயன்படுத்தப்படும்" : "Linked to all public order buttons"}
+              <span className="text-[10px] text-gray-400">
+                Linked to all public store order buttons and alerts
               </span>
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-zinc-700 font-tamil">
-                {isTa ? "துணை தொடர்பு / உதவி எண்" : "Secondary Support Line"}
+              <label className="text-xs font-bold text-gray-700">
+                Secondary Support Line
               </label>
               <input
                 type="text"
                 value={altPhone}
                 onChange={(e) => setAltPhone(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl border border-black/12 text-xs font-mono min-h-[40px]"
+                className="w-full px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs font-mono text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[40px]"
               />
             </div>
           </div>
         </div>
 
         {/* Section 3: Shipping Rates & Deliverable Pincodes Matrix */}
-        <div className="bg-white rounded-2xl p-6 border border-black/8 shadow-2xs space-y-4">
-          <div className="flex items-center gap-2 border-b border-black/8 pb-3">
+        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
             <Truck className="h-5 w-5 text-[#0A6847]" />
-            <h3 className="font-bold text-base text-zinc-900 font-tamil">
-              {isTa ? "அஞ்சல் கட்டணங்கள் & டெலிவரி செய்யப்படும் பின்கோடுகள்" : "Shipping Charges & Deliverable Pincodes Matrix"}
+            <h3 className="font-bold text-base text-gray-900">
+              Shipping Charges & Deliverable Pincodes Matrix
             </h3>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-zinc-700 font-tamil">
-                {isTa ? "தமிழ்நாடு அஞ்சல் கட்டணம் (₹)" : "Tamil Nadu Postal Rate (₹)"}
+              <label className="text-xs font-bold text-gray-700">
+                Tamil Nadu Postal Rate (₹)
               </label>
               <input
                 type="number"
                 value={tnShippingFee}
                 onChange={(e) => setTnShippingFee(Number(e.target.value))}
-                className="w-full px-3.5 py-2 rounded-xl border border-black/12 text-xs font-mono min-h-[40px]"
+                className="w-full px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs font-mono text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[40px]"
               />
-              <span className="text-[10px] text-zinc-400 font-tamil">ST Courier / Speed Post (2-3 days)</span>
+              <span className="text-[10px] text-gray-400">ST Courier / Speed Post (2-3 days)</span>
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-zinc-700 font-tamil">
-                {isTa ? "பிற மாநிலங்கள் கட்டணம் (₹)" : "Rest of India Rate (₹)"}
+              <label className="text-xs font-bold text-gray-700">
+                Rest of India Rate (₹)
               </label>
               <input
                 type="number"
                 value={otherShippingFee}
                 onChange={(e) => setOtherShippingFee(Number(e.target.value))}
-                className="w-full px-3.5 py-2 rounded-xl border border-black/12 text-xs font-mono min-h-[40px]"
+                className="w-full px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs font-mono text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[40px]"
               />
-              <span className="text-[10px] text-zinc-400 font-tamil">India Post Speed Post (4-6 days)</span>
+              <span className="text-[10px] text-gray-400">India Post Speed Post (4-6 days)</span>
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-zinc-700 font-tamil">
-                {isTa ? "இலவச அஞ்சல் வரம்பு (₹)" : "Free Shipping Threshold (₹)"}
+              <label className="text-xs font-bold text-gray-700">
+                Free Shipping Threshold (₹)
               </label>
               <input
                 type="number"
                 value={freeShippingThreshold}
                 onChange={(e) => setFreeShippingThreshold(Number(e.target.value))}
-                className="w-full px-3.5 py-2 rounded-xl border border-black/12 text-xs font-mono min-h-[40px]"
+                className="w-full px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs font-mono text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[40px]"
               />
-              <span className="text-[10px] text-zinc-400 font-tamil">Orders above this amount get free shipping</span>
+              <span className="text-[10px] text-gray-400">Orders above this amount get free shipping</span>
             </div>
           </div>
 
           {/* Deliverable Pincodes Selector */}
-          <div className="space-y-2 pt-2 border-t border-black/5">
-            <label className="text-xs font-bold text-zinc-700 font-tamil block">
-              {isTa ? "டெலிவரி செய்யப்படும் பின்கோடு வரம்பு (Deliverable Coverage)" : "Deliverable Pincodes Coverage"}
+          <div className="space-y-2 pt-2 border-t border-gray-100">
+            <label className="text-xs font-bold text-gray-700 block">
+              Deliverable Pincodes Coverage
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <label
                 onClick={() => setPincodeMode("all_india")}
                 className={`p-3.5 rounded-xl border text-xs cursor-pointer flex items-start gap-2.5 transition-all ${
                   pincodeMode === "all_india"
-                    ? "border-[#0A6847] bg-[#0A6847]/5 text-neutral-900 ring-1 ring-[#0A6847]"
-                    : "border-black/10 bg-white text-neutral-600 hover:bg-neutral-50"
+                    ? "border-[#0A6847] bg-emerald-50/50 text-gray-900 ring-1 ring-[#0A6847]"
+                    : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
                 }`}
               >
                 <input
@@ -299,9 +277,9 @@ export default function AdminSettingsPage() {
                   className="mt-0.5 text-[#0A6847]"
                 />
                 <div>
-                  <span className="font-bold block font-tamil">அனைத்து இந்திய பின்கோடுகள் (All-India Speed Post)</span>
-                  <span className="text-[11px] text-neutral-500 font-tamil">
-                    இந்தியாவின் 19,100+ பின்கோடுகளுக்கும் India Post நேரடி டெலிவரி
+                  <span className="font-bold block">All-India Speed Post</span>
+                  <span className="text-[11px] text-gray-500">
+                    Direct India Post Speed Post delivery to all 19,100+ postal PIN codes
                   </span>
                 </div>
               </label>
@@ -310,8 +288,8 @@ export default function AdminSettingsPage() {
                 onClick={() => setPincodeMode("south_india")}
                 className={`p-3.5 rounded-xl border text-xs cursor-pointer flex items-start gap-2.5 transition-all ${
                   pincodeMode === "south_india"
-                    ? "border-[#0A6847] bg-[#0A6847]/5 text-neutral-900 ring-1 ring-[#0A6847]"
-                    : "border-black/10 bg-white text-neutral-600 hover:bg-neutral-50"
+                    ? "border-[#0A6847] bg-emerald-50/50 text-gray-900 ring-1 ring-[#0A6847]"
+                    : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
                 }`}
               >
                 <input
@@ -322,57 +300,94 @@ export default function AdminSettingsPage() {
                   className="mt-0.5 text-[#0A6847]"
                 />
                 <div>
-                  <span className="font-bold block font-tamil">தென்னிந்தியா மட்டும் (ST Courier Hubs)</span>
-                  <span className="text-[11px] text-neutral-500 font-tamil">
-                    தமிழ்நாடு, புதுச்சேரி, கேரளா, கர்நாடகா, ஆந்திரா & தெலங்கானா
+                  <span className="font-bold block">South India Hubs (ST Courier)</span>
+                  <span className="text-[11px] text-gray-500">
+                    Tamil Nadu, Puducherry, Kerala, Karnataka, Andhra & Telangana
                   </span>
                 </div>
               </label>
             </div>
 
             <div className="pt-2">
-              <label className="text-[11px] font-bold text-zinc-600 font-tamil block mb-1">
-                {isTa ? "பார்சல் கண்காணிப்பு & வாடிக்கையாளர் குறிப்பு" : "Dispatch & SLA Policy Note"}
+              <label className="text-[11px] font-bold text-gray-600 block mb-1">
+                Dispatch & SLA Policy Note
               </label>
               <textarea
                 rows={2}
                 value={pincodeNote}
                 onChange={(e) => setPincodeNote(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl border border-black/12 text-xs font-tamil resize-none"
+                className="w-full px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
               />
             </div>
           </div>
         </div>
 
         {/* Section 4: Live Connected Database Status */}
-        <div className="bg-white rounded-2xl p-6 border border-emerald-300 bg-emerald-50/30 shadow-2xs space-y-3">
+        <div className="bg-white rounded-2xl p-6 border border-emerald-200 bg-emerald-50/40 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Server className="h-5 w-5 text-emerald-700" />
-              <h3 className="font-bold text-base text-zinc-900 font-tamil">
-                {isTa ? "நேரடி தரவுத்தள இணைப்பு (Supabase Postgres 17)" : "Live Database Connected"}
+              <h3 className="font-bold text-base text-gray-900">
+                Live Database Connected
               </h3>
             </div>
             <span className="px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[11px] font-bold font-mono">
-              Live &amp; Synchronized
+              Live & Synchronized
             </span>
           </div>
 
-          <p className="text-xs text-zinc-600 font-tamil leading-relaxed">
-            {isTa
-              ? "மேதகு களஞ்சியத்தின் அனைத்து அமைப்புகளும் Supabase பொது தரவுத்தள அட்டவணையுடன் (public.site_settings) நேரடியாக இணைக்கப்பட்டுள்ளன. இங்கு நீங்கள் மாற்றும் கட்டணங்கள் மற்றும் தொலைபேசி எண்கள் தளத்தின் செக் அவுட் மற்றும் வாங்கு பொத்தான்களில் உடனடி விளைவை ஏற்படுத்தும்."
-              : "All settings are directly bound to Supabase PostgreSQL (public.site_settings). Updates here immediately reflect on live cart calculations, postal fee slabs, and customer receipts."}
+          <p className="text-xs text-gray-600 leading-relaxed">
+            All settings are directly bound to Supabase PostgreSQL (public.site_settings). Updates saved here immediately reflect on live cart calculations, postal fee slabs, and customer receipts.
           </p>
+        </div>
+
+        {/* Section 5: ERPNext Enterprise Synchronization */}
+        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+            <div className="flex items-center gap-2">
+              <Server className="h-5 w-5 text-[#0A6847]" />
+              <h3 className="font-bold text-base text-gray-900">
+                ERPNext & Frappe Synchronization
+              </h3>
+            </div>
+            <Link
+              href="/admin/erp"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition-colors cursor-pointer"
+            >
+              <span>Manage ERP Sync</span>
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+
+          <p className="text-xs text-gray-600 leading-relaxed">
+            Direct REST integration configured for <code className="font-mono text-[11px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-900">https://erp.methagukalanjiyam.in</code>. Automatically mirrors customer profiles, sales invoices, stock levels, and order dispatches with zero-loss outbox queueing.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs">
+            <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
+              <div className="text-[11px] text-gray-400 font-medium">ERP Host</div>
+              <div className="font-mono font-bold text-gray-900 mt-0.5 truncate">erp.methagukalanjiyam.in</div>
+            </div>
+            <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
+              <div className="text-[11px] text-gray-400 font-medium">API Key</div>
+              <div className="font-mono font-bold text-gray-900 mt-0.5">251d72274f50663</div>
+            </div>
+            <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
+              <div className="text-[11px] text-gray-400 font-medium">Outbox Mode</div>
+              <div className="font-bold text-emerald-700 mt-0.5">Offline-Resilient Buffer</div>
+            </div>
+          </div>
         </div>
 
         {/* Submit */}
         <div className="flex items-center justify-end">
           <button
             type="submit"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white text-xs font-bold font-tamil shadow-sm transition-all active:scale-95 cursor-pointer min-h-[44px]"
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white text-xs font-bold shadow-sm transition-all active:scale-95 cursor-pointer min-h-[44px]"
           >
             <Save className="h-4 w-4" />
-            <span>{isTa ? "அமைப்புகளைச் சேமிக்க" : "Save Platform Settings"}</span>
+            <span>{saving ? "Saving..." : "Save Platform Settings"}</span>
           </button>
         </div>
       </form>

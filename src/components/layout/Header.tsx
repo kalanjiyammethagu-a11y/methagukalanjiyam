@@ -221,12 +221,12 @@ export function Header({ onOpenSearch }: HeaderProps) {
                 </button>
               </div>
 
-              {/* 3. Ghost Settings Icon Button */}
+              {/* 3. Ghost Settings Icon Button (Available in Mobile Drawer on mobile viewports) */}
               <button
                 type="button"
                 onClick={openSettings}
                 aria-label={isTa ? "தள & வாசிப்பு அமைப்புகள்" : "Reading & Display Settings"}
-                className="min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl text-[var(--color-ink-secondary)] hover:text-[var(--color-accent)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] flex items-center justify-center transition-colors cursor-pointer"
+                className="hidden sm:flex min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl text-[var(--color-ink-secondary)] hover:text-[var(--color-accent)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] items-center justify-center transition-colors cursor-pointer"
                 title={isTa ? "வாசிப்பு அமைப்புகள்" : "Reading Settings"}
               >
                 <Sliders className="h-4 w-4" />

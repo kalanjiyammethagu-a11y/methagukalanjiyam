@@ -58,6 +58,13 @@ export default function AdminLoginPage() {
         return;
       }
 
+      // 2FA bypassed: direct session issued — redirect immediately
+      if (data.success && data.redirect) {
+        setSuccessMessage("Login successful! Redirecting to dashboard...");
+        window.location.href = data.redirect;
+        return;
+      }
+
       setStep("otp");
       setMaskedEmail(data.email || email);
       setSuccessMessage(data.message || "A 6-digit verification code has been dispatched to your email.");
@@ -195,13 +202,13 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#121212] text-[#f5f5f4] flex flex-col items-center justify-center p-4 sm:p-6 selection:bg-[#0A6847] selection:text-white">
-      {/* Container with minimal authoritative styling */}
-      <div className="w-full max-w-md bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl shadow-2xl overflow-hidden">
+    <div className="min-h-screen w-full bg-[#F4F5F7] text-gray-900 flex flex-col items-center justify-center p-4 sm:p-6 selection:bg-[#0A6847] selection:text-white">
+      {/* Container */}
+      <div className="w-full max-w-md bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
         {/* Header Ribbon */}
-        <div className="px-6 py-6 sm:px-8 border-b border-[#262626] flex items-center justify-between">
+        <div className="px-6 py-6 sm:px-8 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full overflow-hidden border border-[#333333] bg-black shrink-0">
+            <div className="h-9 w-9 rounded-full overflow-hidden border border-gray-200 bg-white shrink-0 shadow-sm">
               <Image
                 src="/icons/favicon.png"
                 alt="Methagu Kalanjiyam"
@@ -212,7 +219,7 @@ export default function AdminLoginPage() {
               />
             </div>
             <div>
-              <h1 className="text-sm font-bold tracking-tight text-white font-sans">
+              <h1 className="text-sm font-bold tracking-tight text-gray-900 font-sans">
                 Methagu Kalanjiyam
               </h1>
               <p className="text-[10px] tracking-wider uppercase font-semibold text-[#0A6847]">
@@ -221,7 +228,7 @@ export default function AdminLoginPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0A6847]/15 border border-[#0A6847]/30 text-[#0A6847] text-[11px] font-mono font-bold">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0A6847]/10 border border-[#0A6847]/25 text-[#0A6847] text-[11px] font-mono font-bold">
             <ShieldCheck className="h-3.5 w-3.5" />
             <span>2FA Gate</span>
           </div>
@@ -233,13 +240,13 @@ export default function AdminLoginPage() {
           {errorMessage && (
             <div
               role="alert"
-              className="p-3.5 rounded-xl bg-rose-950/40 border border-rose-800/50 text-rose-300 text-xs flex items-start gap-2.5"
+              className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start gap-2.5"
             >
-              <AlertCircle className="h-4 w-4 shrink-0 text-rose-400 mt-0.5" />
+              <AlertCircle className="h-4 w-4 shrink-0 text-rose-500 mt-0.5" />
               <div className="leading-relaxed">
                 <span>{errorMessage}</span>
                 {attemptsLeft !== null && attemptsLeft > 0 && (
-                  <span className="block mt-1 font-semibold text-rose-200">
+                  <span className="block mt-1 font-semibold text-rose-600">
                     Remaining attempts: {attemptsLeft}
                   </span>
                 )}
@@ -251,9 +258,9 @@ export default function AdminLoginPage() {
           {successMessage && !errorMessage && (
             <div
               role="status"
-              className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-800/50 text-emerald-300 text-xs flex items-start gap-2.5"
+              className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2.5"
             >
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400 mt-0.5" />
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 mt-0.5" />
               <span className="leading-relaxed">{successMessage}</span>
             </div>
           )}
@@ -264,12 +271,12 @@ export default function AdminLoginPage() {
               <div className="space-y-1.5">
                 <label
                   htmlFor="admin-email"
-                  className="block text-xs font-semibold text-[#a8a29e]"
+                  className="block text-xs font-semibold text-gray-600"
                 >
                   Administrator Email
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#78716c]" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
                     id="admin-email"
                     type="email"
@@ -279,7 +286,7 @@ export default function AdminLoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@domain.com"
-                    className="w-full h-11 pl-10 pr-3.5 rounded-xl bg-[#222222] border border-[#333333] focus:border-[#0A6847] focus:ring-1 focus:ring-[#0A6847] text-white text-xs outline-none transition-colors"
+                    className="w-full h-11 pl-10 pr-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-[#0A6847] focus:ring-2 focus:ring-[#0A6847]/20 text-gray-900 text-xs outline-none transition-colors placeholder:text-gray-400"
                   />
                 </div>
               </div>
@@ -287,12 +294,12 @@ export default function AdminLoginPage() {
               <div className="space-y-1.5">
                 <label
                   htmlFor="admin-password"
-                  className="block text-xs font-semibold text-[#a8a29e]"
+                  className="block text-xs font-semibold text-gray-600"
                 >
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#78716c]" />
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
                     id="admin-password"
                     type="password"
@@ -301,7 +308,7 @@ export default function AdminLoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="w-full h-11 pl-10 pr-3.5 rounded-xl bg-[#222222] border border-[#333333] focus:border-[#0A6847] focus:ring-1 focus:ring-[#0A6847] text-white text-xs outline-none transition-colors"
+                    className="w-full h-11 pl-10 pr-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-[#0A6847] focus:ring-2 focus:ring-[#0A6847]/20 text-gray-900 text-xs outline-none transition-colors"
                   />
                 </div>
               </div>
@@ -309,7 +316,7 @@ export default function AdminLoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-11 mt-2 rounded-xl bg-[#0A6847] hover:bg-[#085036] disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+                className="w-full h-11 mt-2 rounded-xl bg-[#0A6847] hover:bg-[#085036] disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
               >
                 {loading ? (
                   <>
@@ -318,7 +325,7 @@ export default function AdminLoginPage() {
                   </>
                 ) : (
                   <>
-                    <span>Proceed to Verification</span>
+                    <span>Sign In to Console</span>
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
@@ -328,10 +335,10 @@ export default function AdminLoginPage() {
             /* STEP 2: 6-Digit OTP */
             <form onSubmit={handleOtpSubmit} className="space-y-5">
               <div className="text-center space-y-1">
-                <p className="text-xs text-[#a8a29e]">
+                <p className="text-xs text-gray-500">
                   Enter the 6-digit authentication code sent to:
                 </p>
-                <p className="text-xs font-mono font-bold text-emerald-400">
+                <p className="text-xs font-mono font-bold text-[#0A6847]">
                   {maskedEmail}
                 </p>
               </div>
@@ -353,7 +360,7 @@ export default function AdminLoginPage() {
                     value={digit}
                     onChange={(e) => handleOtpChange(idx, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                    className="w-11 h-12 text-center text-lg font-mono font-extrabold rounded-xl bg-[#222222] border border-[#333333] focus:border-[#0A6847] focus:ring-2 focus:ring-[#0A6847]/30 text-white outline-none transition-all"
+                    className="w-11 h-12 text-center text-lg font-mono font-extrabold rounded-xl bg-gray-50 border border-gray-200 focus:border-[#0A6847] focus:ring-2 focus:ring-[#0A6847]/20 text-gray-900 outline-none transition-all"
                   />
                 ))}
               </div>
@@ -362,7 +369,7 @@ export default function AdminLoginPage() {
                 <button
                   type="submit"
                   disabled={loading || otpCode.join("").length !== 6}
-                  className="w-full h-11 rounded-xl bg-[#0A6847] hover:bg-[#085036] disabled:opacity-40 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+                  className="w-full h-11 rounded-xl bg-[#0A6847] hover:bg-[#085036] disabled:opacity-40 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
                 >
                   {loading ? (
                     <>
@@ -385,7 +392,7 @@ export default function AdminLoginPage() {
                       setOtpCode(["", "", "", "", "", ""]);
                       setErrorMessage(null);
                     }}
-                    className="text-[#78716c] hover:text-[#d6d3d1] transition-colors cursor-pointer"
+                    className="text-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
                   >
                     ← Back to credentials
                   </button>
@@ -394,7 +401,7 @@ export default function AdminLoginPage() {
                     type="button"
                     onClick={handleResendOtp}
                     disabled={cooldown > 0 || loading}
-                    className="text-[#0A6847] hover:text-emerald-400 disabled:text-[#57534e] font-semibold flex items-center gap-1 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                    className="text-[#0A6847] hover:text-[#085036] disabled:text-gray-300 font-semibold flex items-center gap-1 transition-colors cursor-pointer disabled:cursor-not-allowed"
                   >
                     <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
                     <span>{cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend code"}</span>
@@ -405,8 +412,8 @@ export default function AdminLoginPage() {
           )}
         </div>
 
-        {/* Security Footer Notice */}
-        <div className="px-6 py-4 bg-[#141414] border-t border-[#222222] text-center text-[11px] text-[#57534e]">
+        {/* Security Footer */}
+        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 text-center text-[11px] text-gray-400">
           Strictly authorized personnel only. All access attempts are recorded.
         </div>
       </div>

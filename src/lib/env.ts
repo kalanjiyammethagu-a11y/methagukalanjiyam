@@ -14,6 +14,14 @@ const envSchema = z.object({
   RAZORPAY_KEY_SECRET: z.string().optional(),
   RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
 
+  ERP_URL: z.string().url("Invalid ERP URL").optional(),
+  ERP_API_KEY: z.string().optional(),
+  ERP_API_SECRET: z.string().optional(),
+  ERP_ENABLED: z.string().optional(),
+  ERP_AUTO_SYNC_ORDERS: z.string().optional(),
+  ERP_COMPANY: z.string().optional(),
+  ERP_DEFAULT_ITEM_GROUP: z.string().optional(),
+
   NEXT_PUBLIC_SITE_URL: z.string().url("Invalid site URL").default("https://methagukalanjiyam.in"),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });

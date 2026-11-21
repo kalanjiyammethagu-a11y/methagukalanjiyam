@@ -84,10 +84,10 @@ export async function POST(req: NextRequest) {
     if (!isPlaceholderDb) {
       const adminSupabase = createAdminClient();
 
-      // Fetch existing order
+      // Fetch existing order with items and shipping details
       const { data: order, error: orderFetchError } = await (adminSupabase
         .from("orders") as any)
-        .select("id, order_number, status, payment_status, razorpay_payment_id")
+        .select("id, order_number, status, payment_status, razorpay_payment_id, total_amount, shipping_address, guest_phone, guest_email, order_items (*)")
         .eq("razorpay_order_id", razorpay_order_id)
         .single();
 
@@ -157,6 +157,28 @@ export async function POST(req: NextRequest) {
           razorpay_order_id,
         },
       });
+
+      // Enqueue for ERPNext synchronization (non-blocking)
+      try {
+        const { enqueueOrderSync } = await import("@/lib/erp/sync-queue");
+        await enqueueOrderSync({
+          orderId: order.id,
+          orderNumber: order.order_number,
+          customerName: order.shipping_address?.full_name || "Customer",
+          customerPhone: order.shipping_address?.phone || order.guest_phone,
+          customerEmail: order.guest_email,
+          shippingAddress: order.shipping_address,
+          totalAmount: order.total_amount || 0,
+          items: (order.order_items || []).map((it: any) => ({
+            book_id: it.book_id,
+            title: it.title,
+            price: it.price,
+            quantity: it.quantity,
+          })),
+        });
+      } catch (erpQueueErr) {
+        console.warn("ERP auto-sync enqueue notice:", erpQueueErr);
+      }
     }
 
     const responsePayload: VerifyPaymentApiResponse = {

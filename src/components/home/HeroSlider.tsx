@@ -196,7 +196,7 @@ export function HeroSlider({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Main Viewport Card */}
-      <div className="relative rounded-3xl overflow-hidden bg-[#121312] border border-black/10 shadow-2xl min-h-[500px] sm:min-h-[540px] lg:min-h-[580px] xl:min-h-[600px] flex items-end">
+      <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-[#121312] border border-black/10 shadow-2xl min-h-[460px] sm:min-h-[540px] lg:min-h-[580px] xl:min-h-[600px] flex items-end">
         {/* Embla Viewport */}
         <div className="overflow-hidden absolute inset-0 w-full h-full" ref={emblaRef}>
           <div className="flex h-full w-full">
@@ -227,22 +227,21 @@ export function HeroSlider({
                         priority={isEager}
                         loading={isEager ? "eager" : "lazy"}
                         className={cn(
-                          "object-cover object-center w-full h-full transition-transform duration-[7000ms] ease-out will-change-transform",
+                          "object-cover object-center w-full h-full brightness-[1.03] contrast-[1.02] transition-transform duration-[7000ms] ease-out will-change-transform",
                           isActive && !isReducedMotion ? "scale-100" : "scale-[1.03]",
                           isReducedMotion && "transform-none transition-none"
                         )}
                       />
                     </picture>
 
-                    {/* Directional Progressive Scrims for Text Legibility (WCAG AAA) */}
-                    <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.96)_0%,rgba(0,0,0,0.82)_35%,rgba(0,0,0,0.42)_70%,transparent_100%)] pointer-events-none" />
-                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.92)_0%,rgba(0,0,0,0.65)_40%,rgba(0,0,0,0.20)_75%,transparent_100%)] pointer-events-none" />
-                    <div className="absolute bottom-0 left-0 w-full sm:w-4/5 lg:w-3/5 h-4/5 bg-[radial-gradient(ellipse_at_bottom_left,rgba(0,0,0,0.65)_0%,rgba(0,0,0,0.25)_50%,transparent_75%)] pointer-events-none" />
+                    {/* Directional Soft Gradient Scrims: Vivid Artwork + Crystal Clear Legibility */}
+                    <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.72)_0%,rgba(0,0,0,0.32)_42%,transparent_78%)] pointer-events-none" />
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.68)_0%,rgba(0,0,0,0.22)_45%,transparent_75%)] pointer-events-none" />
                   </div>
 
                   {/* Editorial Left-Aligned Caption Block */}
-                  <div className="absolute inset-0 z-10 flex flex-col justify-end p-6 sm:p-10 lg:p-14 xl:p-16 text-white pointer-events-none">
-                    <div className="pointer-events-auto max-w-3xl space-y-3 sm:space-y-4">
+                  <div className="absolute inset-0 z-10 flex flex-col justify-end p-4 sm:p-8 lg:p-14 xl:p-16 !text-white pointer-events-none">
+                    <div className="pointer-events-auto max-w-3xl space-y-2.5 sm:space-y-4">
                       {/* Eyebrow Label with Hairline Rule */}
                       <div
                         className={cn(
@@ -253,8 +252,8 @@ export function HeroSlider({
                           isReducedMotion && "transition-none translate-y-0 opacity-100"
                         )}
                       >
-                        <span className="h-[1px] w-5 sm:w-6 bg-emerald-400/80 inline-block" />
-                        <span className="text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase font-mono text-emerald-300 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
+                        <span className="h-[1px] w-5 sm:w-6 bg-emerald-400 inline-block shadow-sm" />
+                        <span className="text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase font-mono !text-emerald-300 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
                           {isTa ? slide.eyebrowTa : slide.eyebrowEn}
                         </span>
                       </div>
@@ -263,7 +262,7 @@ export function HeroSlider({
                       {index === 0 ? (
                         <h1
                           className={cn(
-                            "text-[clamp(1.75rem,3.2vw,2.75rem)] leading-[1.14] font-semibold font-serif font-tamil-serif text-white tracking-[-0.015em] drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)] transition-all duration-700 delay-[80ms] ease-out",
+                            "text-[clamp(1.35rem,5.5vw,2.75rem)] sm:text-[clamp(1.75rem,3.2vw,2.75rem)] leading-[1.16] font-bold font-serif font-tamil-serif !text-white tracking-[-0.015em] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] transition-all duration-700 delay-[80ms] ease-out",
                             isActive
                               ? "opacity-100 translate-y-0"
                               : "opacity-0 translate-y-3 pointer-events-none",
@@ -275,7 +274,7 @@ export function HeroSlider({
                       ) : (
                         <h2
                           className={cn(
-                            "text-[clamp(1.75rem,3.2vw,2.75rem)] leading-[1.14] font-semibold font-serif font-tamil-serif text-white tracking-[-0.015em] drop-shadow-[0_2px_10px_rgba(0,0,0,0.85)] transition-all duration-700 delay-[80ms] ease-out",
+                            "text-[clamp(1.35rem,5.5vw,2.75rem)] sm:text-[clamp(1.75rem,3.2vw,2.75rem)] leading-[1.16] font-bold font-serif font-tamil-serif !text-white tracking-[-0.015em] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] transition-all duration-700 delay-[80ms] ease-out",
                             isActive
                               ? "opacity-100 translate-y-0"
                               : "opacity-0 translate-y-3 pointer-events-none",
@@ -289,7 +288,7 @@ export function HeroSlider({
                       {/* Subtitle / Narrative Description */}
                       <p
                         className={cn(
-                          "text-[clamp(0.875rem,1.15vw,1.05rem)] text-white/95 font-medium leading-relaxed max-w-2xl font-tamil drop-shadow-[0_1px_4px_rgba(0,0,0,0.85)] transition-all duration-700 delay-[160ms] ease-out",
+                          "text-[clamp(0.8125rem,3vw,1.05rem)] sm:text-[clamp(0.875rem,1.15vw,1.05rem)] !text-white/95 font-medium leading-relaxed max-w-2xl font-tamil drop-shadow-[0_1px_5px_rgba(0,0,0,0.9)] transition-all duration-700 delay-[160ms] ease-out line-clamp-3 sm:line-clamp-none",
                           isActive
                             ? "opacity-100 translate-y-0"
                             : "opacity-0 translate-y-3 pointer-events-none",
@@ -351,7 +350,7 @@ export function HeroSlider({
                 ? "ஸ்லைடு இயக்குக (Play)"
                 : "Play slideshow"
             }
-            className="h-9 w-9 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 text-white/80 hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+            className="h-9 w-9 rounded-full bg-black/25 hover:bg-black/50 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             title={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? (
@@ -362,7 +361,7 @@ export function HeroSlider({
           </button>
 
           <div
-            className="px-3 py-1 rounded-full bg-black/40 backdrop-blur-md text-white/85 text-[11px] font-mono tabular-nums tracking-widest border border-white/10 shadow-sm"
+            className="px-3 py-1 rounded-full bg-black/25 backdrop-blur-md text-white/90 text-[11px] font-mono tabular-nums tracking-widest border border-white/20 shadow-sm"
             aria-label={`Slide ${selectedIndex + 1} of ${slides.length}`}
           >
             {String(selectedIndex + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
@@ -418,7 +417,7 @@ export function HeroSlider({
               type="button"
               onClick={scrollPrev}
               aria-label={isTa ? "முந்தைய ஸ்லைடு" : "Previous slide"}
-              className="h-9 w-9 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 text-white/80 hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+              className="h-9 w-9 rounded-full bg-black/25 hover:bg-black/50 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             >
               <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -427,7 +426,7 @@ export function HeroSlider({
               type="button"
               onClick={scrollNext}
               aria-label={isTa ? "அடுத்த ஸ்லைடு" : "Next slide"}
-              className="h-9 w-9 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 text-white/80 hover:text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+              className="h-9 w-9 rounded-full bg-black/25 hover:bg-black/50 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             >
               <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </button>

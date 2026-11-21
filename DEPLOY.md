@@ -147,3 +147,4 @@ If an unexpected production defect occurs:
    ```
 3. **Database Rollback:**
    - Database schema changes are non-destructive and backwards compatible. If a migration needs reversal, execute the down-migration SQL script in Supabase SQL editor.
+

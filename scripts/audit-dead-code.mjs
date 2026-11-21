@@ -126,3 +126,4 @@ for (const c of rootCandidates) {
     console.log(`  - ${c} (${size} bytes) -> EXISTS`);
   }
 }
+

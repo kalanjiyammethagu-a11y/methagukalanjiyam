@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
           if (payment && payment.order_id) {
             const { data: order } = await (adminSupabase
               .from("orders") as any)
-              .select("id, status, payment_status")
+              .select("id, order_number, status, payment_status, total_amount, shipping_address, guest_phone, guest_email, order_items (*)")
               .eq("razorpay_order_id", payment.order_id)
               .maybeSingle();
 
@@ -136,6 +136,28 @@ export async function POST(req: NextRequest) {
                 method: payment.method,
               },
             });
+
+            // Enqueue for ERPNext synchronization (non-blocking)
+            try {
+              const { enqueueOrderSync } = await import("@/lib/erp/sync-queue");
+              await enqueueOrderSync({
+                orderId: order.id,
+                orderNumber: order.order_number,
+                customerName: order.shipping_address?.full_name || "Customer",
+                customerPhone: order.shipping_address?.phone || order.guest_phone,
+                customerEmail: order.guest_email,
+                shippingAddress: order.shipping_address,
+                totalAmount: order.total_amount || (payment.amount ? payment.amount / 100 : 0),
+                items: (order.order_items || []).map((it: any) => ({
+                  book_id: it.book_id,
+                  title: it.title,
+                  price: it.price,
+                  quantity: it.quantity,
+                })),
+              });
+            } catch (erpQueueErr) {
+              console.warn("ERP auto-sync webhook enqueue notice:", erpQueueErr);
+            }
           }
           break;
         }

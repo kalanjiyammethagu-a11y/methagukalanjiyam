@@ -28,8 +28,10 @@ export function FloatingWhatsApp() {
     <aside
       aria-label={isTa ? "வாட்ஸ்அப் உதவி மையம்" : "WhatsApp Helpdesk"}
       className={cn(
-        "fixed right-5 z-40 flex items-center gap-2 group transition-all duration-200",
-        isBookDetail ? "bottom-20 sm:bottom-5" : "bottom-5"
+        "fixed right-4 sm:right-5 z-40 flex items-center gap-2 group transition-all duration-200",
+        isBookDetail
+          ? "bottom-36 sm:bottom-6"
+          : "bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] sm:bottom-6"
       )}
     >
       {/* Tooltip badge on hover/focus */}

@@ -3,122 +3,150 @@ import fs from "node:fs";
 import path from "node:path";
 
 const PORT = 3089;
+const CDP_PORT = 9225;
 const BROWSER_PATH = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
-const OUTPUT_DIR = path.resolve(process.cwd(), "screenshots");
+const OUTPUT_DIR = path.resolve("screenshots");
 const ARTIFACT_DIR = path.resolve("C:\\Users\\madha\\.gemini\\antigravity\\brain\\52ccce1b-fadc-48a3-8d75-215141fc2e85\\screenshots");
 
 for (const dir of [OUTPUT_DIR, ARTIFACT_DIR]) {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function waitForServer(url, timeoutMs = 25000) {
+async function waitForHttp(url, timeoutMs = 25000) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     try {
       const res = await fetch(url);
-      if (res.status === 200) {
-        return true;
-      }
+      if (res.status === 200) return true;
     } catch {
-      await sleep(500);
+      await sleep(400);
     }
   }
-  throw new Error(`Server failed to respond at ${url} within ${timeoutMs}ms`);
-}
-
-function captureScreenshot(url, outputPath, width, height) {
-  return new Promise((resolve) => {
-    const args = [
-      "--headless=new",
-      "--disable-gpu",
-      "--hide-scrollbars",
-      `--window-size=${width},${height}`,
-      `--screenshot=${outputPath}`,
-      url,
-    ];
-
-    const child = spawn(BROWSER_PATH, args, { stdio: "ignore" });
-    child.on("close", () => {
-      resolve();
-    });
-    child.on("error", () => {
-      resolve();
-    });
-  });
+  throw new Error(`Timeout waiting for ${url}`);
 }
 
 async function run() {
   console.log("================================================================================");
-  console.log(" CAPTURING RESPONSIVE SCREENSHOTS FOR HERO SLIDER");
+  console.log(" CAPTURING ACCURATE RESPONSIVE SCREENSHOTS VIA DEVTOOLS PROTOCOL");
   console.log(" Target: Next.js Production Build on Port " + PORT);
   console.log("================================================================================\n");
 
+  const nextBin = path.resolve("node_modules/next/dist/bin/next");
   const server = spawn(
     process.execPath,
-    ["./node_modules/next/dist/bin/next", "start", "-H", "127.0.0.1", "-p", String(PORT)],
-    {
-      stdio: ["ignore", "pipe", "pipe"],
-      env: { ...process.env, NODE_ENV: "production", PORT: String(PORT) },
-    }
+    [nextBin, "start", "-H", "127.0.0.1", "-p", String(PORT)],
+    { stdio: "ignore", env: { ...process.env, NODE_ENV: "production", PORT: String(PORT) } }
   );
 
-  server.stdout.on("data", (d) => {
-    const text = d.toString();
-    if (text.includes("Ready")) console.log("       [Server]", text.trim());
-  });
+  let browser;
 
   try {
-    console.log("[Setup] Waiting for server at http://127.0.0.1:" + PORT + "...");
-    await waitForServer(`http://127.0.0.1:${PORT}/`);
-    console.log("[Setup] Server is ready! Capturing screenshots...\n");
+    console.log("[1/4] Waiting for server at http://127.0.0.1:" + PORT + "...");
+    await waitForHttp(`http://127.0.0.1:${PORT}/`);
+    console.log("      Server is ready!");
 
-    // 1. Viewport Breakpoints (with Slide 1)
-    const breakpoints = [
-      { label: "360px", width: 360, height: 740, desc: "Mobile Viewport (360px)", url: `http://127.0.0.1:${PORT}/?slide=0` },
-      { label: "768px", width: 768, height: 1024, desc: "Tablet Viewport (768px)", url: `http://127.0.0.1:${PORT}/?slide=0` },
-      { label: "1280px", width: 1280, height: 800, desc: "Desktop Viewport (1280px)", url: `http://127.0.0.1:${PORT}/?slide=0` },
-      { label: "1920px", width: 1920, height: 1080, desc: "Widescreen Viewport (1920px)", url: `http://127.0.0.1:${PORT}/?slide=0` },
-    ];
+    console.log("[2/4] Launching Microsoft Edge with CDP on port " + CDP_PORT + "...");
+    browser = spawn(
+      BROWSER_PATH,
+      [
+        "--headless=new",
+        `--remote-debugging-port=${CDP_PORT}`,
+        "--disable-gpu",
+        "--hide-scrollbars",
+        "--user-data-dir=" + path.resolve("temp-edge-profile-shots"),
+        `http://127.0.0.1:${PORT}/`,
+      ],
+      { stdio: "ignore" }
+    );
 
-    for (const bp of breakpoints) {
-      const fileOut = path.join(OUTPUT_DIR, `hero-slider-${bp.label}.png`);
-      const artifactOut = path.join(ARTIFACT_DIR, `hero-slider-${bp.label}.png`);
-      console.log(`[Capture] ${bp.desc} -> ${path.basename(fileOut)}`);
-      await captureScreenshot(bp.url, fileOut, bp.width, bp.height);
-      fs.copyFileSync(fileOut, artifactOut);
-      await sleep(500);
+    await waitForHttp(`http://127.0.0.1:${CDP_PORT}/json/version`);
+    const versionRes = await fetch(`http://127.0.0.1:${CDP_PORT}/json/list`);
+    const pages = await versionRes.json();
+    const targetPage = pages.find((p) => p.type === "page") || pages[0];
+    const ws = new WebSocket(targetPage.webSocketDebuggerUrl);
+    await new Promise((resolve) => (ws.onopen = resolve));
+
+    let msgId = 1;
+    function send(method, params = {}) {
+      return new Promise((resolve) => {
+        const id = msgId++;
+        const handler = (evt) => {
+          const data = JSON.parse(evt.data);
+          if (data.id === id) {
+            ws.removeEventListener("message", handler);
+            resolve(data.result);
+          }
+        };
+        ws.addEventListener("message", handler);
+        ws.send(JSON.stringify({ id, method, params }));
+      });
     }
 
-    // 2. Each Slide Active at 1280px Desktop
-    const slides = [
-      { id: "1", title: "Flagship Archives", url: `http://127.0.0.1:${PORT}/?slide=0` },
-      { id: "2", title: "Thileepan Satyagraha", url: `http://127.0.0.1:${PORT}/?slide=1` },
-      { id: "3", title: "Katunayake Victory", url: `http://127.0.0.1:${PORT}/?slide=2` },
-      { id: "4", title: "Leader Thoughts", url: `http://127.0.0.1:${PORT}/?slide=3` },
-    ];
+    await send("Page.enable");
+    await send("DOM.enable");
 
-    for (const slide of slides) {
-      const fileOut = path.join(OUTPUT_DIR, `hero-slider-slide-${slide.id}.png`);
-      const artifactOut = path.join(ARTIFACT_DIR, `hero-slider-slide-${slide.id}.png`);
-      console.log(`[Capture] Slide ${slide.id}: ${slide.title} -> ${path.basename(fileOut)}`);
-      await captureScreenshot(slide.url, fileOut, 1280, 800);
-      fs.copyFileSync(fileOut, artifactOut);
-      await sleep(500);
+    async function capture(fileName, width, height) {
+      await send("Emulation.setDeviceMetricsOverride", {
+        width,
+        height,
+        deviceScaleFactor: 1,
+        mobile: width < 768,
+      });
+      await sleep(1400); // allow font rendering, layout, and slide fade-in transition
+      const { data } = await send("Page.captureScreenshot", { format: "png" });
+      const buf = Buffer.from(data, "base64");
+      const localFile = path.join(OUTPUT_DIR, fileName);
+      const artifactFile = path.join(ARTIFACT_DIR, fileName);
+      fs.writeFileSync(localFile, buf);
+      fs.writeFileSync(artifactFile, buf);
+      console.log(`      Saved ${fileName} (${width}x${height}, ${(buf.length / 1024).toFixed(1)} KB)`);
     }
 
-    console.log("\n[Success] All responsive and per-slide hero screenshots captured successfully!");
-  } catch (err) {
-    console.error("[FATAL ERROR]", err);
+    console.log("[3/4] Capturing responsive viewport breakpoints...");
+    // 360px Mobile
+    await send("Page.navigate", { url: `http://127.0.0.1:${PORT}/?slide=0` });
+    await capture("hero-slider-360px.png", 360, 740);
+
+    // 768px Tablet
+    await capture("hero-slider-768px.png", 768, 1024);
+
+    // 1280px Desktop
+    await capture("hero-slider-1280px.png", 1280, 800);
+
+    // 1920px Widescreen
+    await capture("hero-slider-1920px.png", 1920, 1080);
+
+    console.log("[4/4] Capturing each active slide at 1280px desktop...");
+    // Slide 1 (Flagship Archives)
+    await send("Page.navigate", { url: `http://127.0.0.1:${PORT}/?slide=0` });
+    await capture("hero-slider-slide-1.png", 1280, 800);
+
+    // Slide 2 (Thileepan Satyagraha)
+    await send("Page.navigate", { url: `http://127.0.0.1:${PORT}/?slide=1` });
+    await capture("hero-slider-slide-2.png", 1280, 800);
+
+    // Slide 3 (Katunayake Victory)
+    await send("Page.navigate", { url: `http://127.0.0.1:${PORT}/?slide=2` });
+    await capture("hero-slider-slide-3.png", 1280, 800);
+
+    // Slide 4 (Leader Thoughts)
+    await send("Page.navigate", { url: `http://127.0.0.1:${PORT}/?slide=3` });
+    await capture("hero-slider-slide-4.png", 1280, 800);
+
+    ws.close();
+    console.log("\nAll 8 responsive screenshots successfully captured with exact live rendering!\n");
+
   } finally {
-    console.log("\n[Teardown] Shutting down Next.js server...");
-    server.kill();
+    if (browser) browser.kill();
+    if (server) server.kill();
+    try {
+      fs.rmSync("temp-edge-profile-shots", { recursive: true, force: true });
+    } catch {}
   }
 }
 
-run();
+run().catch(console.error);

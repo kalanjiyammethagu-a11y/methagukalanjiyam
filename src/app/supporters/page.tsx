@@ -37,7 +37,7 @@ const allSupporters: SupporterData[] = [
     nameEn: "Pacha Muthu",
     roleTa: "திட்ட நெறியாளர்",
     roleEn: "Project Coordinator & Operations",
-    image: "/images/supporters/images/supporters/pachamuthu.webp",
+    image: "/images/supporters/pachamuthu.webp",
     instagramUrl: "https://www.instagram.com/pachamuthu_2004?igsh=NjA2ZTZ0NmJycjY4",
   },
   {
@@ -74,7 +74,7 @@ const allSupporters: SupporterData[] = [
     nameEn: "Suriyaprakash",
     roleTa: "வலைத்தளம் மற்றும் தொழில்நுட்ப உருவாக்குநர்",
     roleEn: "Platform Architect & Technical Developer",
-    image: "/images/supporters/images/supporters/suriya.webp",
+    image: "/images/supporters/suriya.webp",
     instagramUrl: "https://www.instagram.com/soora_byte?igsh=ZW5yNWlocGhoMGx3",
     whatsappUrl: "https://wa.me/916382630040",
   },
@@ -84,7 +84,7 @@ const allSupporters: SupporterData[] = [
     nameEn: "Dhilipan",
     roleTa: "தரவு ஒருங்கிணைப்பாளர்",
     roleEn: "Digital Catalog & Data Coordinator",
-    image: "/images/supporters/images/supporters/deelip.webp",
+    image: "/images/supporters/deelip.webp",
     instagramUrl: "https://www.instagram.com/dhilip_offizial?igsh=Z2s1ejMyY2NhdWxq",
   },
   {
@@ -93,7 +93,7 @@ const allSupporters: SupporterData[] = [
     nameEn: "Selva",
     roleTa: "தமிழ்_வாரியர்ஸ் நிர்வாகி",
     roleEn: "Tamil Warriors Community Administrator",
-    image: "/images/supporters/images/supporters/selva.webp",
+    image: "/images/supporters/selva.webp",
     instagramUrl: "https://www.instagram.com/tamil_warriors2.0?igsh=MWFncHI4NndmN2hrcg==",
   },
 ];

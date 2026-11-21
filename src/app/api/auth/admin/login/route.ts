@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { adminLoginStep1Schema } from "@/lib/validators/auth";
-import { issueAdminOtp } from "@/lib/auth-service";
+import { issueAdminOtp, createAdminSession } from "@/lib/auth-service";
 import { sendAdminOtpEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
@@ -80,6 +80,59 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const clientIp =
+      req.headers.get("cf-connecting-ip") ||
+      req.headers.get("x-forwarded-for")?.split(",")[0] ||
+      "unknown";
+    const userAgent = req.headers.get("user-agent") || "admin-login";
+    const isProduction = process.env.NODE_ENV === "production";
+
+    // 4. Check if 2FA is bypassed (ADMIN_2FA_ENABLED=false in env)
+    const bypass2FA = process.env.ADMIN_2FA_ENABLED === "false";
+
+    if (bypass2FA) {
+      // --- BYPASS PATH: issue full admin session directly ---
+      const { sessionToken } = await createAdminSession(userId, clientIp, userAgent);
+
+      // Audit log
+      try {
+        await (adminSupabase.from("audit_logs") as any).insert({
+          user_id: userId,
+          action: "admin_login_success_2fa_bypassed",
+          resource_type: "auth",
+          resource_id: userId,
+          ip_address: clientIp,
+          user_agent: userAgent,
+          metadata: { email: normalizedEmail },
+        });
+      } catch (auditErr) {
+        console.warn("Audit log warning on admin bypass login:", auditErr);
+      }
+
+      await equalizeTiming(startTime);
+
+      const response = NextResponse.json(
+        {
+          success: true,
+          redirect: "/admin",
+          message: "Admin login successful (2FA bypassed).",
+        },
+        { status: 200 }
+      );
+
+      response.cookies.set("mk_admin_session", sessionToken, {
+        path: "/admin",
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: "strict",
+        maxAge: 8 * 60 * 60, // 8 hours
+      });
+
+      return response;
+    }
+
+    // --- FULL 2FA PATH: issue OTP and pre-auth cookie ---
+
     // 4. Issue Step 2 OTP (CSPRNG 6-digit code, 10 min TTL, max 5 attempts)
     const { preAuthToken, otpCode, expiresInMinutes } = await issueAdminOtp(
       userId,
@@ -106,18 +159,13 @@ export async function POST(req: NextRequest) {
 
     // 6. Log audit trail
     try {
-      const clientIp =
-        req.headers.get("cf-connecting-ip") ||
-        req.headers.get("x-forwarded-for")?.split(",")[0] ||
-        "unknown";
-
       await (adminSupabase.from("audit_logs") as any).insert({
         user_id: userId,
         action: "admin_login_step1_success",
         resource_type: "auth",
         resource_id: userId,
         ip_address: clientIp,
-        user_agent: req.headers.get("user-agent") || null,
+        user_agent: userAgent,
         metadata: {
           email: normalizedEmail,
           simulated_email: emailResult.simulated || false,
@@ -130,7 +178,6 @@ export async function POST(req: NextRequest) {
     await equalizeTiming(startTime);
 
     // 7. Prepare response and bind pre-auth state in HttpOnly cookie
-    const isProduction = process.env.NODE_ENV === "production";
     const response = NextResponse.json(
       {
         step: "otp",
