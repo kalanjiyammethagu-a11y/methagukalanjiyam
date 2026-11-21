@@ -10,7 +10,6 @@ import {
   ArrowRight,
   MapPin,
   Truck,
-  MessageCircle,
   CreditCard,
   CheckCircle2,
   Loader2,
@@ -106,8 +105,37 @@ export default function CartPage() {
     amount: number;
   } | null>(null);
   const [paymentSuccess, setPaymentSuccess] = React.useState(false);
+  const [userSession, setUserSession] = React.useState<{
+    authenticated: boolean;
+    user?: { id: string; email?: string; fullName?: string | null } | null;
+  } | null>(null);
+  const [isCheckingAuth, setIsCheckingAuth] = React.useState(true);
 
   const isTa = locale === "ta";
+
+  // Check authenticated session for mandatory account ordering (No guest ordering)
+  React.useEffect(() => {
+    let isMounted = true;
+    async function checkAuth() {
+      try {
+        const res = await fetch("/api/auth/session");
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) setUserSession(data);
+        } else {
+          if (isMounted) setUserSession({ authenticated: false, user: null });
+        }
+      } catch {
+        if (isMounted) setUserSession({ authenticated: false, user: null });
+      } finally {
+        if (isMounted) setIsCheckingAuth(false);
+      }
+    }
+    checkAuth();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Sync address form when global context changes
   React.useEffect(() => {
@@ -207,6 +235,16 @@ export default function CartPage() {
   const handleInitiateOnlinePayment = async () => {
     if (isCreatingOrder) return;
 
+    if (!userSession?.authenticated) {
+      setOrderError(
+        isTa
+          ? "ஆர்டர் செய்ய வாசகர் கணக்கில் உள்நுழையவும் (விருந்தினர் ஆர்டர் அனுமதி இல்லை)."
+          : "Account required. Please sign in or create an account to order (No guest ordering)."
+      );
+      router.push("/login?redirect=/cart");
+      return;
+    }
+
     if (!isAddressFilled) {
       setOrderError(
         isTa
@@ -220,20 +258,6 @@ export default function CartPage() {
     setOrderError(null);
 
     try {
-      // Resolve user authentication state
-      let isGuest = true;
-      try {
-        const sessionRes = await fetch("/api/auth/session");
-        if (sessionRes.ok) {
-          const sessionData = await sessionRes.json();
-          if (sessionData?.authenticated && sessionData?.user?.id) {
-            isGuest = false;
-          }
-        }
-      } catch {
-        isGuest = true;
-      }
-
       const res = await fetch("/api/orders/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -254,13 +278,20 @@ export default function CartPage() {
             state: addressForm.districtState || "Tamil Nadu",
             pincode: addressForm.pincode,
           },
-          is_guest_checkout: isGuest,
-          guest_phone: addressForm.phone,
+          is_guest_checkout: false,
         }),
       });
 
       const data = await res.json();
       if (!res.ok) {
+        if (res.status === 401 || data.requiresAuth) {
+          router.push("/login?redirect=/cart");
+          throw new Error(
+            isTa
+              ? "ஆர்டர் செய்ய உங்கள் கணக்கில் உள்நுழைய வேண்டும்."
+              : "Please sign in or create an account to complete your order."
+          );
+        }
         throw new Error(data.error || "Order creation failed on server");
       }
 
@@ -462,6 +493,59 @@ export default function CartPage() {
                   </GlassPanel>
                 ))}
               </div>
+
+              {/* Mandatory Account Verification Notice (No Guest Ordering) */}
+              {!isCheckingAuth && !userSession?.authenticated && (
+                <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="h-9 w-9 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-700 dark:text-amber-400 shrink-0 mt-0.5">
+                      <AlertCircle className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-bold text-amber-950 dark:text-amber-200 font-tamil">
+                        {isTa
+                          ? "ஆர்டர் செய்ய வாசகர் கணக்கில் நுழையவும்"
+                          : "Sign In Required to Place Order"}
+                      </h3>
+                      <p className="text-xs text-amber-900/80 dark:text-amber-300/80 font-tamil mt-1 leading-relaxed">
+                        {isTa
+                          ? "அஞ்சல் கண்காணிப்பு மற்றும் பாதுகாப்பான விநியோகத்திற்கு வாசகர் கணக்கு கட்டாயமாகும் (விருந்தினர் ஆர்டர் அனுமதி இல்லை)."
+                          : "An authenticated account is required to dispatch and track your parcel. Guest ordering is disabled."}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2.5 pt-1">
+                    <Link
+                      href="/login?redirect=/cart"
+                      className="flex-1 min-h-[44px] py-2 px-4 rounded-xl bg-[#0A6847] hover:bg-[#085237] text-white text-xs sm:text-sm font-bold font-tamil flex items-center justify-center shadow-xs transition-all active:scale-98"
+                    >
+                      {isTa ? "உள்நுழைக (Sign In)" : "Sign In"}
+                    </Link>
+                    <Link
+                      href="/signup?redirect=/cart"
+                      className="flex-1 min-h-[44px] py-2 px-4 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-zinc-900 text-amber-900 dark:text-amber-200 hover:bg-amber-100/50 text-xs sm:text-sm font-bold font-tamil flex items-center justify-center shadow-2xs transition-all active:scale-98"
+                    >
+                      {isTa ? "புதிய கணக்கு (Create Account)" : "Create Account"}
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {!isCheckingAuth && userSession?.authenticated && (
+                <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-between text-xs font-tamil">
+                  <div className="flex items-center gap-2 text-emerald-900 dark:text-emerald-200">
+                    <CheckCircle2 className="h-4 w-4 text-[#0A6847]" />
+                    <span>
+                      {isTa
+                        ? `உள்நுழைந்துள்ளீர்கள்: ${userSession.user?.fullName || userSession.user?.email}`
+                        : `Signed in as: ${userSession.user?.fullName || userSession.user?.email}`}
+                    </span>
+                  </div>
+                  <Link href="/account" className="text-[#0A6847] font-bold hover:underline">
+                    {isTa ? "என் கணக்கு" : "My Account"}
+                  </Link>
+                </div>
+              )}
 
               {/* Inline Delivery Address Form */}
               <GlassPanel className="p-5 sm:p-6 rounded-2xl space-y-5">
@@ -783,11 +867,23 @@ export default function CartPage() {
                           setOrderError(err.error?.description || "Payment failed");
                         }}
                       />
+                    ) : !isCheckingAuth && !userSession?.authenticated ? (
+                      <Link
+                        href="/login?redirect=/cart"
+                        className="w-full min-h-[48px] px-6 rounded-2xl bg-[#0A6847] hover:bg-[#085036] text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md transition-all active:scale-[0.98] cursor-pointer font-tamil"
+                      >
+                        <CreditCard className="h-5 w-5" />
+                        <span>
+                          {isTa
+                            ? "உள்நுழைந்து பணம் செலுத்துக"
+                            : `Sign In to Pay (${formatINR(total)})`}
+                        </span>
+                      </Link>
                     ) : (
                       <button
                         type="button"
                         onClick={handleInitiateOnlinePayment}
-                        disabled={isCreatingOrder}
+                        disabled={isCreatingOrder || isCheckingAuth}
                         className="w-full min-h-[48px] px-6 rounded-2xl bg-[#0A6847] hover:bg-[#085036] text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md transition-all active:scale-[0.98] cursor-pointer disabled:opacity-60 font-tamil"
                       >
                         {isCreatingOrder ? (
@@ -807,34 +903,6 @@ export default function CartPage() {
                         )}
                       </button>
                     )}
-
-                    {/* WhatsApp Checkout Option */}
-                    <a
-                      href={`https://wa.me/918248654946?text=${encodeURIComponent(
-                        `வணக்கம் மேதகு களஞ்சியம்,\nநான் பின்வரும் நூல்களை வாங்க விரும்புகிறேன்:\n${items
-                          .map(
-                            (item) =>
-                              `• ${item.title} (${item.quantity} x ₹${item.price} = ₹${
-                                item.price * item.quantity
-                              })`
-                          )
-                          .join("\n")}\n\nநூல்கள் தொகை: ₹${subtotal}\nஅஞ்சல் மண்டலம்: ${shippingRegion}\nஅஞ்சல் கட்டணம்: ₹${shipping}\nமொத்தத் தொகை: ₹${total}${
-                          getFormattedAddress()
-                            ? `\n\nஎன் அஞ்சல் முகவரி:\n${getFormattedAddress()}`
-                            : "\n\nஎன் முகவரி விவரங்களை அடுத்து அனுப்புகிறேன்."
-                        }`
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full min-h-[48px] px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-md transition-all active:scale-[0.98] font-tamil cursor-pointer"
-                    >
-                      <MessageCircle className="h-5 w-5 fill-white shrink-0" />
-                      <span className="font-tamil">
-                        {isTa
-                          ? "வாட்ஸ்அப் வழி வாங்குக (WhatsApp Order)"
-                          : "Order on WhatsApp"}
-                      </span>
-                    </a>
                   </div>
 
                   {/* Trust Signals */}

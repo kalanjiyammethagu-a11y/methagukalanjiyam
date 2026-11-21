@@ -47,20 +47,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Resolve user ID if authenticated
+    // 3. Resolve user ID - mandatory authentication (No guest ordering permitted)
     let userId: string | null = null;
-    if (!is_guest_checkout) {
-      try {
-        const supabase = await createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (user) {
-          userId = user.id;
-        }
-      } catch {
-        // Fall back to guest mode if session check fails
+    try {
+      const supabase = await createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        userId = user.id;
       }
+    } catch {
+      // Supabase client error
+    }
+
+    if (!userId) {
+      return NextResponse.json(
+        {
+          error: "Account required. Please log in or create an account to complete your order.",
+          requiresAuth: true,
+        },
+        { status: 401 }
+      );
     }
 
     // 4. Generate unique business order number

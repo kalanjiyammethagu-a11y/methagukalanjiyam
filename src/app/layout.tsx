@@ -5,6 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { FloatingWhatsApp } from "@/components/layout/FloatingWhatsApp";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { ScrollToTopOnNavigation } from "@/components/layout/ScrollToTopOnNavigation";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { CartProvider } from "@/context/CartContext";
 import { safeJsonLdStringify } from "@/lib/sanitize";
@@ -126,7 +127,7 @@ export default function RootLayout({
         identifier: "UDYAM-TN-18-0101323",
         priceRange: "₹80 - ₹450",
         currenciesAccepted: "INR",
-        paymentAccepted: "Cash on Delivery, UPI, WhatsApp Order",
+        paymentAccepted: "UPI, Net Banking, Credit Card, Debit Card",
       },
       {
         "@type": "WebSite",
@@ -175,6 +176,7 @@ export default function RootLayout({
       >
         <LanguageProvider>
           <CartProvider>
+            <ScrollToTopOnNavigation />
             {/* Skip to Main Content Link for Keyboard Accessibility (WCAG 2.4.1) */}
             <a
               href="#main-content"

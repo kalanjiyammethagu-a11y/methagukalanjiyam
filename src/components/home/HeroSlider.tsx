@@ -196,7 +196,7 @@ export function HeroSlider({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Main Viewport Card */}
-      <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-[#121312] border border-black/10 shadow-2xl min-h-[460px] sm:min-h-[540px] lg:min-h-[580px] xl:min-h-[600px] flex items-end">
+      <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-[#121312] border border-black/10 shadow-2xl min-h-[440px] sm:min-h-[520px] lg:min-h-[580px] flex items-end">
         {/* Embla Viewport */}
         <div className="overflow-hidden absolute inset-0 w-full h-full" ref={emblaRef}>
           <div className="flex h-full w-full">
@@ -235,25 +235,30 @@ export function HeroSlider({
                     </picture>
 
                     {/* Directional Soft Gradient Scrims: Vivid Artwork + Crystal Clear Legibility */}
-                    <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.72)_0%,rgba(0,0,0,0.32)_42%,transparent_78%)] pointer-events-none" />
-                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.68)_0%,rgba(0,0,0,0.22)_45%,transparent_75%)] pointer-events-none" />
+                    <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.88)_0%,rgba(0,0,0,0.5)_50%,rgba(0,0,0,0.2)_100%)] pointer-events-none" />
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.72)_0%,rgba(0,0,0,0.25)_50%,transparent_80%)] pointer-events-none" />
                   </div>
 
                   {/* Editorial Left-Aligned Caption Block */}
-                  <div className="absolute inset-0 z-10 flex flex-col justify-end p-4 sm:p-8 lg:p-14 xl:p-16 !text-white pointer-events-none">
-                    <div className="pointer-events-auto max-w-3xl space-y-2.5 sm:space-y-4">
+                  <div className="absolute inset-0 z-10 flex flex-col justify-end p-5 sm:p-8 lg:p-14 xl:p-16 !text-white pointer-events-none">
+                    <div className="pointer-events-auto max-w-3xl space-y-2 sm:space-y-3.5 pb-6 sm:pb-0">
                       {/* Eyebrow Label with Hairline Rule */}
                       <div
                         className={cn(
-                          "flex items-center gap-2.5 transition-all duration-700 ease-out",
+                          "flex items-center gap-2 transition-all duration-700 ease-out",
                           isActive
                             ? "opacity-100 translate-y-0"
                             : "opacity-0 translate-y-3 pointer-events-none",
                           isReducedMotion && "transition-none translate-y-0 opacity-100"
                         )}
                       >
-                        <span className="h-[1px] w-5 sm:w-6 bg-emerald-400 inline-block shadow-sm" />
-                        <span className="text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase font-mono !text-emerald-300 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shadow-xs" />
+                        <span
+                          className={cn(
+                            "text-[11px] sm:text-xs font-bold text-emerald-300 drop-shadow-md",
+                            isTa ? "font-tamil normal-case tracking-normal" : "font-mono uppercase tracking-[0.14em]"
+                          )}
+                        >
                           {isTa ? slide.eyebrowTa : slide.eyebrowEn}
                         </span>
                       </div>
@@ -262,7 +267,7 @@ export function HeroSlider({
                       {index === 0 ? (
                         <h1
                           className={cn(
-                            "text-[clamp(1.35rem,5.5vw,2.75rem)] sm:text-[clamp(1.75rem,3.2vw,2.75rem)] leading-[1.16] font-bold font-serif font-tamil-serif !text-white tracking-[-0.015em] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] transition-all duration-700 delay-[80ms] ease-out",
+                            "text-xl sm:text-3xl lg:text-4xl leading-snug sm:leading-tight font-bold font-serif font-tamil-serif !text-white tracking-normal drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] transition-all duration-700 delay-[80ms] ease-out text-balance",
                             isActive
                               ? "opacity-100 translate-y-0"
                               : "opacity-0 translate-y-3 pointer-events-none",
@@ -274,7 +279,7 @@ export function HeroSlider({
                       ) : (
                         <h2
                           className={cn(
-                            "text-[clamp(1.35rem,5.5vw,2.75rem)] sm:text-[clamp(1.75rem,3.2vw,2.75rem)] leading-[1.16] font-bold font-serif font-tamil-serif !text-white tracking-[-0.015em] drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] transition-all duration-700 delay-[80ms] ease-out",
+                            "text-xl sm:text-3xl lg:text-4xl leading-snug sm:leading-tight font-bold font-serif font-tamil-serif !text-white tracking-normal drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] transition-all duration-700 delay-[80ms] ease-out text-balance",
                             isActive
                               ? "opacity-100 translate-y-0"
                               : "opacity-0 translate-y-3 pointer-events-none",
@@ -288,7 +293,7 @@ export function HeroSlider({
                       {/* Subtitle / Narrative Description */}
                       <p
                         className={cn(
-                          "text-[clamp(0.8125rem,3vw,1.05rem)] sm:text-[clamp(0.875rem,1.15vw,1.05rem)] !text-white/95 font-medium leading-relaxed max-w-2xl font-tamil drop-shadow-[0_1px_5px_rgba(0,0,0,0.9)] transition-all duration-700 delay-[160ms] ease-out line-clamp-3 sm:line-clamp-none",
+                          "text-xs sm:text-base !text-white/95 font-medium leading-relaxed max-w-2xl font-tamil drop-shadow-[0_1px_5px_rgba(0,0,0,0.9)] transition-all duration-700 delay-[160ms] ease-out line-clamp-2 sm:line-clamp-none",
                           isActive
                             ? "opacity-100 translate-y-0"
                             : "opacity-0 translate-y-3 pointer-events-none",
@@ -301,7 +306,7 @@ export function HeroSlider({
                       {/* Editorial Actions (Primary Pill + Secondary Underline Link) */}
                       <div
                         className={cn(
-                          "flex flex-wrap items-center gap-4 pt-1 sm:pt-2 transition-all duration-700 delay-[240ms] ease-out",
+                          "flex flex-wrap items-center gap-3 pt-1 sm:pt-2 transition-all duration-700 delay-[240ms] ease-out",
                           isActive
                             ? "opacity-100 translate-y-0"
                             : "opacity-0 translate-y-3 pointer-events-none",
@@ -310,7 +315,7 @@ export function HeroSlider({
                       >
                         <Link
                           href={slide.ctaPrimaryHref}
-                          className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold shadow-md transition-all active:scale-95 min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A6847] hover:bg-emerald-600 text-white text-xs sm:text-sm font-bold font-tamil shadow-lg shadow-emerald-950/60 transition-all active:scale-95 min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
                         >
                           <span>{isTa ? slide.ctaPrimaryLabelTa : slide.ctaPrimaryLabelEn}</span>
                           <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -319,7 +324,7 @@ export function HeroSlider({
                         {slide.ctaSecondaryHref && (
                           <Link
                             href={slide.ctaSecondaryHref}
-                            className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-white hover:text-emerald-300 transition-colors relative group py-2 min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-sm drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]"
+                            className="hidden sm:inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-white hover:text-emerald-300 transition-colors relative group py-2 min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-sm drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)] font-tamil"
                           >
                             <span>
                               {isTa ? slide.ctaSecondaryLabelTa : slide.ctaSecondaryLabelEn}
@@ -411,8 +416,8 @@ export function HeroSlider({
             })}
           </div>
 
-          {/* Minimal Editorial Prev / Next Buttons */}
-          <div className="flex items-center gap-1.5">
+          {/* Minimal Editorial Prev / Next Buttons (hidden on mobile, swipe-driven) */}
+          <div className="hidden sm:flex items-center gap-1.5">
             <button
               type="button"
               onClick={scrollPrev}

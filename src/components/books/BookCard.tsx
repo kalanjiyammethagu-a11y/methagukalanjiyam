@@ -3,6 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ShoppingBag } from "lucide-react";
 import { BookmarkRibbonIcon } from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
@@ -10,7 +11,6 @@ import { formatINR } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
-import { getWhatsAppOrderUrl } from "@/lib/whatsapp";
 
 export interface BookCardData {
   id: string;
@@ -42,6 +42,7 @@ export function BookCard({
   onAddToCart,
   className,
 }: BookCardProps) {
+  const router = useRouter();
   const { locale: contextLocale, isInWishlist, toggleWishlist, getFormattedAddress, showToast } = useLanguage();
   const { addToCart } = useCart();
   const locale = propLocale || contextLocale;
@@ -80,6 +81,13 @@ export function BookCard({
       actionLabelEn: "View Cart",
       actionHref: "/cart",
     });
+  };
+
+  const handleBuyNow = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleAddToCart(e);
+    router.push("/cart");
   };
 
   return (
@@ -149,7 +157,12 @@ export function BookCard({
         <div className="space-y-1.5">
           {/* Header Row: Category Kicker + Bookmark Ribbon Action */}
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#0D5C3A] font-tamil">
+            <span
+              className={cn(
+                "text-[11px] font-bold text-[#0D5C3A]",
+                locale === "ta" ? "font-tamil tracking-normal" : "uppercase tracking-wider font-sans"
+              )}
+            >
               {locale === "ta" ? book.categoryTa : book.categoryEn}
             </span>
 
@@ -187,25 +200,25 @@ export function BookCard({
             </button>
           </div>
 
-          {/* Bilingual Book Title */}
+          {/* Book Title */}
           <Link href={`/books/${book.slug}`} className="group/title block">
             <h3
               className={cn(
                 "font-bold text-[#191614] group-hover/title:text-[#0D5C3A] transition-colors leading-snug line-clamp-2",
-                isCompact ? "text-xs font-tamil" : isHorizontal ? "text-base sm:text-lg font-tamil-serif" : "text-sm sm:text-base font-tamil-serif"
+                isCompact
+                  ? "text-xs font-tamil"
+                  : isHorizontal
+                  ? "text-base sm:text-lg font-tamil-serif"
+                  : "text-sm sm:text-base font-tamil-serif"
               )}
             >
-              {locale === "ta" ? book.title : book.titleEn}
+              {locale === "ta" ? book.title : (book.titleEn || book.title)}
             </h3>
 
-            {/* Subtitle in opposite language */}
-            {locale === "en" ? (
-              <p className="text-xs text-[#665F57] font-tamil truncate mt-0.5">
-                {book.title}
-              </p>
-            ) : (
-              <p className="text-xs text-[#665F57] truncate mt-0.5" lang="en">
-                {book.titleEn}
+            {/* Subtitle: Only show secondary language when in horizontal layout and distinctly different */}
+            {isHorizontal && book.titleEn && book.title !== book.titleEn && (
+              <p className="text-xs text-[#665F57] truncate mt-0.5" lang={locale === "ta" ? "en" : "ta"}>
+                {locale === "ta" ? book.titleEn : book.title}
               </p>
             )}
           </Link>
@@ -246,26 +259,19 @@ export function BookCard({
                 <ShoppingBag className="h-4.5 w-4.5" />
               </button>
 
-              {/* Direct WhatsApp Order */}
-              <a
-                href={getWhatsAppOrderUrl(
-                  book.title,
-                  book.discountPrice ?? book.price,
-                  book.slug,
-                  1,
-                  getFormattedAddress()
-                )}
-                target="_blank"
-                rel="noopener noreferrer"
+              {/* Direct On-Site Buy Button (Navigates to Cart / Checkout) */}
+              <button
+                type="button"
+                onClick={handleBuyNow}
                 aria-label={
                   locale === "ta"
-                    ? `${book.title} — புலனம் (WhatsApp) வழியாக வாங்குக`
-                    : `Order ${book.titleEn} on WhatsApp`
+                    ? `${book.title} — இப்போதே வாங்குக`
+                    : `Buy ${book.titleEn} now`
                 }
                 className="min-h-[44px] px-3.5 py-2 rounded-lg bg-[#0D5C3A] hover:bg-[#08442A] text-white flex items-center justify-center text-xs font-bold transition-colors font-tamil cursor-pointer active:bg-[#063320] shadow-xs"
               >
-                <span>{locale === "ta" ? "வாங்க" : "Order"}</span>
-              </a>
+                <span>{locale === "ta" ? "வாங்க" : "Buy Now"}</span>
+              </button>
             </div>
           ) : (
             <span className="text-xs text-[#665F57] font-semibold">

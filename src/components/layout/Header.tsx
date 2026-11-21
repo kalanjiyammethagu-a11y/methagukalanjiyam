@@ -245,7 +245,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
                 )}
               </Link>
 
-              {/* 5. Hero Shopping Cart Button (Single Filled Accent CTA) */}
+              {/* 5. Hero Shopping Cart Button (Single Filled Accent CTA - desktop/tablet, bottom bar on mobile) */}
               <Link
                 href="/cart"
                 aria-label={
@@ -253,7 +253,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
                     ? `கூடை (${cartCount} நூல்கள்)`
                     : `Shopping Cart (${cartCount} items)`
                 }
-                className="relative min-h-[44px] h-10 px-3.5 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white flex items-center justify-center gap-2 text-xs font-bold transition-all shadow-sm shadow-[var(--color-accent)]/20 cursor-pointer active:scale-95 shrink-0"
+                className="relative hidden sm:flex min-h-[44px] h-10 px-3.5 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white items-center justify-center gap-2 text-xs font-bold transition-all shadow-sm shadow-[var(--color-accent)]/20 cursor-pointer active:scale-95 shrink-0"
                 title={isTa ? "கூடை" : "Cart"}
               >
                 <ShoppingBag className="h-4 w-4 text-white shrink-0" />

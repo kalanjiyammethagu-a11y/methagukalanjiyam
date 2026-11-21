@@ -167,8 +167,8 @@ export const translations = {
     en: "Saved Postal Delivery Address",
   },
   savedAddressDesc: {
-    ta: "இங்கு சேமிக்கப்படும் முகவரி WhatsApp ஆர்டர் செய்தியில் தானாகவே இணைக்கப்படும்.",
-    en: "This address will be automatically prefilled into your WhatsApp order message.",
+    ta: "இங்கு சேமிக்கப்படும் முகவரி உங்கள் இணையதள ஆர்டரில் தானாகவே இணைக்கப்படும்.",
+    en: "This address will be automatically prefilled during on-site checkout.",
   },
 
   // Account
@@ -181,8 +181,8 @@ export const translations = {
     en: "Saved Wishlist",
   },
   orderHistoryTitle: {
-    ta: "ஆர்டர் விசாரணைகள்",
-    en: "WhatsApp Order Logs",
+    ta: "ஆர்டர் வரலாறுகள்",
+    en: "Order History",
   },
   saveChanges: {
     ta: "அமைப்புகளைச் சேமிக்க",

@@ -13,20 +13,20 @@ export function FloatingWhatsApp() {
   const { locale } = useLanguage();
   const isTa = locale === "ta";
 
-  if (pathname?.startsWith("/admin")) {
+  const isBookDetail = Boolean(pathname?.startsWith("/books/") && pathname !== "/books");
+
+  // Hide on admin, cart, and book detail pages to keep purchasing focused on website checkout
+  if (pathname?.startsWith("/admin") || pathname === "/cart" || isBookDetail) {
     return null;
   }
 
-  // When on a book detail page on mobile, elevate above the sticky purchase bar
-  const isBookDetail = Boolean(pathname?.startsWith("/books/") && pathname !== "/books");
-
   const message = encodeURIComponent(
-    "வணக்கம் மேதகு களஞ்சியம், நான் புத்தகங்களை வாங்க விரும்புகிறேன்."
+    "வணக்கம் மேதகு களஞ்சியம், எனக்கு உதவி தேவைப்படுகிறது."
   );
 
   return (
     <aside
-      aria-label={isTa ? "வாட்ஸ்அப் உதவி மையம்" : "WhatsApp Helpdesk"}
+      aria-label={isTa ? "வாடிக்கையாளர் உதவி மையம்" : "Customer Support"}
       className={cn(
         "fixed right-4 sm:right-5 z-40 flex items-center gap-2 group transition-all duration-200",
         isBookDetail
@@ -36,7 +36,7 @@ export function FloatingWhatsApp() {
     >
       {/* Tooltip badge on hover/focus */}
       <span className="hidden sm:inline-block px-3 py-1.5 rounded-xl bg-white text-emerald-950 font-bold text-xs shadow-lg border border-black/8 opacity-0 group-hover:opacity-100 transition-opacity font-tamil pointer-events-none">
-        {isTa ? "நூல்கள் வாங்க வாட்ஸ்அப்பில் பேசுக" : "Order via WhatsApp"}
+        {isTa ? "வாடிக்கையாளர் உதவி மையம்" : "Customer Support"}
       </span>
 
       {/* Floating Action Button */}
@@ -46,8 +46,8 @@ export function FloatingWhatsApp() {
         rel="noopener noreferrer"
         aria-label={
           isTa
-            ? `வாட்ஸ்அப் (WhatsApp) வழியாக நூல்களை வாங்குக — +${WHATSAPP_NUMBER}`
-            : `Chat & Order on WhatsApp (+${WHATSAPP_NUMBER})`
+            ? `வாட்ஸ்அப் உதவி மையத்தைத் தொடர்புகொள்க — +${WHATSAPP_NUMBER}`
+            : `Contact Customer Support via WhatsApp (+${WHATSAPP_NUMBER})`
         }
         className="h-14 w-14 rounded-full bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white flex items-center justify-center shadow-2xl shadow-emerald-900/40 border-2 border-white transition-all duration-300 min-h-[48px] min-w-[48px]"
       >

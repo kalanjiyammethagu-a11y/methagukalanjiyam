@@ -25,8 +25,9 @@ export function BottomNav() {
     setMounted(true);
   }, []);
 
-  // Hide on dedicated admin console routes
-  if (pathname?.startsWith("/admin")) {
+  // Hide on dedicated admin console routes or book detail view (where sticky purchase bar is active)
+  const isBookDetail = Boolean(pathname?.startsWith("/books/") && pathname !== "/books");
+  if (pathname?.startsWith("/admin") || isBookDetail) {
     return null;
   }
 
@@ -101,7 +102,7 @@ export function BottomNav() {
                   <div className="h-9 w-9 rounded-full flex items-center justify-center transition-all group-active:scale-90">
                     <Icon className="h-5 w-5 stroke-[1.8] group-hover:stroke-[2.2]" />
                   </div>
-                  <span className="text-[10px] font-medium mt-0.5 tracking-tight font-tamil leading-none">
+                  <span className="text-[10px] font-medium mt-0.5 tracking-normal font-tamil leading-none">
                     {label}
                   </span>
                 </button>
@@ -140,7 +141,7 @@ export function BottomNav() {
                     </span>
                   )}
                 </div>
-                <span className="text-[10px] mt-0.5 tracking-tight font-tamil leading-none">
+                <span className="text-[10px] mt-0.5 tracking-normal font-tamil leading-none">
                   {label}
                 </span>
 

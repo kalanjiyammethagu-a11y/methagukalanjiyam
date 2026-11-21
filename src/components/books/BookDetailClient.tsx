@@ -3,10 +3,11 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Check,
   Share2,
-  MessageCircle,
+  CreditCard,
   ShoppingBag,
   Truck,
   AlertTriangle,
@@ -22,7 +23,6 @@ import { GlassPanel } from "@/components/ui/GlassPanel";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
 import { formatINR, cn } from "@/lib/utils";
-import { getWhatsAppOrderUrl } from "@/lib/whatsapp";
 import type { BookItem } from "@/data/books";
 
 export interface BookDetailClientProps {
@@ -110,9 +110,10 @@ export function BookCoverActions({ book }: { book: BookItem }) {
 
 /**
  * Main interactive unit for book detail:
- * Quantity selector, WhatsApp ordering, Tabs switcher, and mobile sticky purchase bar
+ * Quantity selector, On-site checkout, Tabs switcher, and mobile sticky purchase bar
  */
 export function BookDetailClient({ book }: BookDetailClientProps) {
+  const router = useRouter();
   const { locale, getFormattedAddress, shippingRegion, showToast } = useLanguage();
   const { addToCart } = useCart();
   const [quantity, setQuantity] = React.useState(1);
@@ -145,6 +146,22 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
       actionLabelEn: "View Cart",
       actionHref: "/cart",
     });
+  };
+
+  const handleBuyNow = () => {
+    addToCart({
+      id: book.id,
+      title: book.title,
+      titleEn: book.titleEn,
+      author: book.author,
+      authorEn: book.authorEn,
+      price: book.discountPrice ?? book.price,
+      image: book.image,
+      slug: book.slug,
+      quantity,
+      maxStock: book.stock || 10,
+    });
+    router.push("/cart");
   };
 
   return (
@@ -202,25 +219,18 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
                 <ShoppingBag className="h-5 w-5 shrink-0" />
                 <span>{isTa ? "கூடையில் சேர்" : "Add to Cart"}</span>
               </button>
-              <a
-                href={getWhatsAppOrderUrl(
-                  book.title,
-                  book.discountPrice ?? book.price,
-                  book.slug,
-                  quantity,
-                  getFormattedAddress()
-                )}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={handleBuyNow}
                 className="flex-1 min-h-[48px] px-6 rounded-2xl bg-[#0A6847] hover:bg-[#085237] text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md transition-all active:scale-[0.98] font-tamil cursor-pointer"
               >
-                <MessageCircle className="h-5 w-5 fill-white shrink-0" />
+                <CreditCard className="h-5 w-5 shrink-0" />
                 <span className="font-tamil">
                   {isTa
-                    ? `வாட்ஸ்அப் வழி வாங்குக (${formatINR((book.discountPrice ?? book.price) * quantity)})`
-                    : `Order on WhatsApp (${formatINR((book.discountPrice ?? book.price) * quantity)})`}
+                    ? `இப்போதே வாங்குக (${formatINR((book.discountPrice ?? book.price) * quantity)})`
+                    : `Buy Now (${formatINR((book.discountPrice ?? book.price) * quantity)})`}
                 </span>
-              </a>
+              </button>
             </div>
 
             {/* Fast Delivery Timeline Reassurance */}
@@ -405,23 +415,16 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
               <span className="hidden xs:inline">{isTa ? "கூடை" : "Cart"}</span>
             </button>
 
-            {/* Mobile Sticky WhatsApp Order */}
-            <a
-              href={getWhatsAppOrderUrl(
-                book.title,
-                book.discountPrice ?? book.price,
-                book.slug,
-                quantity,
-                getFormattedAddress()
-              )}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={isTa ? "வாட்ஸ்அப் வழி வாங்குக" : "Order on WhatsApp"}
-              className="min-h-[44px] px-3.5 rounded-xl bg-[#0A6847] hover:bg-[#085237] text-white font-bold text-xs flex items-center gap-1.5 shadow-md active:scale-95 transition-all shrink-0 font-tamil cursor-pointer"
+            {/* Mobile Sticky Buy Now */}
+            <button
+              type="button"
+              onClick={handleBuyNow}
+              aria-label={isTa ? "இப்போதே வாங்குக" : "Buy Now"}
+              className="min-h-[44px] px-4 rounded-xl bg-[#0A6847] hover:bg-[#085237] text-white font-bold text-xs flex items-center gap-1.5 shadow-md active:scale-95 transition-all shrink-0 font-tamil cursor-pointer"
             >
-              <MessageCircle className="h-4 w-4 fill-white shrink-0" />
-              <span>{isTa ? "வாங்குக" : "Order"}</span>
-            </a>
+              <CreditCard className="h-4 w-4 shrink-0" />
+              <span>{isTa ? "வாங்க" : "Buy Now"}</span>
+            </button>
           </div>
         </aside>
       )}
