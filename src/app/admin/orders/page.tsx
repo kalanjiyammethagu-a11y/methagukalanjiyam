@@ -427,7 +427,7 @@ export default function AdminOrdersPage() {
                           )}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="h-8 w-8 rounded-lg bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 flex items-center justify-center transition-colors shadow-2xs"
+                          className="h-10 w-10 sm:h-8 sm:w-8 min-h-[44px] min-w-[44px] sm:min-h-[32px] sm:min-w-[32px] rounded-lg bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 flex items-center justify-center transition-colors shadow-2xs"
                           title="Chat on WhatsApp"
                         >
                           <MessageCircle className="h-4 w-4" />
@@ -435,7 +435,7 @@ export default function AdminOrdersPage() {
                         <button
                           type="button"
                           onClick={() => setSelectedOrder(order)}
-                          className="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-[#0A6847] hover:text-white text-gray-700 text-xs font-semibold transition-colors"
+                          className="px-3 py-2 sm:px-2.5 sm:py-1 min-h-[44px] sm:min-h-[32px] rounded-lg bg-gray-100 hover:bg-[#0A6847] hover:text-white text-gray-700 text-xs font-semibold transition-colors flex items-center justify-center"
                         >
                           View
                         </button>

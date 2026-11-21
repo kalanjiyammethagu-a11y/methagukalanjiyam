@@ -63,7 +63,7 @@ export function Toast({ toast, onClose, locale }: ToastProps) {
               type="button"
               onClick={onClose}
               aria-label={isTa ? "மூடுக" : "Close notification"}
-              className="h-7 w-7 rounded-full hover:bg-[var(--color-surface-subtle)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink-primary)] flex items-center justify-center transition-colors cursor-pointer shrink-0"
+              className="h-9 w-9 min-h-[44px] min-w-[44px] rounded-full hover:bg-[var(--color-surface-subtle)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink-primary)] flex items-center justify-center transition-colors cursor-pointer shrink-0 -mr-2 -mt-1"
             >
               <X className="h-4 w-4" />
             </button>

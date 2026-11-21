@@ -471,7 +471,7 @@ export default function AdminSupportersPage() {
                       href={s.instagramUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="h-8 w-8 rounded-lg bg-pink-50 hover:bg-pink-100 text-pink-700 flex items-center justify-center transition-colors min-h-[32px] min-w-[32px]"
+                      className="h-9 w-9 rounded-lg bg-pink-50 hover:bg-pink-100 text-pink-700 flex items-center justify-center transition-colors min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px]"
                       title="Open Instagram"
                     >
                       <Instagram className="h-4 w-4" />
@@ -482,7 +482,7 @@ export default function AdminSupportersPage() {
                       href={s.whatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="h-8 w-8 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 flex items-center justify-center transition-colors min-h-[32px] min-w-[32px]"
+                      className="h-9 w-9 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 flex items-center justify-center transition-colors min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px]"
                       title="Open WhatsApp"
                     >
                       <MessageCircle className="h-4 w-4" />
@@ -494,7 +494,7 @@ export default function AdminSupportersPage() {
                   <button
                     type="button"
                     onClick={() => handleToggleActive(s.id)}
-                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[36px] ${
+                    className={`px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[44px] sm:min-h-[36px] flex items-center justify-center ${
                       s.isActive
                         ? "bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200"
                         : "bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200"
@@ -507,16 +507,16 @@ export default function AdminSupportersPage() {
                   <button
                     type="button"
                     onClick={() => handleOpenEdit(s)}
-                    className="h-9 w-9 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors cursor-pointer min-h-[36px] min-w-[36px]"
+                    className="h-10 w-10 sm:h-9 sm:w-9 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center transition-colors cursor-pointer min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px]"
                     title="Edit Member Details"
                   >
-                    <Pencil className="h-3.5 w-3.5" />
+                    <Pencil className="h-4 w-4" />
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setDeleteTarget(s)}
-                    className="h-9 w-9 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition-colors cursor-pointer min-h-[36px] min-w-[36px]"
+                    className="h-10 w-10 sm:h-9 sm:w-9 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition-colors cursor-pointer min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px]"
                     title="Remove Member"
                   >
                     <Trash2 className="h-3.5 w-3.5" />

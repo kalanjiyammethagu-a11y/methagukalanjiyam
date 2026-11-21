@@ -355,7 +355,7 @@ export function HeroSlider({
                 ? "ஸ்லைடு இயக்குக (Play)"
                 : "Play slideshow"
             }
-            className="h-9 w-9 rounded-full bg-black/25 hover:bg-black/50 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+            className="h-11 w-11 sm:h-9 sm:w-9 min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] rounded-full bg-black/25 hover:bg-black/50 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             title={isPlaying ? "Pause" : "Play"}
           >
             {isPlaying ? (
@@ -391,7 +391,7 @@ export function HeroSlider({
                   aria-selected={isCurrent}
                   aria-label={`Go to slide ${idx + 1}: ${isTa ? slide.titleTa : slide.titleEn}`}
                   onClick={() => scrollTo(idx)}
-                  className="group relative h-6 py-2.5 flex items-center cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-xs"
+                  className="group relative min-h-[44px] py-3.5 flex items-center cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-xs"
                 >
                   <span className="block h-[2px] w-8 sm:w-12 rounded-full bg-white/20 overflow-hidden relative transition-colors group-hover:bg-white/40">
                     {isCurrent ? (
