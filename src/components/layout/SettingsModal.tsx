@@ -195,14 +195,14 @@ export function SettingsModal() {
                 placeholder={isTa ? "பெயர் (Full Name)" : "Full Name"}
                 value={addressForm.fullName}
                 onChange={(e) => setAddressForm({ ...addressForm, fullName: e.target.value })}
-                className="px-3.5 py-2.5 text-xs rounded-xl border border-black/10 bg-white font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847] min-h-[44px]"
+                className="px-3.5 py-2.5 text-base sm:text-sm rounded-xl border border-black/10 bg-white font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847] min-h-[44px]"
               />
               <input
                 type="tel"
                 placeholder={isTa ? "தொலைபேசி எண் (Phone / WA)" : "Phone Number"}
                 value={addressForm.phone}
                 onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
-                className="px-3.5 py-2.5 text-xs rounded-xl border border-black/10 bg-white font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847] min-h-[44px]"
+                className="px-3.5 py-2.5 text-base sm:text-sm rounded-xl border border-black/10 bg-white font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847] min-h-[44px]"
               />
             </div>
 
@@ -211,7 +211,7 @@ export function SettingsModal() {
               placeholder={isTa ? "கதவு எண், தெரு முகவரி (Door No, Street Address)" : "Street Address"}
               value={addressForm.doorStreet}
               onChange={(e) => setAddressForm({ ...addressForm, doorStreet: e.target.value })}
-              className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-black/10 bg-white font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847] min-h-[44px]"
+              className="w-full px-3.5 py-2.5 text-base sm:text-sm rounded-xl border border-black/10 bg-white font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847] min-h-[44px]"
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -220,21 +220,21 @@ export function SettingsModal() {
                 placeholder={isTa ? "நகரம் / ஊர் (City)" : "City"}
                 value={addressForm.cityArea}
                 onChange={(e) => setAddressForm({ ...addressForm, cityArea: e.target.value })}
-                className="px-3.5 py-2.5 text-xs rounded-xl border border-black/10 bg-white font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847] min-h-[44px]"
+                className="px-3.5 py-2.5 text-base sm:text-sm rounded-xl border border-black/10 bg-white font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847] min-h-[44px]"
               />
               <input
                 type="text"
                 placeholder={isTa ? "மாவட்டம் / மாநிலம்" : "State"}
                 value={addressForm.districtState}
                 onChange={(e) => setAddressForm({ ...addressForm, districtState: e.target.value })}
-                className="px-3.5 py-2.5 text-xs rounded-xl border border-black/10 bg-white font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847] min-h-[44px]"
+                className="px-3.5 py-2.5 text-base sm:text-sm rounded-xl border border-black/10 bg-white font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847] min-h-[44px]"
               />
               <input
                 type="text"
                 placeholder={isTa ? "அஞ்சல் குறியீடு (Pincode)" : "Pincode"}
                 value={addressForm.pincode}
                 onChange={(e) => setAddressForm({ ...addressForm, pincode: e.target.value })}
-                className="px-3.5 py-2.5 text-xs rounded-xl border border-black/10 bg-white font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847] min-h-[44px]"
+                className="px-3.5 py-2.5 text-base sm:text-sm rounded-xl border border-black/10 bg-white font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847] min-h-[44px]"
               />
             </div>
 

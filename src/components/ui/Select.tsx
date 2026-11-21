@@ -69,7 +69,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             aria-invalid={Boolean(error)}
             aria-describedby={describedBy || undefined}
             className={cn(
-              "w-full min-h-[44px] h-11 px-3.5 pr-10 rounded-xl text-sm appearance-none transition-all duration-150 cursor-pointer",
+              "w-full min-h-[44px] h-11 px-3.5 pr-10 rounded-xl text-base sm:text-sm appearance-none transition-all duration-150 cursor-pointer",
               "bg-[var(--color-surface-card)] text-[var(--color-ink-primary)]",
               "border border-[var(--color-border-subtle)]",
               "hover:border-[var(--color-border-strong)]",

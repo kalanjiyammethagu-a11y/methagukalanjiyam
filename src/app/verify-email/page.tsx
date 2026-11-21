@@ -175,7 +175,7 @@ function VerifyEmailContent() {
                   value={resendEmail}
                   onChange={(e) => setResendEmail(e.target.value)}
                   placeholder="your-email@example.com"
-                  className="w-full h-10 pl-9 pr-3 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#222222] text-xs outline-none focus:border-[#0A6847]"
+                  className="w-full min-h-[44px] h-11 pl-9 pr-3 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#222222] text-base sm:text-sm outline-none focus:border-[#0A6847]"
                 />
               </div>
 
@@ -188,7 +188,7 @@ function VerifyEmailContent() {
               <button
                 type="submit"
                 disabled={resendLoading || !resendEmail}
-                className="w-full h-10 rounded-xl bg-[#0A6847] hover:bg-[#085036] disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer font-tamil"
+                className="w-full min-h-[44px] h-11 rounded-xl bg-[#0A6847] hover:bg-[#085036] disabled:opacity-50 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer font-tamil"
               >
                 {resendLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

@@ -70,7 +70,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             aria-invalid={Boolean(error)}
             aria-describedby={describedBy || undefined}
             className={cn(
-              "w-full min-h-[44px] h-11 rounded-xl text-sm transition-all duration-150",
+              "w-full min-h-[44px] h-11 rounded-xl text-base sm:text-sm transition-all duration-150",
               "bg-[var(--color-surface-card)] text-[var(--color-ink-primary)]",
               "border border-[var(--color-border-subtle)] placeholder:text-[var(--color-ink-muted)]",
               "hover:border-[var(--color-border-strong)]",

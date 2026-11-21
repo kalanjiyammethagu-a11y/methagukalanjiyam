@@ -256,7 +256,7 @@ export default function SignUpPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@example.com"
-                    className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#222222] text-xs outline-none focus:border-[#0A6847] focus:ring-1 focus:ring-[#0A6847]"
+                    className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#222222] text-base sm:text-sm outline-none focus:border-[#0A6847] focus:ring-1 focus:ring-[#0A6847]"
                   />
                 </div>
               </div>
@@ -269,7 +269,7 @@ export default function SignUpPage() {
                 >
                   {isTa ? "கடவுச்சொல்" : "Password"} *
                 </label>
-                <div className="relative">
+                <div className="relative flex items-center">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#888888]" />
                   <input
                     id="signup-password"
@@ -279,12 +279,12 @@ export default function SignUpPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="w-full h-11 pl-10 pr-10 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#222222] text-xs outline-none focus:border-[#0A6847] focus:ring-1 focus:ring-[#0A6847]"
+                    className="w-full h-11 pl-10 pr-12 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#222222] text-base sm:text-sm outline-none focus:border-[#0A6847] focus:ring-1 focus:ring-[#0A6847]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#777777] hover:text-[#111111] dark:hover:text-white"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-[#777777] hover:text-[#111111] dark:hover:text-white cursor-pointer"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -374,7 +374,7 @@ export default function SignUpPage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder={isTa ? "எ.கா. க. மாதவன்" : "e.g. John Doe"}
-                    className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#222222] text-xs outline-none focus:border-[#0A6847] focus:ring-1 focus:ring-[#0A6847]"
+                    className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#222222] text-base sm:text-sm outline-none focus:border-[#0A6847] focus:ring-1 focus:ring-[#0A6847]"
                   />
                 </div>
               </div>
@@ -395,7 +395,7 @@ export default function SignUpPage() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
                     placeholder="9876543210"
-                    className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#222222] text-xs outline-none focus:border-[#0A6847] focus:ring-1 focus:ring-[#0A6847]"
+                    className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#222222] text-base sm:text-sm outline-none focus:border-[#0A6847] focus:ring-1 focus:ring-[#0A6847]"
                   />
                 </div>
               </div>

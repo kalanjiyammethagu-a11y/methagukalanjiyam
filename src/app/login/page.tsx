@@ -461,7 +461,7 @@ function LoginForm() {
                     aria-invalid={Boolean(touched.fullName && errors.fullName)}
                     placeholder={isTa ? "எ.கா. க. தமிழரசன்" : "e.g. Tamilarasan"}
                     className={cn(
-                      "w-full px-4 py-2.5 rounded-xl border bg-white text-sm font-tamil text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 transition-all min-h-[44px]",
+                      "w-full px-4 py-2.5 rounded-xl border bg-white text-base sm:text-sm font-tamil text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 transition-all min-h-[44px]",
                       touched.fullName && errors.fullName
                         ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
                         : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
@@ -507,7 +507,7 @@ function LoginForm() {
                         aria-invalid={Boolean(touched.phone && errors.phone)}
                         placeholder="82486 54946"
                         className={cn(
-                          "w-full pl-12 pr-4 py-2.5 rounded-xl border bg-white text-sm font-mono text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 transition-all min-h-[44px]",
+                          "w-full pl-12 pr-4 py-2.5 rounded-xl border bg-white text-base sm:text-sm font-mono text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 transition-all min-h-[44px]",
                           touched.phone && errors.phone
                             ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
                             : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]",
@@ -588,7 +588,7 @@ function LoginForm() {
                       aria-invalid={Boolean(touched.email && errors.email)}
                       placeholder="name@example.com"
                       className={cn(
-                        "w-full px-4 py-2.5 rounded-xl border bg-white text-sm text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 transition-all min-h-[44px]",
+                        "w-full px-4 py-2.5 rounded-xl border bg-white text-base sm:text-sm text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 transition-all min-h-[44px]",
                         touched.email && errors.email
                           ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
                           : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
@@ -624,7 +624,7 @@ function LoginForm() {
                       aria-invalid={Boolean(touched.password && errors.password)}
                       placeholder="••••••••"
                       className={cn(
-                        "w-full px-4 py-2.5 rounded-xl border bg-white text-sm text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 transition-all min-h-[44px]",
+                        "w-full px-4 py-2.5 rounded-xl border bg-white text-base sm:text-sm text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 transition-all min-h-[44px]",
                         touched.password && errors.password
                           ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
                           : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"

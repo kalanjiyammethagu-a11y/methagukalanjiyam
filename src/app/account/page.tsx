@@ -443,7 +443,7 @@ export default function AccountPage() {
                           setAddressForm({ ...addressForm, fullName: e.target.value })
                         }
                         placeholder={isTa ? "எ.கா: சுந்தரம் அல்லது அறிவழகன்" : "e.g. Arivalagan M"}
-                        className="w-full px-4 py-2.5 rounded-xl border border-black/12 bg-white text-sm text-[#111111] placeholder:text-zinc-400 focus:ring-2 focus:ring-[#0A6847]/30 focus:border-[#0A6847] transition-all min-h-[44px]"
+                        className="w-full px-4 py-2.5 rounded-xl border border-black/12 bg-white text-base sm:text-sm text-[#111111] placeholder:text-zinc-400 focus:ring-2 focus:ring-[#0A6847]/30 focus:border-[#0A6847] transition-all min-h-[44px]"
                       />
                     </div>
 
@@ -460,7 +460,7 @@ export default function AccountPage() {
                           setAddressForm({ ...addressForm, phone: e.target.value })
                         }
                         placeholder={isTa ? "+91 98765 43210" : "+91 98765 43210"}
-                        className="w-full px-4 py-2.5 rounded-xl border border-black/12 bg-white text-sm text-[#111111] placeholder:text-zinc-400 focus:ring-2 focus:ring-[#0A6847]/30 focus:border-[#0A6847] transition-all min-h-[44px]"
+                        className="w-full px-4 py-2.5 rounded-xl border border-black/12 bg-white text-base sm:text-sm text-[#111111] placeholder:text-zinc-400 focus:ring-2 focus:ring-[#0A6847]/30 focus:border-[#0A6847] transition-all min-h-[44px]"
                       />
                     </div>
                   </div>
@@ -478,7 +478,7 @@ export default function AccountPage() {
                         setAddressForm({ ...addressForm, doorStreet: e.target.value })
                       }
                       placeholder={isTa ? "எ.கா: கதவு எண் 12, வடக்குத் தெரு" : "Door No 12, North Street"}
-                      className="w-full px-4 py-2.5 rounded-xl border border-black/12 bg-white text-sm text-[#111111] placeholder:text-zinc-400 focus:ring-2 focus:ring-[#0A6847]/30 focus:border-[#0A6847] transition-all min-h-[44px]"
+                      className="w-full px-4 py-2.5 rounded-xl border border-black/12 bg-white text-base sm:text-sm text-[#111111] placeholder:text-zinc-400 focus:ring-2 focus:ring-[#0A6847]/30 focus:border-[#0A6847] transition-all min-h-[44px]"
                     />
                   </div>
 
@@ -496,7 +496,7 @@ export default function AccountPage() {
                           setAddressForm({ ...addressForm, cityArea: e.target.value })
                         }
                         placeholder={isTa ? "எ.கா: திருநெல்வேலி / சென்னை" : "Chennai"}
-                        className="w-full px-4 py-2.5 rounded-xl border border-black/12 bg-white text-sm text-[#111111] placeholder:text-zinc-400 focus:ring-2 focus:ring-[#0A6847]/30 focus:border-[#0A6847] transition-all min-h-[44px]"
+                        className="w-full px-4 py-2.5 rounded-xl border border-black/12 bg-white text-base sm:text-sm text-[#111111] placeholder:text-zinc-400 focus:ring-2 focus:ring-[#0A6847]/30 focus:border-[#0A6847] transition-all min-h-[44px]"
                       />
                     </div>
 
@@ -510,7 +510,7 @@ export default function AccountPage() {
                         onChange={(e) =>
                           setAddressForm({ ...addressForm, districtState: e.target.value })
                         }
-                        className="w-full px-4 py-2.5 rounded-xl border border-black/12 bg-white text-sm text-[#111111] focus:ring-2 focus:ring-[#0A6847]/30 focus:border-[#0A6847] transition-all min-h-[44px]"
+                        className="w-full px-4 py-2.5 rounded-xl border border-black/12 bg-white text-base sm:text-sm text-[#111111] focus:ring-2 focus:ring-[#0A6847]/30 focus:border-[#0A6847] transition-all min-h-[44px]"
                       >
                         <option value="தமிழ்நாடு (Tamil Nadu)">தமிழ்நாடு (Tamil Nadu)</option>
                         <option value="புதுச்சேரி (Puducherry)">புதுச்சேரி (Puducherry)</option>
@@ -536,7 +536,7 @@ export default function AccountPage() {
                           setAddressForm({ ...addressForm, pincode: e.target.value })
                         }
                         placeholder="627201"
-                        className="w-full px-4 py-2.5 rounded-xl border border-black/12 bg-white text-sm text-[#111111] placeholder:text-zinc-400 focus:ring-2 focus:ring-[#0A6847]/30 focus:border-[#0A6847] transition-all min-h-[44px]"
+                        className="w-full px-4 py-2.5 rounded-xl border border-black/12 bg-white text-base sm:text-sm text-[#111111] placeholder:text-zinc-400 focus:ring-2 focus:ring-[#0A6847]/30 focus:border-[#0A6847] transition-all min-h-[44px]"
                       />
                     </div>
                   </div>

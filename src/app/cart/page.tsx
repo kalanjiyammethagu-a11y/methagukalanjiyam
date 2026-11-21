@@ -590,7 +590,7 @@ export default function CartPage() {
                       aria-invalid={Boolean(touched.fullName && errors.fullName)}
                       placeholder={isTa ? "எ.கா. வே. தமிழரசன்" : "e.g. Tamilarasan"}
                       className={cn(
-                        "w-full px-3.5 py-2 rounded-xl border bg-white text-sm font-tamil text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
+                        "w-full px-3.5 py-2 rounded-xl border bg-white text-base sm:text-sm font-tamil text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
                         touched.fullName && errors.fullName
                           ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
                           : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
@@ -622,7 +622,7 @@ export default function CartPage() {
                       aria-invalid={Boolean(touched.phone && errors.phone)}
                       placeholder="82486 54946"
                       className={cn(
-                        "w-full px-3.5 py-2 rounded-xl border bg-white text-sm font-mono text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
+                        "w-full px-3.5 py-2 rounded-xl border bg-white text-base sm:text-sm font-mono text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
                         touched.phone && errors.phone
                           ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
                           : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
@@ -652,7 +652,7 @@ export default function CartPage() {
                       aria-invalid={Boolean(touched.doorStreet && errors.doorStreet)}
                       placeholder={isTa ? "எ.கா. 12/4, பாரதி தெரு, கானார்பட்டி" : "e.g. 12/4, Bharathi Street"}
                       className={cn(
-                        "w-full px-3.5 py-2 rounded-xl border bg-white text-sm font-tamil text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
+                        "w-full px-3.5 py-2 rounded-xl border bg-white text-base sm:text-sm font-tamil text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
                         touched.doorStreet && errors.doorStreet
                           ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
                           : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
@@ -682,7 +682,7 @@ export default function CartPage() {
                       aria-invalid={Boolean(touched.cityArea && errors.cityArea)}
                       placeholder={isTa ? "திருநெல்வேலி / சென்னை" : "Tirunelveli / Chennai"}
                       className={cn(
-                        "w-full px-3.5 py-2 rounded-xl border bg-white text-sm font-tamil text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
+                        "w-full px-3.5 py-2 rounded-xl border bg-white text-base sm:text-sm font-tamil text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
                         touched.cityArea && errors.cityArea
                           ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
                           : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
@@ -714,7 +714,7 @@ export default function CartPage() {
                       aria-invalid={Boolean(touched.pincode && errors.pincode)}
                       placeholder="627201"
                       className={cn(
-                        "w-full px-3.5 py-2 rounded-xl border bg-white text-sm font-mono text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
+                        "w-full px-3.5 py-2 rounded-xl border bg-white text-base sm:text-sm font-mono text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
                         touched.pincode && errors.pincode
                           ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
                           : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"

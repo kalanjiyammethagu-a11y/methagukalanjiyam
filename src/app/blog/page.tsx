@@ -225,7 +225,7 @@ export default function BlogArchivePage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={isTa ? "பதிவுகளைத் தேடுக (Search articles)..." : "Search articles..."}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-black/12 bg-white/80 text-sm font-tamil text-[#111111] placeholder:text-[#777777] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/40 focus:border-[#0A6847] transition-all min-h-[44px]"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-black/12 bg-white/80 text-base sm:text-sm font-tamil text-[#111111] placeholder:text-[#777777] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/40 focus:border-[#0A6847] transition-all min-h-[44px]"
               />
             </div>
 

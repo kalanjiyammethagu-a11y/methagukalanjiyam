@@ -146,14 +146,14 @@ function BooksCatalogContent() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={locale === "ta" ? "நூலின் பெயர் அல்லது ஆசிரியர் பெயர் தேடுக..." : "Search by title or author name..."}
-              className="w-full h-12 pl-11 pr-4 rounded-xl bg-white border border-black/10 text-sm text-[#111111] placeholder:text-[#999999] focus:outline-none focus:ring-2 focus:ring-[#0A6847] focus:border-transparent transition-shadow font-tamil"
+              className="w-full h-12 pl-11 pr-12 rounded-xl bg-white border border-black/10 text-base sm:text-sm text-[#111111] placeholder:text-[#999999] focus:outline-none focus:ring-2 focus:ring-[#0A6847] focus:border-transparent transition-shadow font-tamil"
               aria-label={locale === "ta" ? "நூல்களைத் தேடுக" : "Search books"}
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 rounded-lg bg-black/5 hover:bg-black/10 flex items-center justify-center text-xs text-[#555555] transition-colors cursor-pointer"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] h-10 w-10 rounded-lg bg-black/5 hover:bg-black/10 flex items-center justify-center text-xs text-[#555555] transition-colors cursor-pointer"
                 aria-label={locale === "ta" ? "தேடலை அழி" : "Clear search"}
               >
                 ✕
@@ -179,7 +179,7 @@ function BooksCatalogContent() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="min-h-[44px] sm:min-h-[36px] h-9 pl-8 pr-8 rounded-xl bg-white border border-black/10 text-xs font-semibold text-[#333333] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0A6847] transition-shadow"
+                  className="min-h-[44px] sm:min-h-[36px] h-10 sm:h-9 pl-8 pr-8 rounded-xl bg-white border border-black/10 text-base sm:text-xs font-semibold text-[#333333] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0A6847] transition-shadow"
                   aria-label={locale === "ta" ? "வரிசைப்படுத்து" : "Sort by"}
                 >
                   <option value="relevance">{locale === "ta" ? "பொருத்தம்" : "Relevance"}</option>
@@ -203,7 +203,7 @@ function BooksCatalogContent() {
                   aria-checked={viewMode === "grid"}
                   role="radio"
                   className={cn(
-                    "min-h-[36px] min-w-[36px] h-9 w-9 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-[0.98]",
+                    "min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] h-10 w-10 sm:h-9 sm:w-9 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-[0.98]",
                     viewMode === "grid"
                       ? "bg-[#0A6847] text-white shadow-xs font-bold"
                       : "text-zinc-600 hover:text-zinc-950 hover:bg-black/[0.03]"
@@ -219,7 +219,7 @@ function BooksCatalogContent() {
                   aria-checked={viewMode === "list"}
                   role="radio"
                   className={cn(
-                    "min-h-[36px] min-w-[36px] h-9 w-9 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-[0.98]",
+                    "min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] h-10 w-10 sm:h-9 sm:w-9 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-[0.98]",
                     viewMode === "list"
                       ? "bg-[#0A6847] text-white shadow-xs font-bold"
                       : "text-zinc-600 hover:text-zinc-950 hover:bg-black/[0.03]"

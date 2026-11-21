@@ -286,7 +286,7 @@ export default function AdminLoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@domain.com"
-                    className="w-full h-11 pl-10 pr-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-[#0A6847] focus:ring-2 focus:ring-[#0A6847]/20 text-gray-900 text-xs outline-none transition-colors placeholder:text-gray-400"
+                    className="w-full h-11 pl-10 pr-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-[#0A6847] focus:ring-2 focus:ring-[#0A6847]/20 text-gray-900 text-base sm:text-xs outline-none transition-colors placeholder:text-gray-400"
                   />
                 </div>
               </div>
@@ -308,7 +308,7 @@ export default function AdminLoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="w-full h-11 pl-10 pr-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-[#0A6847] focus:ring-2 focus:ring-[#0A6847]/20 text-gray-900 text-xs outline-none transition-colors"
+                    className="w-full h-11 pl-10 pr-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-[#0A6847] focus:ring-2 focus:ring-[#0A6847]/20 text-gray-900 text-base sm:text-xs outline-none transition-colors"
                   />
                 </div>
               </div>
