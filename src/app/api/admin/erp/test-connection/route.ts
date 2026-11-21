@@ -1,5 +1,3 @@
-export const runtime = "edge";
-
 import { NextRequest, NextResponse } from "next/server";
 import { validateAdminSession } from "@/lib/auth-service";
 import { ERPNextClient } from "@/lib/erp/erp-client";
