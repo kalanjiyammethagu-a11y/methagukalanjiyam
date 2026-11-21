@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "build:cf": "npx --legacy-peer-deps @cloudflare/next-on-pages@1",
     "admin:create": "tsx scripts/create-admin.ts"
   },
   "dependencies": {
