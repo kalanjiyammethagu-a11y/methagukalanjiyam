@@ -119,7 +119,7 @@ export function SearchBar({ isOpen, onClose }: SearchBarProps) {
       {/* Spotlight Modal */}
       <div
         ref={modalRef}
-        className="relative w-full max-w-2xl bg-white rounded-2xl border border-black/10 shadow-2xl overflow-hidden z-10"
+        className="relative w-full max-w-2xl bg-white rounded-2xl border border-black/10 shadow-2xl overflow-hidden z-10 max-h-[85dvh] flex flex-col"
       >
         {/* Search Input Bar */}
         <form onSubmit={handleSearchSubmit} className="relative flex items-center px-4 border-b border-black/10">

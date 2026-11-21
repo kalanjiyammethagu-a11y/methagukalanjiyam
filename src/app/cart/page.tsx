@@ -316,7 +316,7 @@ export default function CartPage() {
   };
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-[100dvh] pb-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumbs */}
         <Breadcrumbs

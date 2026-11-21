@@ -112,7 +112,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#F4F5F7] text-[#1A1A1A] flex flex-col font-sans">
+    <div className="min-h-[100dvh] bg-[#F4F5F7] text-[#1A1A1A] flex flex-col font-sans">
       {/* Top Banner */}
       <div className="bg-[#0A6847] text-white px-4 py-2 text-xs font-semibold flex items-center justify-between z-50 shrink-0">
         <div className="flex items-center gap-2">
@@ -174,9 +174,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <button
               type="button"
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden h-8 w-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100"
+              className="lg:hidden h-10 w-10 min-h-[44px] min-w-[44px] rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 cursor-pointer"
+              aria-label="Close sidebar"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </button>
           </div>
 
@@ -313,7 +314,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           {/* Mobile Sticky Bottom Navigation Bar */}
           <nav
             aria-label="Mobile Admin Navigation"
-            className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-gray-200 px-2 py-1.5 flex items-center justify-around shadow-lg safe-area-bottom"
+            className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-gray-200 px-2 pt-1.5 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] flex items-center justify-around shadow-lg"
           >
             {[
               { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },

@@ -119,7 +119,7 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-[100dvh] pb-20">
       {/* Top Breadcrumbs */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 pb-4">
         <Breadcrumbs

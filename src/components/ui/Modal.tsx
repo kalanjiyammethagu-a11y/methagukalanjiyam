@@ -120,7 +120,7 @@ export function Modal({
         className={cn(
           "relative z-10 w-full bg-[var(--color-surface-card)] text-[var(--color-ink-primary)]",
           "rounded-t-3xl sm:rounded-3xl border border-[var(--color-border-subtle)] shadow-2xl",
-          "flex flex-col max-h-[90vh] sm:max-h-[85vh] overflow-hidden",
+          "flex flex-col max-h-[90dvh] sm:max-h-[85vh] overflow-hidden",
           "pb-safe", // Mobile Safe Area Inset
           "animate-in fade-in slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200",
           sizeClasses[size],

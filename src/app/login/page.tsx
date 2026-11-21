@@ -246,7 +246,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-[100dvh] pb-24">
       {/* Top Breadcrumbs */}
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-6 pb-4">
         <Breadcrumbs
@@ -710,7 +710,7 @@ export default function LoginPage() {
   return (
     <React.Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center p-8">
+        <div className="min-h-[100dvh] flex items-center justify-center p-8">
           <div className="w-8 h-8 rounded-full border-2 border-[#0A6847] border-t-transparent animate-spin" />
         </div>
       }

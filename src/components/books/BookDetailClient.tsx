@@ -380,7 +380,7 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
         <aside
           aria-label={isTa ? "விரைவு வாங்கு பலகை" : "Quick Purchase Bar"}
           className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-xl border-t border-black/10 px-4 py-2.5 sm:hidden flex items-center justify-between gap-2.5 shadow-2xl"
-          style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+          style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
         >
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <div className="relative h-11 w-8 rounded-lg overflow-hidden border border-black/10 shrink-0 shadow-2xs">

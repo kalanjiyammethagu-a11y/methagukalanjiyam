@@ -116,7 +116,7 @@ function BooksCatalogContent() {
   }, [search, selectedCategory, sortBy]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-[100dvh]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumbs — Gestalt Continuity */}
         <Breadcrumbs
@@ -306,7 +306,7 @@ export default function BooksPage() {
   return (
     <React.Suspense
       fallback={
-        <div className="min-h-screen py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="min-h-[100dvh] py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="animate-pulse space-y-6">
             <div className="h-8 w-48 bg-black/5 rounded-xl" />
             <div className="h-12 w-full bg-black/5 rounded-2xl" />

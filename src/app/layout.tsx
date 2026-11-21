@@ -172,7 +172,7 @@ export default function RootLayout({
       </head>
       <body
         suppressHydrationWarning
-        className="min-h-screen flex flex-col bg-surface text-ink antialiased selection:bg-accent/15 selection:text-accent"
+        className="min-h-[100dvh] flex flex-col bg-surface text-ink antialiased selection:bg-accent/15 selection:text-accent"
       >
         <LanguageProvider>
           <CartProvider>
@@ -186,7 +186,7 @@ export default function RootLayout({
             </a>
 
             <Header />
-            <main id="main-content" className="flex-1 focus:outline-none pb-20 md:pb-0" tabIndex={-1}>
+            <main id="main-content" className="flex-1 focus:outline-none pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-0" tabIndex={-1}>
               {children}
             </main>
             <Footer />

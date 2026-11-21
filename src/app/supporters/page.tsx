@@ -103,7 +103,7 @@ export default function SupportersPage() {
   const isTa = locale === "ta";
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-[100dvh] pb-24">
       {/* Top Breadcrumb */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 pb-4">
         <Breadcrumbs
