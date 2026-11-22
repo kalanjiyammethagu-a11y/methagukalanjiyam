@@ -1,17 +1,41 @@
 # STATE.md — Project State & Memory
 
 > **Project:** Methagu Kalanjiyam (Platform Rebuild to Next.js 15 + Supabase + Cloudflare)  
-> **Updated:** 2026-10-17  
-> **Status:** READY FOR PHASE 1 EXECUTION  
+> **Updated:** 2026-11-22  
+> **Status:** PRODUCTION READY & HARDENED
 
 ---
 
 ## Current Position
 
-- **Phase:** 2 (Data Layer) → COMPLETE ✅
-- **SPEC Status:** `FINALIZED` (includes Blog with multi-image gallery, keyword taxonomy, Tanglish search, and atomic stock locks)
-- **ROADMAP Status:** `FINALIZED` (12 phases, decomposed into actionable waves)
-- **Next Phase:** Phase 3 (Auth & Profiles — Supabase Auth actions, login/register UI, profile management)
+- **Phase:** 1-12 COMPLETE ✅
+- **Latest Hardening Waves Completed:**
+  - **Mobile UI/UX Hardening**: 320px–430px touch optimization, 44px+ tap targets, zero iOS zoom (`text-base sm:text-sm`), safe-area insets, hero slider auto-advance and contrast calibration, video in-feed autoplay with viewport intersection detection.
+  - **Cloudflare Edge Optimization**: Security headers (CSP, HSTS, X-Content-Type-Options), Turnstile bot protection, Cloudflare image pipeline & edge caching (`stale-while-revalidate`), Turnstile on login/signup forms.
+  - **Backend & Database Hardening**: Full CRUD modules for categories, addresses, and books; stock restoration database triggers (`trg_restore_stock_on_cancel`), atomic server-side price recalculation (`calculateOrderSummary`).
+  - **Storefront Purchasing Protocol**: Domestic orders strictly via on-site cart checkout (Razorpay UPI, Debit/Credit Cards, NetBanking); zero guest ordering; WhatsApp reserved exclusively for overseas diaspora postal inquiries.
+  - **Auth Streamlining**: Removed mobile phone login from `/login` (pure email + password); instant auto sign-in on account creation (`/signup` and register tab); Resend email verification activation (`sendVerificationEmail`); Two-Factor Authentication activated for administrators (`ADMIN_2FA_ENABLED=true` via Resend OTP).
+- **TypeScript Status:** `npx tsc --noEmit` — 0 errors.
+- **Build Status:** `npm run build` — 47/47 routes static/dynamic compiled successfully.
+- **Test Pass Rate:** 100% on all verification suites (`test-auth-rework.mjs`, `verify-backend-fixes.mjs`, `test-security.mjs`).
+
+---
+
+## Recent Commits
+
+- `67b7508`: `feat(auth): remove phone login, implement auto sign-in on signup, activate Resend verification, and enable admin 2FA`
+- `472d8fb`: `feat(storefront): promote in-site purchase exclusively and reserve WhatsApp for overseas orders`
+- `fef226d`: `feat(backend): complete database hardening, full CRUD builder, atomic server pricing and verify zero backdoors`
+- `09c693a`: `feat(cloudflare): complete edge optimization, security headers, turnstile bot defense and image caching`
+- `bc27e36`: `feat(videos): optimize video player in feed with intersection observer and custom playback controls`
+
+---
+
+## Next Steps
+
+1. **Deploy to Hosting / Production**: Push commits to GitHub `main` branch.
+2. **Environment Variables**: Configure `RESEND_API_KEY`, `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `SUPABASE_SERVICE_ROLE_KEY` in Vercel or Cloudflare Pages project settings.
+3. **Domain & DNS**: Verify custom domain `methagukalanjiyam.in` and SSL termination.
 
 ---
 
