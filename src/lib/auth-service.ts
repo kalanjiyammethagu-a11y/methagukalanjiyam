@@ -420,10 +420,16 @@ export async function verifyUserEmailToken(rawToken: string): Promise<{
     .update({ consumed_at: new Date().toISOString() })
     .eq("id", record.id);
 
-  // Mark user email confirmed in auth.users via Supabase Admin
+  // Mark user email confirmed in auth.users via Supabase Admin and update metadata
   const { error: updateUserError } = await adminSupabase.auth.admin.updateUserById(
     record.user_id,
-    { email_confirm: true }
+    {
+      email_confirm: true,
+      user_metadata: {
+        email_verified: true,
+        email_verified_at: new Date().toISOString(),
+      },
+    }
   );
 
   if (updateUserError) {

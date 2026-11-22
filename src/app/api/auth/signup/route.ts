@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { userSignUpSchema } from "@/lib/validators/auth";
 import { issueUserVerificationToken } from "@/lib/auth-service";
 import { sendVerificationEmail, sendAlreadyRegisteredEmail } from "@/lib/email";
+import { Database } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
@@ -75,16 +77,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. User is new: Create user in Supabase as UNVERIFIED (email_confirm: false)
+    // 3. User is new: Create user in Supabase Auth
+    // email_confirm: true enables instant session establishment for auto sign-in
+    // email_verified: false in user_metadata tracks Resend email verification
     // Server enforces role: 'customer' (Hard-prevents role elevation / mass assignment)
     const { data: newUserData, error: createError } =
       await adminSupabase.auth.admin.createUser({
         email: normalizedEmail,
         password,
-        email_confirm: false, // Must verify via Resend link
+        email_confirm: true,
         user_metadata: {
           full_name,
           locale,
+          email_verified: false,
         },
         app_metadata: {
           role: "customer", // Enforced server-side
@@ -137,7 +142,7 @@ export async function POST(req: NextRequest) {
 
       await (adminSupabase.from("audit_logs") as any).insert({
         user_id: newUserId,
-        action: "user_signup_unverified",
+        action: "user_signup_auto_signin",
         resource_type: "auth",
         resource_id: newUserId,
         ip_address: clientIp,
@@ -151,16 +156,60 @@ export async function POST(req: NextRequest) {
       console.warn("Audit log error on signup:", auditErr);
     }
 
-    await equalizeTiming(startTime);
-
-    return NextResponse.json(
+    // 8. Auto Sign-In: Establish user session and set SSR cookies on response
+    let response = NextResponse.json(
       {
         success: true,
+        autoSignedIn: true,
         message:
-          "If your email address is eligible, a verification link has been dispatched to your inbox.",
+          "Account created successfully and signed in. Verification email dispatched.",
+        user: {
+          id: newUserId,
+          email: normalizedEmail,
+          fullName: full_name,
+        },
       },
       { status: 200 }
     );
+
+    const isProduction = process.env.NODE_ENV === "production";
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+
+    const supabase = createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll(cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, {
+              ...options,
+              httpOnly: true,
+              secure: isProduction,
+              sameSite: "lax",
+              path: "/",
+            });
+          });
+        },
+      },
+    });
+
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      });
+
+      if (signInError) {
+        console.warn("Auto-signin error after account creation:", signInError);
+      }
+    } catch (authErr) {
+      console.warn("Exception during auto-signin:", authErr);
+    }
+
+    await equalizeTiming(startTime);
+    return response;
   } catch (error: any) {
     console.error("API /api/auth/signup exception:", error);
     await equalizeTiming(startTime);

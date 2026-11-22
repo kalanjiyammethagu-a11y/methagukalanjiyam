@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Phone,
   Mail,
   Lock,
   ArrowRight,
@@ -20,7 +19,6 @@ import { ArchivalWaxSealIcon } from "@/components/ui/Icons";
 import { Button } from "@/components/ui/Button";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { useLanguage } from "@/context/LanguageContext";
-import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 function LoginForm() {
@@ -30,29 +28,17 @@ function LoginForm() {
   const { locale } = useLanguage();
   const isTa = locale === "ta";
 
-  const [authMode, setAuthMode] = React.useState<"phone" | "email">("email");
   const [tab, setTab] = React.useState<"login" | "register">("login");
-  const [phone, setPhone] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [fullName, setFullName] = React.useState("");
-  const [otpCode, setOtpCode] = React.useState("");
-  const [otpSent, setOtpSent] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [serverError, setServerError] = React.useState<string | null>(null);
   const [serverSuccess, setServerSuccess] = React.useState<string | null>(null);
   const [touched, setTouched] = React.useState<Record<string, boolean>>({});
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
-  const supabase = React.useMemo(() => createClient(), []);
-
   const validate = (field: string, val: string): string | null => {
-    if (field === "phone") {
-      const clean = val.replace(/\D/g, "");
-      if (!val.trim()) return isTa ? "கைபேசி எண்ணை உள்ளிடுக" : "Please enter mobile number";
-      if (clean.length < 10) return isTa ? "சரியான 10 இலக்க எண்ணை உள்ளிடுக" : "Enter a valid 10-digit mobile number";
-      return null;
-    }
     if (field === "email") {
       if (!val.trim()) return isTa ? "மின்னஞ்சலை உள்ளிடுக" : "Please enter email address";
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) return isTa ? "சரியான மின்னஞ்சலை உள்ளிடுக" : "Enter a valid email address";
@@ -66,10 +52,6 @@ function LoginForm() {
     if (field === "fullName" && tab === "register") {
       if (!val.trim()) return isTa ? "முழுப் பெயரை உள்ளிடுக" : "Please enter full name";
       if (val.trim().length < 3) return isTa ? "குறைந்தது 3 எழுத்துக்கள் தேவை" : "Name must be at least 3 characters";
-      return null;
-    }
-    if (field === "otp" && otpSent) {
-      if (!val.trim() || val.length < 6) return isTa ? "சரியான 6 இலக்க குறியீட்டை உள்ளிடுக" : "Enter 6-digit OTP";
       return null;
     }
     return null;
@@ -92,26 +74,18 @@ function LoginForm() {
     setServerSuccess(null);
 
     const newErrors: Record<string, string> = {};
-    if (authMode === "phone") {
-      const pErr = validate("phone", phone);
-      if (pErr) newErrors.phone = pErr;
-      if (otpSent) {
-        const oErr = validate("otp", otpCode);
-        if (oErr) newErrors.otp = oErr;
-      }
-    } else {
-      const eErr = validate("email", email);
-      if (eErr) newErrors.email = eErr;
-      const passErr = validate("password", password);
-      if (passErr) newErrors.password = passErr;
-    }
+    const eErr = validate("email", email);
+    if (eErr) newErrors.email = eErr;
+    const passErr = validate("password", password);
+    if (passErr) newErrors.password = passErr;
+
     if (tab === "register") {
       const fnErr = validate("fullName", fullName);
       if (fnErr) newErrors.fullName = fnErr;
     }
 
     if (Object.keys(newErrors).length > 0) {
-      setTouched({ phone: true, email: true, password: true, fullName: true, otp: true });
+      setTouched({ email: true, password: true, fullName: true });
       setErrors(newErrors);
       return;
     }
@@ -119,120 +93,75 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      // 1. Email + Password Sign In / Sign Up
-      if (authMode === "email") {
-        if (tab === "login") {
-          const res = await fetch("/api/auth/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
-          });
+      if (tab === "login") {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+        });
 
-          const data = await res.json();
+        const data = await res.json();
 
-          if (!res.ok) {
-            if (data.error === "email_unverified") {
-              setServerError(
-                isTa
-                  ? "உங்கள் மின்னஞ்சல் இன்னும் உறுதிப்படுத்தப்படவில்லை. தயவுசெய்து உங்கள் மின்னஞ்சலில் வந்துள்ள சரிபார்ப்பு இணைப்பை உறுதிப்படுத்தவும்."
-                  : "Your email is not verified yet. Please check your inbox for the activation link."
-              );
-            } else {
-              setServerError(
-                isTa
-                  ? "தவறான மின்னஞ்சல் அல்லது கடவுச்சொல். தயவுசெய்து உங்கள் விவரங்களை சரிபார்க்கவும்."
-                  : "Invalid credentials. Please verify your email and password."
-              );
-            }
-            setLoading(false);
-            return;
-          }
-
-          // Success: Refresh and redirect
-          router.push(redirectTo);
-          router.refresh();
-        } else {
-          // Register flow through server-side Resend verification endpoint
-          const res = await fetch("/api/auth/signup", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: email.trim().toLowerCase(),
-              password,
-              full_name: fullName.trim(),
-              locale: isTa ? "ta" : "en",
-            }),
-          });
-
-          const data = await res.json();
-
-          if (!res.ok) {
-            setServerError(
-              data.error ||
-                (isTa
-                  ? "கணக்கு உருவாக்குவதில் சிக்கல் ஏற்பட்டது. தயவுசெய்து மீண்டும் முயற்சிக்கவும்."
-                  : "Registration failed. Please try again.")
-            );
-            setLoading(false);
-            return;
-          }
-
-          setServerSuccess(
-            isTa
-              ? "கணக்கு உருவாக்கப்பட்டது! உங்கள் மின்னஞ்சலுக்கு வந்துள்ள சரிபார்ப்பு இணைப்பை உறுதிப்படுத்தவும்."
-              : "Account created! Please check your email to verify your registration before logging in."
-          );
-          setLoading(false);
-        }
-      } else {
-        // 2. Phone OTP flow
-        const cleanPhone = phone.replace(/\D/g, "");
-        const formattedPhone = `+91${cleanPhone}`;
-
-        if (!otpSent) {
-          const { error } = await supabase.auth.signInWithOtp({
-            phone: formattedPhone,
-          });
-
-          if (error) {
-            setServerError(
-              error.message ||
-                (isTa
-                  ? "OTP அனுப்புவதில் சிக்கல் ஏற்பட்டது. தயவுசெய்து மின்னஞ்சல் மூலம் உள்நுழையவும்."
-                  : "Failed to send OTP code. Please try using email sign-in.")
-            );
-            setLoading(false);
-            return;
-          }
-
-          setOtpSent(true);
-          setServerSuccess(
-            isTa
-              ? `OTP குறியீடு ${formattedPhone} எண்ணிற்கு அனுப்பப்பட்டது.`
-              : `OTP code sent to ${formattedPhone}.`
-          );
-          setLoading(false);
-        } else {
-          // Verify OTP
-          const { error } = await supabase.auth.verifyOtp({
-            phone: formattedPhone,
-            token: otpCode.trim(),
-            type: "sms",
-          });
-
-          if (error) {
+        if (!res.ok) {
+          if (data.error === "email_unverified") {
             setServerError(
               isTa
-                ? "தவறான அல்லது காலாவதியான OTP குறியீடு. தயவுசெய்து மீண்டும் முயற்சிக்கவும்."
-                : "Invalid or expired OTP code. Please try again."
+                ? "உங்கள் மின்னஞ்சல் இன்னும் உறுதிப்படுத்தப்படவில்லை. தயவுசெய்து உங்கள் மின்னஞ்சலில் வந்துள்ள சரிபார்ப்பு இணைப்பை உறுதிப்படுத்தவும்."
+                : "Your email is not verified yet. Please check your inbox for the activation link."
             );
-            setLoading(false);
-            return;
+          } else {
+            setServerError(
+              isTa
+                ? "தவறான மின்னஞ்சல் அல்லது கடவுச்சொல். தயவுசெய்து உங்கள் விவரங்களை சரிபார்க்கவும்."
+                : "Invalid credentials. Please verify your email and password."
+            );
           }
+          setLoading(false);
+          return;
+        }
 
+        // Success: Refresh and redirect
+        router.push(redirectTo);
+        router.refresh();
+      } else {
+        // Register flow through server-side auto-signin endpoint
+        const res = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email.trim().toLowerCase(),
+            password,
+            full_name: fullName.trim(),
+            locale: isTa ? "ta" : "en",
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          setServerError(
+            data.error ||
+              (isTa
+                ? "கணக்கு உருவாக்குவதில் சிக்கல் ஏற்பட்டது. தயவுசெய்து மீண்டும் முயற்சிக்கவும்."
+                : "Registration failed. Please try again.")
+          );
+          setLoading(false);
+          return;
+        }
+
+        // Auto sign-in was performed by the backend route
+        setServerSuccess(
+          isTa
+            ? "கணக்கு வெற்றிகரமாக உருவாக்கப்பட்டு நீங்கள் உள்நுழைந்துள்ளீர்கள்! சரிபார்ப்பு இணைப்பு உங்கள் மின்னஞ்சலுக்கு அனுப்பப்பட்டுள்ளது."
+            : "Account created and automatically signed in! A verification email has been dispatched."
+        );
+        setLoading(false);
+
+        // Immediate redirection with active session
+        setTimeout(() => {
           router.push(redirectTo);
           router.refresh();
-        }
+        }, 800);
       }
     } catch (err: any) {
       console.error("Authentication exception:", err);
@@ -393,47 +322,6 @@ function LoginForm() {
                   <span>{serverSuccess}</span>
                 </div>
               )}
-
-              {/* Auth Mode Toggle: Email vs Phone */}
-              <div className="flex items-center justify-between pb-4 mb-4 border-b border-black/8">
-                <span className="text-xs font-semibold text-[#555555] font-tamil">
-                  {isTa ? "உள்நுழைவு முறை:" : "Sign In Method:"}
-                </span>
-                <div className="flex items-center gap-1.5 p-1 bg-black/[0.04] rounded-xl border border-black/5" role="radiogroup">
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={authMode === "email"}
-                    onClick={() => {
-                      setAuthMode("email");
-                      setServerError(null);
-                    }}
-                    className={`min-h-[32px] px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-[0.98] ${
-                      authMode === "email"
-                        ? "bg-white text-[#0A6847] shadow-xs font-bold"
-                        : "text-zinc-600 hover:text-zinc-950 hover:bg-black/[0.03]"
-                    }`}
-                  >
-                    {isTa ? "மின்னஞ்சல் (Email)" : "Email Address"}
-                  </button>
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={authMode === "phone"}
-                    onClick={() => {
-                      setAuthMode("phone");
-                      setServerError(null);
-                    }}
-                    className={`min-h-[32px] px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer active:scale-[0.98] ${
-                      authMode === "phone"
-                        ? "bg-white text-[#0A6847] shadow-xs font-bold"
-                        : "text-zinc-600 hover:text-zinc-950 hover:bg-black/[0.03]"
-                    }`}
-                  >
-                    {isTa ? "தொலைபேசி எண் (Phone)" : "Mobile Phone"}
-                  </button>
-                </div>
-              </div>
             </div>
 
             {/* Form */}
@@ -476,169 +364,77 @@ function LoginForm() {
                 </div>
               )}
 
-              {authMode === "phone" ? (
-                <div className="space-y-3">
-                  <div className="space-y-1.5">
-                    <label htmlFor="login-phone" className="text-xs font-bold text-[#222222] font-tamil block">
-                      {isTa ? "தொலைபேசி எண் (Mobile Number)" : "Mobile Number"}
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#555555]">
-                        +91
-                      </span>
-                      <input
-                        id="login-phone"
-                        type="tel"
-                        name="phone"
-                        autoComplete="tel"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        required
-                        disabled={otpSent}
-                        value={phone}
-                        onChange={(e) => {
-                          setPhone(e.target.value);
-                          if (touched.phone) {
-                            const err = validate("phone", e.target.value);
-                            setErrors((prev) => ({ ...prev, phone: err || "" }));
-                          }
-                        }}
-                        onBlur={() => handleBlur("phone", phone)}
-                        aria-invalid={Boolean(touched.phone && errors.phone)}
-                        placeholder="82486 54946"
-                        className={cn(
-                          "w-full pl-12 pr-4 py-2.5 rounded-xl border bg-white text-base sm:text-sm font-mono text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 transition-all min-h-[44px]",
-                          touched.phone && errors.phone
-                            ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
-                            : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]",
-                          otpSent && "bg-neutral-100 text-neutral-500"
-                        )}
-                      />
-                    </div>
-                    {touched.phone && errors.phone && (
-                      <p className="text-xs text-rose-600 font-tamil flex items-center gap-1 mt-1">
-                        <AlertCircle className="h-3 w-3 shrink-0" />
-                        <span>{errors.phone}</span>
-                      </p>
-                    )}
-                  </div>
-
-                  {otpSent && (
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label htmlFor="login-otp" className="text-xs font-bold text-[#222222] font-tamil block">
-                          {isTa ? "OTP குறியீடு (6-digit OTP)" : "6-Digit OTP Code"}
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => setOtpSent(false)}
-                          className="text-[11px] font-bold text-[#0A6847] hover:underline cursor-pointer"
-                        >
-                          {isTa ? "எண்ணை மாற்றுக" : "Change Phone"}
-                        </button>
-                      </div>
-                      <input
-                        id="login-otp"
-                        type="text"
-                        name="otp"
-                        inputMode="numeric"
-                        maxLength={6}
-                        required
-                        value={otpCode}
-                        onChange={(e) => {
-                          setOtpCode(e.target.value);
-                          if (touched.otp) {
-                            const err = validate("otp", e.target.value);
-                            setErrors((prev) => ({ ...prev, otp: err || "" }));
-                          }
-                        }}
-                        onBlur={() => handleBlur("otp", otpCode)}
-                        placeholder="123456"
-                        className={cn(
-                          "w-full px-4 py-2.5 rounded-xl border bg-white text-base tracking-widest text-center font-mono text-[#111111] focus:outline-none focus:ring-2 transition-all min-h-[44px]",
-                          touched.otp && errors.otp
-                            ? "border-rose-400 focus:ring-rose-200"
-                            : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
-                        )}
-                      />
-                    </div>
+              <div className="space-y-1.5">
+                <label htmlFor="login-email" className="text-xs font-bold text-[#222222] font-tamil block">
+                  {isTa ? "மின்னஞ்சல் (Email Address)" : "Email Address"}
+                </label>
+                <input
+                  id="login-email"
+                  type="email"
+                  name="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (touched.email) {
+                      const err = validate("email", e.target.value);
+                      setErrors((prev) => ({ ...prev, email: err || "" }));
+                    }
+                  }}
+                  onBlur={() => handleBlur("email", email)}
+                  aria-invalid={Boolean(touched.email && errors.email)}
+                  placeholder="name@example.com"
+                  className={cn(
+                    "w-full px-4 py-2.5 rounded-xl border bg-white text-base sm:text-sm text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 transition-all min-h-[44px]",
+                    touched.email && errors.email
+                      ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
+                      : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
                   )}
-                </div>
-              ) : (
-                <>
-                  <div className="space-y-1.5">
-                    <label htmlFor="login-email" className="text-xs font-bold text-[#222222] font-tamil block">
-                      {isTa ? "மின்னஞ்சல் (Email Address)" : "Email Address"}
-                    </label>
-                    <input
-                      id="login-email"
-                      type="email"
-                      name="email"
-                      autoComplete="email"
-                      required
-                      value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        if (touched.email) {
-                          const err = validate("email", e.target.value);
-                          setErrors((prev) => ({ ...prev, email: err || "" }));
-                        }
-                      }}
-                      onBlur={() => handleBlur("email", email)}
-                      aria-invalid={Boolean(touched.email && errors.email)}
-                      placeholder="name@example.com"
-                      className={cn(
-                        "w-full px-4 py-2.5 rounded-xl border bg-white text-base sm:text-sm text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 transition-all min-h-[44px]",
-                        touched.email && errors.email
-                          ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
-                          : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
-                      )}
-                    />
-                    {touched.email && errors.email && (
-                      <p className="text-xs text-rose-600 font-tamil flex items-center gap-1 mt-1">
-                        <AlertCircle className="h-3 w-3 shrink-0" />
-                        <span>{errors.email}</span>
-                      </p>
-                    )}
-                  </div>
+                />
+                {touched.email && errors.email && (
+                  <p className="text-xs text-rose-600 font-tamil flex items-center gap-1 mt-1">
+                    <AlertCircle className="h-3 w-3 shrink-0" />
+                    <span>{errors.email}</span>
+                  </p>
+                )}
+              </div>
 
-                  <div className="space-y-1.5">
-                    <label htmlFor="login-password" className="text-xs font-bold text-[#222222] font-tamil block">
-                      {isTa ? "கடவுச்சொல் (Password)" : "Password"}
-                    </label>
-                    <input
-                      id="login-password"
-                      type="password"
-                      name="password"
-                      autoComplete={tab === "login" ? "current-password" : "new-password"}
-                      required
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        if (touched.password) {
-                          const err = validate("password", e.target.value);
-                          setErrors((prev) => ({ ...prev, password: err || "" }));
-                        }
-                      }}
-                      onBlur={() => handleBlur("password", password)}
-                      aria-invalid={Boolean(touched.password && errors.password)}
-                      placeholder="••••••••"
-                      className={cn(
-                        "w-full px-4 py-2.5 rounded-xl border bg-white text-base sm:text-sm text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 transition-all min-h-[44px]",
-                        touched.password && errors.password
-                          ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
-                          : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
-                      )}
-                    />
-                    {touched.password && errors.password && (
-                      <p className="text-xs text-rose-600 font-tamil flex items-center gap-1 mt-1">
-                        <AlertCircle className="h-3 w-3 shrink-0" />
-                        <span>{errors.password}</span>
-                      </p>
-                    )}
-                  </div>
-                </>
-              )}
+              <div className="space-y-1.5">
+                <label htmlFor="login-password" className="text-xs font-bold text-[#222222] font-tamil block">
+                  {isTa ? "கடவுச்சொல் (Password)" : "Password"}
+                </label>
+                <input
+                  id="login-password"
+                  type="password"
+                  name="password"
+                  autoComplete={tab === "login" ? "current-password" : "new-password"}
+                  required
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (touched.password) {
+                      const err = validate("password", e.target.value);
+                      setErrors((prev) => ({ ...prev, password: err || "" }));
+                    }
+                  }}
+                  onBlur={() => handleBlur("password", password)}
+                  aria-invalid={Boolean(touched.password && errors.password)}
+                  placeholder="••••••••"
+                  className={cn(
+                    "w-full px-4 py-2.5 rounded-xl border bg-white text-base sm:text-sm text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 transition-all min-h-[44px]",
+                    touched.password && errors.password
+                      ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
+                      : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
+                  )}
+                />
+                {touched.password && errors.password && (
+                  <p className="text-xs text-rose-600 font-tamil flex items-center gap-1 mt-1">
+                    <AlertCircle className="h-3 w-3 shrink-0" />
+                    <span>{errors.password}</span>
+                  </p>
+                )}
+              </div>
 
               {/* Submit CTA button (Fitts's Law ≥44px) */}
               <Button
@@ -656,17 +452,13 @@ function LoginForm() {
                 ) : (
                   <span className="flex items-center gap-2">
                     <span>
-                      {authMode === "phone" && !otpSent
-                        ? isTa
-                          ? "OTP குறியீடு பெறுக"
-                          : "Send OTP Code"
-                        : tab === "login"
+                      {tab === "login"
                         ? isTa
                           ? "உள்நுழைக"
                           : "Sign In"
                         : isTa
-                          ? "கணக்கை உருவாக்குக"
-                          : "Create Account"}
+                          ? "கணக்கை உருவாக்கி உள்நுழைக"
+                          : "Create Account & Sign In"}
                     </span>
                     <ArrowRight className="h-4 w-4" />
                   </span>

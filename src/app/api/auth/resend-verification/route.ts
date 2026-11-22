@@ -22,11 +22,11 @@ export async function POST(req: NextRequest) {
     const normalizedEmail = email.toLowerCase().trim();
     const adminSupabase = createAdminClient();
 
-    // Check if user exists and is unverified
+    // Check if user exists and is unverified via Resend
     const { data: userList } = await adminSupabase.auth.admin.listUsers();
     const user = userList?.users?.find((u) => u.email?.toLowerCase() === normalizedEmail);
 
-    if (user && !user.email_confirmed_at) {
+    if (user && (!user.user_metadata?.email_verified || !user.email_confirmed_at)) {
       const appUrl =
         process.env.NEXT_PUBLIC_APP_URL ||
         process.env.NEXT_PUBLIC_SITE_URL ||

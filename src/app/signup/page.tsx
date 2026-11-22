@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Mail,
   Lock,
@@ -18,15 +18,18 @@ import {
   Loader2,
   RefreshCw,
   ShieldCheck,
+  ShoppingBag,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
-export default function SignUpPage() {
+function SignUpContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirectTo") || "/account";
   const { locale } = useLanguage();
   const isTa = locale === "ta";
 
-  // Multi-step progress: 1 = Credentials, 2 = Profile, 3 = Check Inbox
+  // Multi-step progress: 1 = Credentials, 2 = Profile, 3 = Auto Signed In & Verify Notice
   const [currentStep, setCurrentStep] = React.useState<1 | 2 | 3>(1);
 
   // Form Fields
@@ -51,6 +54,17 @@ export default function SignUpPage() {
     }, 1000);
     return () => clearInterval(timer);
   }, [cooldown]);
+
+  // Optional auto-redirect on step 3 after 4 seconds
+  React.useEffect(() => {
+    if (currentStep === 3) {
+      const timer = setTimeout(() => {
+        router.push(redirectTo);
+        router.refresh();
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep, redirectTo, router]);
 
   // Live Password Criteria Calculations
   const hasMinLength = password.length >= 8;
@@ -123,7 +137,7 @@ export default function SignUpPage() {
         return;
       }
 
-      // Step 3: Check your inbox screen
+      // Step 3: Auto Signed In with active session & Resend verification dispatched
       setCurrentStep(3);
       setCooldown(60);
       setLoading(false);
@@ -463,30 +477,32 @@ export default function SignUpPage() {
           )}
 
           {/* ============================================================
-              STEP 3: "CHECK YOUR INBOX" CONFIRMATION SCREEN
+              STEP 3: AUTO SIGNED IN & EMAIL VERIFICATION DISPATCHED
               ============================================================ */}
           {currentStep === 3 && (
             <div className="space-y-6 text-center py-4">
               <div className="h-16 w-16 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-[#0A6847] dark:text-emerald-400 mx-auto flex items-center justify-center ring-8 ring-emerald-50 dark:ring-emerald-950/20">
-                <Mail className="h-8 w-8" />
+                <CheckCircle2 className="h-8 w-8 text-[#0A6847]" />
               </div>
 
               <div className="space-y-2">
                 <h2 className="text-xl font-bold text-[#111111] dark:text-white font-tamil">
-                  {isTa ? "மின்னஞ்சலை சரிபார்க்கவும்" : "Check Your Inbox"}
+                  {isTa
+                    ? "கணக்கு உருவாக்கப்பட்டு நீங்கள் உள்நுழைந்துள்ளீர்கள்!"
+                    : "Account Created & Automatically Signed In!"}
                 </h2>
                 <p className="text-xs text-[#555555] dark:text-[#aaaaaa] font-tamil max-w-sm mx-auto leading-relaxed">
                   {isTa
-                    ? "சரிபார்ப்பு இணைப்பு கீழே உள்ள மின்னஞ்சலுக்கு அனுப்பப்பட்டுள்ளது:"
-                    : "We have dispatched a verification link to your email address:"}
+                    ? "உங்கள் வாசகர் கணக்கு உடனடியாக செயல்பாட்டிற்கு வந்துவிட்டது. உறுதிப்படுத்தல் இணைப்பு Resend வழியாக உங்கள் மின்னஞ்சலுக்கு அனுப்பப்பட்டுள்ளது:"
+                    : "Your reader profile is now active and signed in. An email activation link has also been dispatched via Resend to:"}
                 </p>
-                <p className="text-xs font-mono font-bold text-[#0A6847] dark:text-emerald-400">
+                <p className="text-xs font-mono font-bold text-[#0A6847] dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 py-1.5 px-3 rounded-lg inline-block">
                   {email}
                 </p>
                 <p className="text-[11px] text-[#777777] font-tamil">
                   {isTa
-                    ? "இந்த இணைப்பு 24 மணி நேரம் மட்டுமே செயல்பாட்டில் இருக்கும்."
-                    : "This link is valid for 24 hours."}
+                    ? "நீங்கள் இப்போது நேரடியாக நூல்களை வாங்கலாம். (மின்னஞ்சல் இணைப்பு 24 மணி நேரம் செல்லுபடியாகும்)."
+                    : "You can proceed to browse, cart, and checkout immediately. (Verification link valid for 24h)."}
                 </p>
               </div>
 
@@ -497,6 +513,25 @@ export default function SignUpPage() {
               )}
 
               <div className="space-y-3 pt-2">
+                {/* Primary CTA: Continue to Cart or Account */}
+                <Link
+                  href={redirectTo}
+                  className="w-full h-11 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md font-tamil"
+                >
+                  <ShoppingBag className="h-4 w-4" />
+                  <span>
+                    {redirectTo.includes("cart")
+                      ? isTa
+                        ? "கூடைக்குச் சென்று வாங்குக (Go to Cart)"
+                        : "Continue to Cart & Checkout"
+                      : isTa
+                      ? "வாசகர் கணக்கு & நூலகத்திற்குச் செல்க"
+                      : "Proceed to My Account"}
+                  </span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+
+                {/* Secondary CTA: Resend email */}
                 <button
                   type="button"
                   onClick={handleResendConfirmation}
@@ -514,33 +549,34 @@ export default function SignUpPage() {
                       : "Resend Verification Email"}
                   </span>
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCurrentStep(1);
-                    setPassword("");
-                    setErrorMessage(null);
-                  }}
-                  className="text-xs text-[#777777] hover:text-[#111111] dark:hover:text-white underline underline-offset-4 cursor-pointer font-tamil"
-                >
-                  {isTa ? "மின்னஞ்சல் முகவரியை மாற்றுக" : "Change email address"}
-                </button>
               </div>
 
-              <div className="pt-4 border-t border-black/8 dark:border-white/8">
-                <Link
-                  href="/login"
-                  className="text-xs font-semibold text-[#0A6847] hover:underline"
-                >
-                  {isTa ? "உள்நுழைவுப் பக்கத்திற்கு செல்ல" : "Proceed to Login"} →
-                </Link>
+              <div className="pt-4 border-t border-black/8 dark:border-white/8 text-[11px] text-[#888888]">
+                <span>
+                  {isTa
+                    ? "தானாக வழிசெலுத்தப்படுகிறது..."
+                    : "Redirecting you automatically..."}
+                </span>
               </div>
             </div>
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-[85vh] flex items-center justify-center p-8">
+          <div className="w-8 h-8 rounded-full border-2 border-[#0A6847] border-t-transparent animate-spin" />
+        </div>
+      }
+    >
+      <SignUpContent />
+    </React.Suspense>
   );
 }
 
