@@ -36,8 +36,8 @@ const nextConfig: NextConfig = {
       // Connect: self + Supabase (HTTPS & Realtime WSS) + Razorpay API & analytics + Cloudflare Turnstile + dev websockets
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.razorpay.com https://lumberjack.razorpay.com https://challenges.cloudflare.com ws: wss:",
 
-      // Frames: Razorpay checkout modal + Cloudflare Turnstile challenge iframe
-      "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://challenges.cloudflare.com",
+      // Frames: Razorpay checkout modal + Cloudflare Turnstile challenge iframe + Video platforms (Odysee, YouTube)
+      "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://challenges.cloudflare.com https://odysee.com https://*.odysee.com https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com",
 
       // Frame ancestors: none (prevents clickjacking, equivalent to X-Frame-Options: DENY)
       "frame-ancestors 'none'",
