@@ -1,0 +1,72 @@
+# ==============================================================================
+# Cloudflare Pages & Cloudflare Edge CDN Headers
+# methagukalanjiyam.in — Tamil Bookstore & Archival Literature
+# ==============================================================================
+
+# Global Security & Browser Defaults
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  X-DNS-Prefetch-Control: on
+
+# Static Next.js Bundles — 1 Year Immutable Caching at Edge & Browser
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+  CDN-Cache-Control: public, max-age=31536000, immutable
+  Cloudflare-CDN-Cache-Control: public, max-age=31536000, immutable
+
+# Book Images, Posters, and Brand Assets — 7 Days Edge Cache, 30 Days Stale While Revalidate
+/images/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+  CDN-Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
+  Cloudflare-CDN-Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
+
+# Fonts, Icons, and Media
+/*.woff2
+  Cache-Control: public, max-age=31536000, immutable
+  CDN-Cache-Control: public, max-age=31536000, immutable
+  Cloudflare-CDN-Cache-Control: public, max-age=31536000, immutable
+
+/favicon.ico
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+/robots.txt
+  Cache-Control: public, max-age=86400
+
+/sitemap.xml
+  Cache-Control: public, max-age=86400
+
+# Strict No-Cache for Private, Checkout, and Authentication Routes
+/api/*
+  Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
+
+/admin/*
+  Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
+  X-Robots-Tag: noindex, nofollow
+
+/account/*
+  Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
+
+/cart/*
+  Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
+
+/login/*
+  Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store
+
+/signup/*
+  Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate
+  CDN-Cache-Control: no-store
+  Cloudflare-CDN-Cache-Control: no-store

@@ -1,7 +1,7 @@
-# Cloudflare Setup Checklist — methagukalanjiyam.in
+# Cloudflare Setup & Edge Optimization Checklist — methagukalanjiyam.in
 
-Complete step-by-step configuration guide for the Tamil bookstore on Cloudflare.
-Follow each section in sequence. Every step includes the exact Cloudflare dashboard navigation path.
+Complete step-by-step configuration and operational guide for the Tamil bookstore on Cloudflare.
+Follow each section in sequence. Every step includes the exact Cloudflare dashboard navigation path, edge rules, and code configuration.
 
 ---
 
@@ -67,7 +67,7 @@ Follow each section in sequence. Every step includes the exact Cloudflare dashbo
 - [ ] **No-Sniff:** Toggle **ON**
 - [ ] Click **Save**
 
-*(Note: HSTS is also configured directly in Next.js response headers via `next.config.ts` for defense-in-depth).*
+*(Note: HSTS is also configured directly in Next.js response headers via `next.config.ts` and `public/_headers` for defense-in-depth).*
 
 ---
 
@@ -169,7 +169,7 @@ Cloudflare edge rate limiting is the primary defense line protecting your Node/s
 
 ## 5. Cloudflare Turnstile CAPTCHA Setup
 
-Turnstile provides non-intrusive CAPTCHA protection for `/login` and checkout.
+Turnstile provides non-intrusive CAPTCHA protection for `/login`, `/signup`, and checkout.
 
 ### 5a. Generate Site Key and Secret Key
 
@@ -193,19 +193,30 @@ Turnstile provides non-intrusive CAPTCHA protection for `/login` and checkout.
   ```
 - [ ] Verify `CLOUDFLARE_TURNSTILE_SECRET_KEY` is kept private (never prefixed with `NEXT_PUBLIC_`).
 
-### 5c. Server-Side Verification Code
+### 5c. Server-Side Verification Code & Client Component
 
 The verification helper is available at `src/lib/cloudflare.ts`:
 ```ts
-import { verifyTurnstileToken } from "@/lib/cloudflare";
+import { verifyTurnstileToken, getClientIp } from "@/lib/cloudflare";
 
 // Example inside an API route or Server Action:
-const clientIp = request.headers.get("cf-connecting-ip") || undefined;
+const clientIp = getClientIp(request);
 const verification = await verifyTurnstileToken(turnstileToken, clientIp);
 
 if (!verification.success) {
   return NextResponse.json({ error: "Turnstile challenge failed" }, { status: 403 });
 }
+```
+
+Client-side widget component is available at `src/components/ui/Turnstile.tsx`:
+```tsx
+import { Turnstile } from "@/components/ui/Turnstile";
+
+<Turnstile
+  action="login"
+  onVerify={(token) => setTurnstileToken(token)}
+  onExpire={() => setTurnstileToken(null)}
+/>
 ```
 
 ---
@@ -223,7 +234,7 @@ Configure edge caching to accelerate static assets and protect dynamic API trans
   - Operator: `starts with`
   - Value: `/images/`
 - [ ] **Cache eligibility:** **Eligible for cache**
-- [ ] **Edge TTL:** `Override origin` → `1 day` (86400 seconds)
+- [ ] **Edge TTL:** `Override origin` → `7 days` (604800 seconds)
 - [ ] **Browser TTL:** `Override origin` → `1 day` (86400 seconds)
 - [ ] Click **Deploy**
 
@@ -239,13 +250,19 @@ Configure edge caching to accelerate static assets and protect dynamic API trans
 - [ ] **Browser TTL:** `Override origin` → `1 year`
 - [ ] Click **Deploy**
 
-### Rule 3: Bypass Cache for API & Webhooks
+### Rule 3: Bypass Cache for API & Private Sessions
 - [ ] Click **Create rule**
-- [ ] **Rule name:** `Bypass Cache for API Routes`
+- [ ] **Rule name:** `Bypass Cache for Private Endpoints`
 - [ ] **If incoming requests match:**
-  - Field: `URI Path`
-  - Operator: `starts with`
-  - Value: `/api/`
+  - Expression:
+    ```text
+    (starts_with(http.request.uri.path, "/api/")) or
+    (starts_with(http.request.uri.path, "/admin/")) or
+    (starts_with(http.request.uri.path, "/account/")) or
+    (starts_with(http.request.uri.path, "/cart/")) or
+    (starts_with(http.request.uri.path, "/login")) or
+    (starts_with(http.request.uri.path, "/signup"))
+    ```
 - [ ] **Cache eligibility:** **Bypass cache**
 - [ ] Click **Deploy**
 
@@ -255,7 +272,34 @@ Configure edge caching to accelerate static assets and protect dynamic API trans
 
 ---
 
-## 7. Performance & Optimization
+## 7. Cloudflare Native Edge Files (`_headers` & `_routes.json`)
+
+The application includes two pre-configured native files in `public/`:
+
+1. **`public/_headers`**:
+   - Instructs Cloudflare Edge to apply immutable caching (`max-age=31536000, immutable`) to `/_next/static/*` and `*.woff2`.
+   - Applies `CDN-Cache-Control` and `Cloudflare-CDN-Cache-Control` edge TTLs to `/images/*`.
+   - Enforces `no-store` directly at the edge for `/api/*`, `/admin/*`, `/account/*`, `/cart/*`, `/login/*`.
+   - Provides global security headers (`nosniff`, `DENY`, `strict-origin-when-cross-origin`, HSTS preload).
+
+2. **`public/_routes.json`**:
+   - Defines static asset routing for Cloudflare Pages.
+   - Bypasses Worker function execution for `/_next/static/*`, `/images/*`, `/favicon.ico`, `/sitemap.xml`, and `/robots.txt`.
+   - Guarantees 0ms worker invocation cost and instantaneous edge delivery for all static content.
+
+---
+
+## 8. Cloudflare Workers / Pages Configuration (`wrangler.jsonc` & `wrangler.toml`)
+
+The repository includes both `wrangler.jsonc` and `wrangler.toml`:
+- **Compatibility Date:** `2026-11-20`
+- **Compatibility Flags:** `["nodejs_compat"]` (enables full Node.js standard library support on V8 isolates)
+- **Smart Placement:** `{"mode": "smart"}` (Cloudflare automatically executes worker logic close to upstream databases like Supabase Mumbai `ap-south-1`)
+- **Pages Build Output:** `.next`
+
+---
+
+## 9. Performance & Network Optimization
 
 **Dashboard Path:** **Speed** → **Optimization**
 
@@ -263,21 +307,17 @@ Configure edge caching to accelerate static assets and protect dynamic API trans
 - [ ] **Early Hints (HTTP 103):** Toggle **ON** (preloads critical font & CSS assets)
 - [ ] **Auto Minify:** Check **JavaScript**, **CSS**, and **HTML**
 
----
-
-## 8. Network Protocols
-
 **Dashboard Path:** **Network**
 
 - [ ] **HTTP/2:** Toggle **ON**
-- [ ] **HTTP/3 (with QUIC):** Toggle **ON** (high performance on mobile networks across India)
+- [ ] **HTTP/3 (with QUIC):** Toggle **ON** (high performance on mobile networks across India and diaspora)
 - [ ] **0-RTT Connection Resumption:** Toggle **ON**
 - [ ] **WebSockets:** Toggle **ON** (required for Supabase Realtime connections)
-- [ ] **gRPC:** Toggle **ON** (optional, recommended if using Google APIs)
+- [ ] **gRPC:** Toggle **ON** (optional)
 
 ---
 
-## 9. Scrape Shield & Security
+## 10. Scrape Shield & Security
 
 **Dashboard Path:** **Scrape Shield**
 
@@ -286,7 +326,7 @@ Configure edge caching to accelerate static assets and protect dynamic API trans
 
 ---
 
-## 10. Post-Launch Verification & Testing
+## 11. Post-Launch Verification & Testing
 
 Execute these tests to confirm readiness:
 
@@ -300,7 +340,7 @@ Execute these tests to confirm readiness:
   - Test Razorpay modal opening (`checkout.razorpay.com`).
   - Test Supabase auth / session token refresh (`*.supabase.co`).
   - Test Google Fonts rendering (`fonts.googleapis.com` / `fonts.gstatic.com`).
-  - Test WhatsApp floating button click (`wa.me`).
+  - Test Video in-feed playback (`odysee.com`).
 - [ ] **Rate Limiting Verification:**
   - Send 35 rapid requests to `/api/orders/create` using curl or Postman:
     ```bash

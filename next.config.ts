@@ -2,12 +2,23 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  poweredByHeader: false,
+  compress: true,
   images: {
     formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 31536000,
     remotePatterns: [
       {
         protocol: "https",
         hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "*.r2.cloudflarestorage.com",
+      },
+      {
+        protocol: "https",
+        hostname: "images.methagukalanjiyam.in",
       },
       {
         protocol: "http",
@@ -30,8 +41,8 @@ const nextConfig: NextConfig = {
       // Fonts: self + Google Fonts static CDN + data URIs
       "font-src 'self' https://fonts.gstatic.com data:",
 
-      // Images: self + Unsplash + data URIs + blob URIs
-      "img-src 'self' https://images.unsplash.com data: blob:",
+      // Images: self + Unsplash + Cloudflare R2 + data URIs + blob URIs
+      "img-src 'self' https://images.unsplash.com https://*.r2.cloudflarestorage.com https://images.methagukalanjiyam.in data: blob:",
 
       // Connect: self + Supabase (HTTPS & Realtime WSS) + Razorpay API & analytics + Cloudflare Turnstile + dev websockets
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.razorpay.com https://lumberjack.razorpay.com https://challenges.cloudflare.com ws: wss:",
@@ -91,7 +102,7 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      // Immutable cache for Next.js static build chunks
+      // Immutable cache for Next.js static build chunks (Edge + Browser 1 Year)
       {
         source: "/_next/static/(.*)",
         headers: [
@@ -99,15 +110,31 @@ const nextConfig: NextConfig = {
             key: "Cache-Control",
             value: "public, max-age=31536000, immutable",
           },
+          {
+            key: "CDN-Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+          {
+            key: "Cloudflare-CDN-Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
         ],
       },
-      // Long cache for public images with stale-while-revalidate
+      // Long cache for public images with stale-while-revalidate at Cloudflare Edge
       {
         source: "/images/(.*)",
         headers: [
           {
             key: "Cache-Control",
             value: "public, max-age=86400, stale-while-revalidate=604800",
+          },
+          {
+            key: "CDN-Cache-Control",
+            value: "public, max-age=604800, stale-while-revalidate=2592000",
+          },
+          {
+            key: "Cloudflare-CDN-Cache-Control",
+            value: "public, max-age=604800, stale-while-revalidate=2592000",
           },
         ],
       },
@@ -119,15 +146,45 @@ const nextConfig: NextConfig = {
             key: "Cache-Control",
             value: "public, max-age=86400, stale-while-revalidate=604800",
           },
+          {
+            key: "CDN-Cache-Control",
+            value: "public, max-age=2592000, stale-while-revalidate=2592000",
+          },
+          {
+            key: "Cloudflare-CDN-Cache-Control",
+            value: "public, max-age=2592000, stale-while-revalidate=2592000",
+          },
+        ],
+      },
+      // Cloudflare Edge Cache for public content pages (accelerates global TTFB via edge cache)
+      {
+        source: "/(books|videos|blog|supporters|certificate|privacy|terms)(.*)",
+        headers: [
+          {
+            key: "CDN-Cache-Control",
+            value: "public, s-maxage=86400, stale-while-revalidate=604800",
+          },
+          {
+            key: "Cloudflare-CDN-Cache-Control",
+            value: "public, s-maxage=86400, stale-while-revalidate=604800",
+          },
         ],
       },
       // Strict no-cache for sensitive, authenticated, and checkout pages
       {
-        source: "/(account|admin|cart|login)(.*)",
+        source: "/(account|admin|cart|login|signup|verify-email)(.*)",
         headers: [
           {
             key: "Cache-Control",
             value: "private, no-cache, no-store, max-age=0, must-revalidate",
+          },
+          {
+            key: "CDN-Cache-Control",
+            value: "no-store",
+          },
+          {
+            key: "Cloudflare-CDN-Cache-Control",
+            value: "no-store",
           },
           {
             key: "Pragma",
@@ -143,13 +200,21 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      // Strict no-cache for all API routes
+      // Strict no-cache for all API routes (prevents Cloudflare edge caching of private API transactions)
       {
         source: "/api/(.*)",
         headers: [
           {
             key: "Cache-Control",
             value: "private, no-cache, no-store, max-age=0, must-revalidate",
+          },
+          {
+            key: "CDN-Cache-Control",
+            value: "no-store",
+          },
+          {
+            key: "Cloudflare-CDN-Cache-Control",
+            value: "no-store",
           },
           {
             key: "Pragma",

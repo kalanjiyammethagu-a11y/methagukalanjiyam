@@ -29,6 +29,8 @@ function getClientIp(request: NextRequest): string {
 
 /**
  * Rate limiting rules:
+ * - /admin/login & admin OTP: 5 requests per minute
+ * - /signup: 5 requests per minute
  * - /login: 10 requests per minute per IP
  * - /api/orders/*: 30 requests per minute per IP
  * - /api/webhooks/*: 60 requests per minute per IP
@@ -93,7 +95,18 @@ const RATE_LIMIT_RULES: RateLimitRule[] = [
   },
 ];
 
-function applyCacheHeaders(response: NextResponse, pathname: string): NextResponse {
+/**
+ * Apply edge caching and security headers tailored for Cloudflare and downstream browsers.
+ */
+function applyCacheHeaders(
+  response: NextResponse,
+  pathname: string,
+  cfRay?: string | null
+): NextResponse {
+  if (cfRay) {
+    response.headers.set("X-CF-Ray", cfRay);
+  }
+
   if (
     pathname.startsWith("/account") ||
     pathname.startsWith("/admin") ||
@@ -103,10 +116,13 @@ function applyCacheHeaders(response: NextResponse, pathname: string): NextRespon
     pathname.startsWith("/verify-email") ||
     pathname.startsWith("/api")
   ) {
+    // Private & stateful: completely disallow edge or browser caching
     response.headers.set(
       "Cache-Control",
       "private, no-cache, no-store, max-age=0, must-revalidate"
     );
+    response.headers.set("CDN-Cache-Control", "no-store");
+    response.headers.set("Cloudflare-CDN-Cache-Control", "no-store");
     response.headers.set("Pragma", "no-cache");
     response.headers.set("Expires", "0");
     response.headers.set("X-Frame-Options", "DENY");
@@ -120,12 +136,24 @@ function applyCacheHeaders(response: NextResponse, pathname: string): NextRespon
     if (!pathname.startsWith("/api")) {
       response.headers.set("Vary", "Cookie, Authorization, Accept-Encoding");
     }
+  } else {
+    // Public static / SSG pages: allow Cloudflare Anycast edge caching with stale-while-revalidate
+    response.headers.set(
+      "CDN-Cache-Control",
+      "public, s-maxage=86400, stale-while-revalidate=604800"
+    );
+    response.headers.set(
+      "Cloudflare-CDN-Cache-Control",
+      "public, s-maxage=86400, stale-while-revalidate=604800"
+    );
   }
   return response;
 }
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const cfRay = request.headers.get("cf-ray");
+  const cfCountry = request.headers.get("cf-ipcountry");
 
   // 1. Strict CSRF verification on state-changing API endpoints
   if (
@@ -148,6 +176,8 @@ export async function middleware(request: NextRequest) {
               status: 403,
               headers: {
                 "Cache-Control": "no-store, no-cache, must-revalidate",
+                "CDN-Cache-Control": "no-store",
+                "Cloudflare-CDN-Cache-Control": "no-store",
               },
             }
           );
@@ -155,7 +185,14 @@ export async function middleware(request: NextRequest) {
       } catch {
         return NextResponse.json(
           { error: "Forbidden: Malformed Origin header" },
-          { status: 403, headers: { "Cache-Control": "no-store" } }
+          {
+            status: 403,
+            headers: {
+              "Cache-Control": "no-store",
+              "CDN-Cache-Control": "no-store",
+              "Cloudflare-CDN-Cache-Control": "no-store",
+            },
+          }
         );
       }
     }
@@ -164,10 +201,15 @@ export async function middleware(request: NextRequest) {
   // 2. Maintain existing session management first
   const sessionResponse = await updateSession(request);
 
+  // Propagate Cloudflare geolocation and ray ID headers forward
+  if (cfCountry) {
+    sessionResponse.headers.set("X-User-Country", cfCountry);
+  }
+
   // If updateSession already returned a redirect response (e.g. unauthenticated /admin),
   // honor it immediately and apply cache headers
   if (sessionResponse && sessionResponse.status >= 300 && sessionResponse.status < 400) {
-    return applyCacheHeaders(sessionResponse, pathname);
+    return applyCacheHeaders(sessionResponse, pathname, cfRay);
   }
 
   // 3. Perform rate limiting checks after session update
@@ -196,10 +238,12 @@ export async function middleware(request: NextRequest) {
               "X-RateLimit-Limit": String(rule.limit),
               "X-RateLimit-Remaining": "0",
               "X-RateLimit-Reset": String(result.reset),
+              "CDN-Cache-Control": "no-store",
+              "Cloudflare-CDN-Cache-Control": "no-store",
             },
           }
         );
-        return applyCacheHeaders(rateLimitResponse, pathname);
+        return applyCacheHeaders(rateLimitResponse, pathname, cfRay);
       }
 
       // If allowed, append rate limit info headers to session response
@@ -214,12 +258,12 @@ export async function middleware(request: NextRequest) {
           String(result.reset)
         );
       }
-      return applyCacheHeaders(sessionResponse, pathname);
+      return applyCacheHeaders(sessionResponse, pathname, cfRay);
     }
   }
 
   // No rate limit rule matched — proceed with session update response
-  return applyCacheHeaders(sessionResponse, pathname);
+  return applyCacheHeaders(sessionResponse, pathname, cfRay);
 }
 
 export const config = {

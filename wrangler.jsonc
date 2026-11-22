@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "methagu-kalanjiyam",
+  "compatibility_date": "2026-11-20",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "pages_build_output_dir": ".next",
+  "placement": {
+    "mode": "smart"
+  },
+  "vars": {
+    "NEXT_PUBLIC_SITE_URL": "https://methagukalanjiyam.in"
+  }
+}
