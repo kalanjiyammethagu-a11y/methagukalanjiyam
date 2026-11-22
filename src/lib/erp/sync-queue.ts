@@ -9,6 +9,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { getERPClient } from "./erp-client";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   ERPSyncQueueItem,
   ERPAuditLogEntry,
@@ -99,13 +100,34 @@ function persistState() {
   try {
     fs.writeFileSync(QUEUE_STORAGE_PATH, JSON.stringify(queueItems, null, 2), "utf8");
   } catch (err) {
-    console.warn("Could not persist ERP queue storage:", err);
+    // In serverless / read-only filesystem environments, file writes are safely caught
   }
 
   try {
     fs.writeFileSync(AUDIT_STORAGE_PATH, JSON.stringify(auditLogs.slice(0, 100), null, 2), "utf8");
   } catch (err) {
-    console.warn("Could not persist ERP audit storage:", err);
+    // Handled safely
+  }
+}
+
+async function syncItemToDatabase(item: ERPSyncQueueItem) {
+  try {
+    const adminSupabase = createAdminClient();
+    await (adminSupabase.from("erp_sync_queue") as any).upsert({
+      order_number: item.orderNumber,
+      customer_name: item.customerName || null,
+      customer_phone: item.customerPhone || null,
+      customer_email: item.customerEmail || null,
+      total_amount: item.totalAmount || 0,
+      item_count: item.itemCount || 0,
+      status: item.status,
+      attempts: item.retryCount || 0,
+      last_error: item.lastError || null,
+      payload: item.payload || {},
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "order_number" });
+  } catch {
+    // Graceful fallback if database table is unavailable or offline
   }
 }
 
@@ -169,6 +191,7 @@ export async function enqueueOrderSync(orderPayload: {
     queueItems.unshift(queueItem);
   }
   persistState();
+  syncItemToDatabase(queueItem).catch(() => {});
 
   // Attempt immediate synchronization in background
   processQueueItem(queueItem).catch((err) => {
@@ -277,6 +300,7 @@ export async function processQueueItem(item: ERPSyncQueueItem): Promise<ERPSyncQ
   }
 
   persistState();
+  syncItemToDatabase(item).catch(() => {});
   return item;
 }
 

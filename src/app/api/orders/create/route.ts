@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { createOrderSchema } from "@/lib/validators/order";
 import {
-  calculateOrderSummary,
+  calculateOrderSummaryAsync,
   createRazorpayOrder,
 } from "@/lib/razorpay";
 import { CreateOrderApiResponse } from "@/types/razorpay";
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     // NEVER trust prices from the client
     let summary;
     try {
-      summary = calculateOrderSummary(items, shipping_address.state);
+      summary = await calculateOrderSummaryAsync(items, shipping_address.state);
     } catch (calcError: any) {
       return NextResponse.json(
         { error: calcError.message || "Failed to calculate order amount" },

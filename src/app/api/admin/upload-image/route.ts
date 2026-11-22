@@ -2,15 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { validateAdminSession } from "@/lib/auth-service";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
 async function checkAdmin(req: NextRequest) {
   const adminCookie = req.cookies.get("mk_admin_session")?.value;
   if (!adminCookie) return false;
-  if (adminCookie.includes("mock") || adminCookie.includes("signature_valid") || adminCookie.includes("admin-01")) {
-    return true;
-  }
   const { valid } = await validateAdminSession(adminCookie);
   return valid;
 }
@@ -60,16 +58,45 @@ export async function POST(req: NextRequest) {
 
     const ext = path.extname(file.name).toLowerCase() || ".jpg";
     const safeName = `${prefix}-${Date.now()}${ext}`;
-    const uploadDir = path.join(process.cwd(), "public", "images", safeFolder);
-
-    await mkdir(uploadDir, { recursive: true });
-
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    await writeFile(path.join(uploadDir, safeName), buffer);
 
-    const publicPath = `/images/${safeFolder}/${safeName}`;
-    return NextResponse.json({ path: publicPath }, { status: 200 });
+    // 1. Try writing to local public/images directory (VPS / Dev environments)
+    try {
+      const uploadDir = path.join(process.cwd(), "public", "images", safeFolder);
+      await mkdir(uploadDir, { recursive: true });
+      await writeFile(path.join(uploadDir, safeName), buffer);
+      const publicPath = `/images/${safeFolder}/${safeName}`;
+      return NextResponse.json({ path: publicPath }, { status: 200 });
+    } catch (fsErr) {
+      console.warn("Local filesystem write unavailable, attempting Supabase Storage fallback:", fsErr);
+    }
+
+    // 2. Try Supabase Storage bucket ("covers" or "public-assets")
+    try {
+      const adminSupabase = createAdminClient();
+      const storagePath = `${safeFolder}/${safeName}`;
+      const { data: uploadData, error: uploadErr } = await adminSupabase.storage
+        .from("covers")
+        .upload(storagePath, buffer, {
+          contentType: file.type,
+          upsert: true,
+        });
+
+      if (!uploadErr && uploadData) {
+        const { data: { publicUrl } } = adminSupabase.storage
+          .from("covers")
+          .getPublicUrl(storagePath);
+        return NextResponse.json({ path: publicUrl }, { status: 200 });
+      }
+    } catch (storageErr) {
+      console.warn("Supabase storage bucket upload skipped:", storageErr);
+    }
+
+    // 3. Resilient fallback for serverless read-only filesystems without storage configured
+    const base64 = buffer.toString("base64");
+    const dataUrl = `data:${file.type};base64,${base64}`;
+    return NextResponse.json({ path: dataUrl }, { status: 200 });
   } catch (err: any) {
     console.error("POST /api/admin/upload-image error:", err);
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });

@@ -10,9 +10,6 @@ export const dynamic = "force-dynamic";
 async function checkAdmin(req: NextRequest) {
   const adminCookie = req.cookies.get("mk_admin_session")?.value;
   if (!adminCookie) return false;
-  if (adminCookie.includes("mock") || adminCookie.includes("signature_valid") || adminCookie.includes("admin-01")) {
-    return true;
-  }
   const { valid } = await validateAdminSession(adminCookie);
   return valid;
 }

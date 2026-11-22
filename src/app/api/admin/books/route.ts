@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
       published_year,
       weight_grams,
       is_featured,
+      is_active,
     } = body;
 
     if (!title || !author || price === undefined || stock === undefined) {
@@ -92,6 +93,7 @@ export async function POST(req: NextRequest) {
         published_year: published_year ? Number(published_year) : new Date().getFullYear(),
         weight_grams: weight_grams ? Number(weight_grams) : 350,
         is_featured: Boolean(is_featured),
+        is_active: is_active !== undefined ? Boolean(is_active) : true,
         sort_order: 99,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -144,6 +146,7 @@ export async function PATCH(req: NextRequest) {
     if (updates.published_year !== undefined) payload.published_year = Number(updates.published_year);
     if (updates.weight_grams !== undefined) payload.weight_grams = Number(updates.weight_grams);
     if (updates.is_featured !== undefined) payload.is_featured = Boolean(updates.is_featured);
+    if (updates.is_active !== undefined) payload.is_active = Boolean(updates.is_active);
 
     const adminSupabase = createAdminClient();
     const { data: updatedBook, error } = await (adminSupabase.from("books") as any)
@@ -173,12 +176,38 @@ export async function DELETE(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
+    const permanent = searchParams.get("permanent") === "true";
 
     if (!id) {
       return NextResponse.json({ error: "Book ID is required" }, { status: 400 });
     }
 
     const adminSupabase = createAdminClient();
+
+    // Check if historical order records reference this book
+    const { count: orderItemsCount } = await (adminSupabase.from("order_items") as any)
+      .select("id", { count: "exact", head: true })
+      .eq("book_id", id);
+
+    if (orderItemsCount && orderItemsCount > 0 && !permanent) {
+      // Soft-delete to protect referential integrity and order history
+      const { data, error } = await (adminSupabase.from("books") as any)
+        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        message: `Book deactivated successfully to protect ${orderItemsCount} historical order record(s).`,
+        deactivated: true,
+        book: data,
+      });
+    }
+
     const { error } = await (adminSupabase.from("books") as any).delete().eq("id", id);
 
     if (error) {
@@ -192,4 +221,3 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
-

@@ -46,7 +46,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { orderId, status, trackingNumber, courier, adminNotes } = body;
+    const { orderId, status, paymentStatus, trackingNumber, courier, adminNotes } = body;
 
     if (!orderId) {
       return NextResponse.json({ error: "Order ID is required" }, { status: 400 });
@@ -56,8 +56,12 @@ export async function PATCH(req: NextRequest) {
       updated_at: new Date().toISOString(),
     };
 
-    if (status) {
-      updatePayload.status = status === "shipped" ? "dispatched" : status;
+    const normalizedStatus = status === "shipped" ? "dispatched" : status;
+    if (normalizedStatus) {
+      updatePayload.status = normalizedStatus;
+    }
+    if (paymentStatus) {
+      updatePayload.payment_status = paymentStatus;
     }
     if (trackingNumber !== undefined) updatePayload.tracking_number = trackingNumber;
     if (courier !== undefined) {
@@ -68,16 +72,28 @@ export async function PATCH(req: NextRequest) {
     }
     if (adminNotes !== undefined) updatePayload.admin_notes = adminNotes;
 
-    if (status === "shipped" || trackingNumber) {
+    if (normalizedStatus === "dispatched" || trackingNumber) {
       updatePayload.dispatched_at = new Date().toISOString();
       if (!updatePayload.status) updatePayload.status = "dispatched";
     }
 
-    if (status === "delivered") {
+    if (normalizedStatus === "delivered") {
       updatePayload.delivered_at = new Date().toISOString();
     }
 
     const adminSupabase = createAdminClient();
+
+    // Trigger explicit stock restoration if cancelled or returned
+    if (normalizedStatus === "cancelled" || normalizedStatus === "returned") {
+      try {
+        await (adminSupabase.rpc as any)("restore_order_inventory", {
+          p_order_id: orderId,
+        });
+      } catch (restoreErr) {
+        console.warn("Direct restore_order_inventory RPC call noted (database trigger also acts):", restoreErr);
+      }
+    }
+
     const { data, error } = await (adminSupabase.from("orders") as any)
       .update(updatePayload)
       .eq("id", orderId)

@@ -143,6 +143,126 @@ export interface CalculatedOrderSummary {
 }
 
 /**
+ * Calculates order amounts server-side from database if connected, falling back to static catalog.
+ * Never trusts prices sent from the client.
+ * Shipping rule: Tamil Nadu = ₹60, Other India = ₹100
+ */
+export async function calculateOrderSummaryAsync(
+  requestedItems: Array<{ book_id: string; quantity: number }>,
+  state: string
+): Promise<CalculatedOrderSummary> {
+  if (!requestedItems || requestedItems.length === 0) {
+    throw new Error("Order must contain at least one item");
+  }
+
+  // 1. Try to fetch from Supabase database first
+  const dbBooksMap = new Map<string, BookItem>();
+  try {
+    const isPlaceholderDb =
+      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder");
+
+    if (!isPlaceholderDb) {
+      const { createAdminClient } = await import("@/lib/supabase/admin");
+      const adminSupabase = createAdminClient();
+      const rawIds = requestedItems.map((i) => i.book_id);
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      const uuidList = rawIds.filter((id) => uuidRegex.test(id));
+      const slugList = rawIds.filter((id) => !uuidRegex.test(id));
+
+      let query = (adminSupabase.from("books") as any).select("*");
+      if (uuidList.length > 0 && slugList.length > 0) {
+        query = query.or(`id.in.(${uuidList.join(",")}),slug.in.(${slugList.map((s) => `"${s}"`).join(",")})`);
+      } else if (uuidList.length > 0) {
+        query = query.in("id", uuidList);
+      } else if (slugList.length > 0) {
+        query = query.in("slug", slugList);
+      }
+
+      const { data: dbRows, error } = await query;
+
+      if (!error && dbRows && dbRows.length > 0) {
+        for (const row of dbRows) {
+          const item: BookItem = {
+            id: row.id,
+            title: row.title,
+            titleEn: row.title,
+            author: row.author,
+            authorEn: row.author,
+            price: Number(row.price),
+            discountPrice: row.discount_price ? Number(row.discount_price) : null,
+            categoryTa: "வரலாறு",
+            categoryEn: "History",
+            categorySlug: "history",
+            image: row.cover_front || "/images/books/book-placeholder.webp",
+            stock: Number(row.stock),
+            slug: row.slug,
+            descriptionTa: row.description || "",
+            descriptionEn: row.description || "",
+          };
+          dbBooksMap.set(row.id, item);
+          dbBooksMap.set(row.slug, item);
+        }
+      }
+    }
+  } catch {
+    // Database lookup failed, fall back to allBooks
+  }
+
+  const items: CalculatedOrderItem[] = [];
+  let subtotal = 0;
+
+  for (const item of requestedItems) {
+    const book =
+      dbBooksMap.get(item.book_id) ||
+      allBooks.find((b) => b.id === item.book_id || b.slug === item.book_id);
+
+    if (!book) {
+      throw new Error(`Book with id '${item.book_id}' not found`);
+    }
+
+    if (item.quantity <= 0) {
+      throw new Error(`Invalid quantity for book '${book.title}'`);
+    }
+
+    if (book.stock < item.quantity) {
+      throw new Error(`Insufficient stock for '${book.title}'. Available: ${book.stock}`);
+    }
+
+    const unitPrice = book.discountPrice ?? book.price;
+    const lineTotal = unitPrice * item.quantity;
+
+    subtotal += lineTotal;
+    items.push({
+      book,
+      quantity: item.quantity,
+      unitPrice,
+      lineTotal,
+    });
+  }
+
+  // Shipping calculation: Tamil Nadu = ₹60, Other India = ₹100
+  const normalizedState = (state || "").trim().toLowerCase();
+  const isTamilNadu =
+    normalizedState === "tamil nadu" ||
+    normalizedState === "tamilnadu" ||
+    normalizedState === "tn" ||
+    normalizedState === "தமிழ்நாடு";
+
+  const shippingFee = isTamilNadu ? 60 : 100;
+  const totalAmount = subtotal + shippingFee;
+  const amountInPaise = Math.round(totalAmount * 100);
+
+  return {
+    items,
+    subtotal,
+    shippingFee,
+    totalAmount,
+    amountInPaise,
+  };
+}
+
+/**
  * Calculates order amounts server-side from static books data
  * Never trusts prices sent from the client
  * Shipping rule: Tamil Nadu = ₹60, Other India = ₹100
