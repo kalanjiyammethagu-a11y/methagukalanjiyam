@@ -14,6 +14,9 @@ import {
   CheckCircle2,
   Loader2,
   AlertCircle,
+  Globe,
+  MessageCircle,
+  ShieldCheck,
 } from "lucide-react";
 import { ArchivalWaxSealIcon, PostalSealIcon } from "@/components/ui/Icons";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
@@ -215,11 +218,30 @@ export default function CartPage() {
     });
   };
 
+  const isDiaspora = shippingRegion === "diaspora";
   const shippingFee =
-    shippingRegion === "other-india" ? 100 : shippingRegion === "diaspora" ? 350 : 60;
+    shippingRegion === "other-india" ? 100 : isDiaspora ? 0 : 60;
   const shipping = subtotal > 0 ? shippingFee : 0;
   const total = subtotal + shipping;
   const isEmpty = items.length === 0;
+
+  const getOverseasWhatsAppUrl = () => {
+    const booksList = items
+      .map(
+        (it) =>
+          `• ${isTa ? it.title : it.titleEn} (x${it.quantity}) - ₹${
+            it.price * it.quantity
+          }`
+      )
+      .join("\n");
+    const addressStr = addressForm.fullName
+      ? `\n\nடெலிவரி முகவரி (Delivery Address):\n${getFormattedAddress()}`
+      : "";
+    const msg = encodeURIComponent(
+      `வணக்கம் மேதகு களஞ்சியம்,\nநான் வெளிநாட்டிலிருந்து (Overseas / International Order) நூல்களை வாங்க விரும்புகிறேன்.\n\n📚 கூடையில் உள்ள நூல்கள்:\n${booksList}\n\nமொத்த நூல் மதிப்பு: ₹${subtotal}${addressStr}\n\nதயவுசெய்து சர்வதேச அஞ்சல் கட்டணம் (DHL / International Post) மற்றும் கட்டண விவரங்களைத் தெரிவிக்கவும்.`
+    );
+    return `https://wa.me/916384654946?text=${msg}`;
+  };
 
   // Validation
   const isAddressFilled = Boolean(
@@ -750,22 +772,22 @@ export default function CartPage() {
                           id: "tamil-nadu" as ShippingRegion,
                           titleTa: "தமிழ்நாடு (Tamil Nadu)",
                           titleEn: "Tamil Nadu",
-                          fee: 60,
+                          feeText: "₹60",
                           courier: "ST Courier / Speed Post",
                         },
                         {
                           id: "other-india" as ShippingRegion,
                           titleTa: "பிற இந்திய மாநிலங்கள் (Other States)",
                           titleEn: "Other States",
-                          fee: 100,
+                          feeText: "₹100",
                           courier: "Speed Post",
                         },
                         {
                           id: "diaspora" as ShippingRegion,
                           titleTa: "வெளிநாடு (Diaspora / International)",
                           titleEn: "International Diaspora",
-                          fee: 350,
-                          courier: "DHL / India Post",
+                          feeText: isTa ? "WhatsApp" : "WhatsApp",
+                          courier: "DHL / India Post (Overseas)",
                         },
                       ].map((reg) => {
                         const isSelected = shippingRegion === reg.id;
@@ -790,7 +812,7 @@ export default function CartPage() {
                               <div className="text-[10px] text-[#666666]">{reg.courier}</div>
                             </div>
                             <div className="font-mono font-bold text-[#0A6847]">
-                              ₹{reg.fee}
+                              {reg.feeText}
                             </div>
                           </button>
                         );
@@ -811,7 +833,9 @@ export default function CartPage() {
                       <span className="font-tamil">
                         {isTa ? "தபால் கட்டணம்" : "Shipping"}
                       </span>
-                      <span className="tabular-nums font-mono">{formatINR(shipping)}</span>
+                      <span className="tabular-nums font-mono">
+                        {isDiaspora ? (isTa ? "எடைக்கேற்ப" : "By Weight") : formatINR(shipping)}
+                      </span>
                     </div>
 
                     <div className="pt-3 border-t border-black/8 flex justify-between text-[#111111] font-bold text-base">
@@ -819,12 +843,12 @@ export default function CartPage() {
                         {isTa ? "மொத்தம்" : "Total"}
                       </span>
                       <span className="tabular-nums text-lg font-mono text-[#0A6847]">
-                        {formatINR(total)}
+                        {isDiaspora ? `${formatINR(subtotal)} + அஞ்சல்` : formatINR(total)}
                       </span>
                     </div>
                   </div>
 
-                  {/* Dual Checkout Action: Razorpay + WhatsApp */}
+                  {/* Checkout Action: Overseas WhatsApp OR Domestic In-Site Payment */}
                   <div className="space-y-3 pt-2">
                     {orderError && (
                       <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
@@ -833,75 +857,121 @@ export default function CartPage() {
                       </div>
                     )}
 
-                    {/* Razorpay Online Checkout Button */}
-                    {createdOrder ? (
-                      <RazorpayCheckout
-                        orderId={createdOrder.orderId}
-                        orderNumber={createdOrder.orderNumber}
-                        razorpayOrderId={createdOrder.razorpayOrderId}
-                        amount={createdOrder.amount}
-                        prefill={{
-                          name: addressForm.fullName,
-                          contact: addressForm.phone,
-                        }}
-                        notes={{
-                          address: getFormattedAddress(),
-                          shipping_region: shippingRegion,
-                        }}
-                        buttonText={
-                          isTa
-                            ? `ஆன்லைனில் பணம் செலுத்துக (${formatINR(total)})`
-                            : `Pay Online (${formatINR(total)})`
-                        }
-                        buttonClassName="w-full min-h-[48px] bg-[#0A6847] hover:bg-[#085036] text-white font-bold rounded-2xl"
-                        onSuccess={() => {
-                          const orderNum = createdOrder?.orderNumber;
-                          clearCart();
-                          if (orderNum) {
-                            router.push(`/orders/${orderNum}`);
-                          } else {
-                            setPaymentSuccess(true);
-                          }
-                        }}
-                        onFailure={(err) => {
-                          setOrderError(err.error?.description || "Payment failed");
-                        }}
-                      />
-                    ) : !isCheckingAuth && !userSession?.authenticated ? (
-                      <Link
-                        href="/login?redirect=/cart"
-                        className="w-full min-h-[48px] px-6 rounded-2xl bg-[#0A6847] hover:bg-[#085036] text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md transition-all active:scale-[0.98] cursor-pointer font-tamil"
-                      >
-                        <CreditCard className="h-5 w-5" />
-                        <span>
-                          {isTa
-                            ? "உள்நுழைந்து பணம் செலுத்துக"
-                            : `Sign In to Pay (${formatINR(total)})`}
-                        </span>
-                      </Link>
+                    {isDiaspora ? (
+                      /* OVERSEAS DIASPORA: WhatsApp Inquire & Order */
+                      <div className="space-y-3">
+                        <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-950 text-xs font-tamil space-y-1.5">
+                          <div className="flex items-center gap-2 font-bold text-amber-950">
+                            <Globe className="h-4 w-4 text-amber-700 shrink-0" />
+                            <span>
+                              {isTa
+                                ? "வெளிநாட்டு வாசகர்கள் கவனத்திற்கு (Overseas Orders)"
+                                : "Overseas / International Diaspora Orders"}
+                            </span>
+                          </div>
+                          <p className="text-amber-900 leading-relaxed text-[11px] sm:text-xs">
+                            {isTa
+                              ? "வெளிநாட்டு அஞ்சல் சேவைக்கு (DHL / International Post) பார்சல் எடை மற்றும் நாட்டின் அடிப்படையில் தபால் கட்டணம் நிர்ணயிக்கப்படும். உங்கள் கூடைப் புத்தகங்களுடன் எங்களின் அதிகாரப்பூர்வ WhatsApp மூலம் தொடர்பு கொள்ளவும்."
+                              : "For international orders, shipping charges are calculated based on parcel weight and destination country (via DHL / India Post). Please proceed via WhatsApp with your cart items."}
+                          </p>
+                        </div>
+
+                        <a
+                          href={getOverseasWhatsAppUrl()}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full min-h-[48px] px-6 rounded-2xl bg-[#0A6847] hover:bg-[#085036] text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md transition-all active:scale-[0.98] cursor-pointer font-tamil"
+                        >
+                          <MessageCircle className="h-5 w-5" />
+                          <span>
+                            {isTa
+                              ? "WhatsApp வழியே வெளிநாட்டு ஆர்டர் செய்க"
+                              : "Inquire Overseas Order on WhatsApp"}
+                          </span>
+                        </a>
+                      </div>
                     ) : (
-                      <button
-                        type="button"
-                        onClick={handleInitiateOnlinePayment}
-                        disabled={isCreatingOrder || isCheckingAuth}
-                        className="w-full min-h-[48px] px-6 rounded-2xl bg-[#0A6847] hover:bg-[#085036] text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md transition-all active:scale-[0.98] cursor-pointer disabled:opacity-60 font-tamil"
-                      >
-                        {isCreatingOrder ? (
-                          <>
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                            <span>தயாராகிறது...</span>
-                          </>
-                        ) : (
-                          <>
+                      /* DOMESTIC: Strictly In-Site Online Payment */
+                      <>
+                        <div className="flex items-center gap-2 text-xs font-semibold text-[#0A6847] bg-[#0A6847]/8 border border-[#0A6847]/20 px-3 py-2 rounded-xl font-tamil">
+                          <ShieldCheck className="h-4 w-4 shrink-0 text-[#0A6847]" />
+                          <span>
+                            {isTa
+                              ? "பாதுகாப்பான இணையதள நேரடி கட்டணம் (UPI / GPay / Card)"
+                              : "100% Secure In-Site Payment (UPI, Cards, NetBanking)"}
+                          </span>
+                        </div>
+
+                        {createdOrder ? (
+                          <RazorpayCheckout
+                            orderId={createdOrder.orderId}
+                            orderNumber={createdOrder.orderNumber}
+                            razorpayOrderId={createdOrder.razorpayOrderId}
+                            amount={createdOrder.amount}
+                            prefill={{
+                              name: addressForm.fullName,
+                              contact: addressForm.phone,
+                            }}
+                            notes={{
+                              address: getFormattedAddress(),
+                              shipping_region: shippingRegion,
+                            }}
+                            buttonText={
+                              isTa
+                                ? `ஆன்லைனில் பணம் செலுத்துக (${formatINR(total)})`
+                                : `Pay Online (${formatINR(total)})`
+                            }
+                            buttonClassName="w-full min-h-[48px] bg-[#0A6847] hover:bg-[#085036] text-white font-bold rounded-2xl"
+                            onSuccess={() => {
+                              const orderNum = createdOrder?.orderNumber;
+                              clearCart();
+                              if (orderNum) {
+                                router.push(`/orders/${orderNum}`);
+                              } else {
+                                setPaymentSuccess(true);
+                              }
+                            }}
+                            onFailure={(err) => {
+                              setOrderError(err.error?.description || "Payment failed");
+                            }}
+                          />
+                        ) : !isCheckingAuth && !userSession?.authenticated ? (
+                          <Link
+                            href="/login?redirect=/cart"
+                            className="w-full min-h-[48px] px-6 rounded-2xl bg-[#0A6847] hover:bg-[#085036] text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md transition-all active:scale-[0.98] cursor-pointer font-tamil"
+                          >
                             <CreditCard className="h-5 w-5" />
                             <span>
                               {isTa
-                                ? `ஆன்லைனில் செலுத்துக (UPI / Card - ${formatINR(total)})`
-                                : `Pay via UPI / Card (${formatINR(total)})`}
+                                ? "உள்நுழைந்து பணம் செலுத்துக"
+                                : `Sign In to Pay (${formatINR(total)})`}
                             </span>
-                          </>
+                          </Link>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={handleInitiateOnlinePayment}
+                            disabled={isCreatingOrder || isCheckingAuth}
+                            className="w-full min-h-[48px] px-6 rounded-2xl bg-[#0A6847] hover:bg-[#085036] text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md transition-all active:scale-[0.98] cursor-pointer disabled:opacity-60 font-tamil"
+                          >
+                            {isCreatingOrder ? (
+                              <>
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                                <span>தயாராகிறது...</span>
+                              </>
+                            ) : (
+                              <>
+                                <CreditCard className="h-5 w-5" />
+                                <span>
+                                  {isTa
+                                    ? `ஆன்லைனில் செலுத்துக (UPI / Card - ${formatINR(total)})`
+                                    : `Pay via UPI / Card (${formatINR(total)})`}
+                                </span>
+                              </>
+                            )}
+                          </button>
                         )}
-                      </button>
+                      </>
                     )}
                   </div>
 

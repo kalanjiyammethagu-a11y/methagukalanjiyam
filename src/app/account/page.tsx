@@ -23,6 +23,7 @@ import {
   ShieldCheck,
   LogOut,
   Truck,
+  ShoppingBag,
 } from "lucide-react";
 import {
   BookmarkRibbonIcon,
@@ -35,9 +36,10 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { useLanguage, type FontSize, type ReadingTheme, type ShippingRegion } from "@/context/LanguageContext";
+import { useCart } from "@/context/CartContext";
 import { allBooks, type BookItem } from "@/data/books";
 import { formatINR } from "@/lib/utils";
-import { getWhatsAppOrderUrl, getGeneralWhatsAppUrl } from "@/lib/whatsapp";
+import { getGeneralWhatsAppUrl } from "@/lib/whatsapp";
 
 type AccountTab = "wishlist" | "address" | "orders" | "settings";
 
@@ -59,8 +61,10 @@ export default function AccountPage() {
     clearSensitiveStorage,
     wishlist,
     toggleWishlist,
+    showToast,
   } = useLanguage();
 
+  const { addToCart } = useCart();
   const isTa = locale === "ta";
   const [activeTab, setActiveTab] = React.useState<AccountTab>("wishlist");
   const [addressForm, setAddressForm] = React.useState(deliveryAddress);
@@ -285,8 +289,8 @@ export default function AccountPage() {
                 </h2>
                 <p className="text-xs sm:text-sm text-[#666666] font-tamil">
                   {isTa
-                    ? "விருப்பப் பட்டியலில் உள்ள புத்தகங்களை ஒரே கிளிக்கில் WhatsApp வழியே பெற்றுக் கொள்ளலாம்."
-                    : "Easily order your bookmarked books directly via WhatsApp."}
+                    ? "விருப்பப் பட்டியலில் உள்ள புத்தகங்களை ஒரே கிளிக்கில் கூடையில் சேர்த்து இணையதளத்தில் நேரடியாக வாங்கலாம்."
+                    : "Add your saved books directly to your cart and purchase online securely on our website."}
                 </p>
               </div>
 
@@ -312,8 +316,8 @@ export default function AccountPage() {
                   </h3>
                   <p className="text-xs sm:text-sm text-[#666666] font-tamil max-w-md mx-auto">
                     {isTa
-                      ? "நூல்கள் பக்கத்தில் எந்த நூலின் அருகிலும் உள்ள வாசிப்புப் பட்டையை (Bookmark) அழுத்தி இங்கு சேமிக்கலாம்."
-                      : "Click the bookmark ribbon on any book across the catalog to save it to your library for instant WhatsApp ordering."}
+                      ? "நூல்கள் பக்கத்தில் எந்த நூலின் அருகிலும் உள்ள வாசிப்புப் பட்டையை (Bookmark) அழுத்தி உங்கள் நூலகத்தில் சேமிக்கலாம்."
+                      : "Click the bookmark ribbon on any book across the catalog to save it to your library for instant on-site ordering."}
                   </p>
                 </div>
                 <div className="pt-2">
@@ -326,14 +330,6 @@ export default function AccountPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {savedBooks.map((book) => {
-                  const orderUrl = getWhatsAppOrderUrl(
-                    book.title,
-                    book.discountPrice ?? book.price,
-                    book.slug,
-                    1,
-                    getFormattedAddress()
-                  );
-
                   return (
                     <article
                       key={book.id}
@@ -377,15 +373,37 @@ export default function AccountPage() {
                       </div>
 
                       <div className="flex items-center gap-2 pt-3 border-t border-black/8">
-                        <a
-                          href={orderUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-1 min-h-[44px] px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs font-tamil active:scale-95"
+                        <button
+                          type="button"
+                          onClick={() => {
+                            addToCart({
+                              id: book.id,
+                              title: book.title,
+                              titleEn: book.titleEn,
+                              author: book.author,
+                              authorEn: book.authorEn,
+                              price: book.discountPrice ?? book.price,
+                              image: book.image,
+                              slug: book.slug,
+                              quantity: 1,
+                              maxStock: book.stock || 10,
+                            });
+                            showToast({
+                              type: "cart",
+                              titleTa: "கூடையில் சேர்க்கப்பட்டது",
+                              titleEn: "Added to Cart",
+                              messageTa: `"${book.title}" உங்கள் கூடையில் சேர்க்கப்பட்டது.`,
+                              messageEn: `"${book.titleEn}" added to your cart.`,
+                              actionLabelTa: "கூடை காண்க",
+                              actionLabelEn: "View Cart",
+                              actionHref: "/cart",
+                            });
+                          }}
+                          className="flex-1 min-h-[44px] px-3.5 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs font-tamil active:scale-95 cursor-pointer"
                         >
-                          <MessageCircle className="h-4 w-4" />
-                          <span>{isTa ? "WhatsApp ஆர்டர்" : "Order on WhatsApp"}</span>
-                        </a>
+                          <ShoppingBag className="h-4 w-4" />
+                          <span>{isTa ? "கூடையில் சேர்" : "Add to Cart"}</span>
+                        </button>
 
                         <button
                           type="button"
@@ -419,8 +437,8 @@ export default function AccountPage() {
                     </h2>
                     <p className="text-xs text-[#666666] font-tamil">
                       {isTa
-                        ? "முகவரியை ஒருமுறை சேமித்தால் போதும்; ஆர்டரின் போது கைப்பட தட்டச்சு செய்யத் தேவையில்லை."
-                        : "Save your address once to auto-populate it into your direct WhatsApp book orders."}
+                        ? "முகவரியை ஒருமுறை சேமித்தால் போதும்; இணையதள ஆர்டரின் போது தானாகவே இணைக்கப்படும்."
+                        : "Save your address once to auto-populate it into your on-site checkout orders."}
                     </p>
                   </div>
                   <div className="h-10 w-10 rounded-xl bg-[#0A6847]/10 flex items-center justify-center text-[#0A6847]">
@@ -449,7 +467,7 @@ export default function AccountPage() {
 
                     <div className="space-y-1.5">
                       <label htmlFor="addr-phone" className="text-xs font-bold text-[#333333] font-tamil block">
-                        {isTa ? "தொடர்பு அலைபேசி எண் (WhatsApp Phone) *" : "Phone Number *"}
+                        {isTa ? "தொடர்பு அலைபேசி எண் (Contact Phone Number) *" : "Phone Number *"}
                       </label>
                       <input
                         id="addr-phone"
@@ -563,32 +581,56 @@ export default function AccountPage() {
               </GlassPanel>
             </div>
 
-            {/* Right: Live Preview of WhatsApp Message */}
+            {/* Right: Postal Dispatch Label Preview & Overseas Info */}
             <div className="lg:col-span-5 space-y-4">
-              <div className="glass-panel p-6 rounded-3xl border border-emerald-900/15 bg-emerald-50/50">
-                <div className="flex items-center gap-2 text-emerald-800 font-bold text-xs font-tamil mb-2">
-                  <MessageSquare className="h-4 w-4 text-emerald-600" />
-                  <span>{isTa ? "நேரடி WhatsApp முன்னோட்டம்" : "Live WhatsApp Integration"}</span>
+              <div className="glass-panel p-6 rounded-3xl border border-emerald-900/15 bg-emerald-50/50 space-y-3">
+                <div className="flex items-center gap-2 text-emerald-800 font-bold text-xs font-tamil">
+                  <PostalSealIcon className="h-4 w-4 text-emerald-600" />
+                  <span>{isTa ? "அஞ்சல் பார்சல் முகவரி மாதிரி" : "Postal Delivery Label"}</span>
                 </div>
-                <h3 className="text-sm font-bold text-[#111111] font-tamil mb-2">
+                <h3 className="text-sm font-bold text-[#111111] font-tamil">
                   {isTa
-                    ? "நீங்கள் புத்தகங்களை வாங்கும்போது தானாக அனுப்பப்படும் வடிவம்:"
-                    : "How this appears in your WhatsApp order:"}
+                    ? "இணையதள ஆர்டர் செய்யப்படும்போது பார்சலில் அச்சிடப்படும் வடிவம்:"
+                    : "How this appears on your delivery parcel:"}
                 </h3>
                 <div className="bg-white rounded-2xl p-4 border border-black/10 text-xs font-mono text-[#222222] whitespace-pre-wrap leading-relaxed shadow-inner">
-                  {`வணக்கம் மேதகு களஞ்சியம்,\nநான் "[புத்தகத்தின் தலைப்பு]" நூலை வாங்க விரும்புகிறேன்.\n• எண்ணிக்கை: 1\n\n📦 அஞ்சல் டெலிவரி முகவரி:\n${
+                  {`பெறுநர் (To):\n${
                     addressForm.fullName || "பெயர் குறிப்பிடப்படவில்லை"
                   }\n${addressForm.phone ? `அலைபேசி: ${addressForm.phone}\n` : ""}${
-                    addressForm.doorStreet || "கதவு எண் / தெரு"
-                  }\n${addressForm.cityArea || "ஊர்"} - ${
-                    addressForm.districtState
-                  } - ${addressForm.pincode || "Pincode"}`}
+                    addressForm.doorStreet || "கதவு எண் / தெரு முகவரி"
+                  }\n${addressForm.cityArea || "நகரம் / ஊர்"} - ${
+                    addressForm.districtState || "மாவட்டம் / மாநிலம்"
+                  }\nஅஞ்சல் குறியீடு: ${addressForm.pincode || "Pincode"}\nநாடு: இந்தியா (India)`}
                 </div>
-                <p className="text-[11px] text-[#555555] font-tamil mt-3">
+                <p className="text-[11px] text-[#555555] font-tamil">
                   {isTa
-                    ? "✓ முகவரி உங்கள் உலாவியில் மட்டுமே பாதுகாப்பாக சேமிக்கப்படும்."
-                    : "✓ Saved locally in your browser for privacy and speed."}
+                    ? "✓ இணையதள செக்அவுட்டின் போது ST Courier / Speed Post பார்சலில் இந்த முகவரியே நேரடியாக இணைக்கப்படும்."
+                    : "✓ Automatically printed on your courier parcel during on-site checkout."}
                 </p>
+              </div>
+
+              {/* Overseas / International Diaspora Note */}
+              <div className="glass-panel p-5 rounded-2xl border border-amber-900/20 bg-amber-50/60 space-y-2">
+                <h4 className="text-xs font-bold text-amber-950 font-tamil flex items-center gap-1.5">
+                  <Globe className="h-4 w-4 text-amber-700" />
+                  <span>{isTa ? "வெளிநாட்டு வாசகர்கள் (Overseas Orders)" : "Overseas Diaspora Orders"}</span>
+                </h4>
+                <p className="text-xs text-amber-900 font-tamil leading-relaxed">
+                  {isTa
+                    ? "இந்தியாவிற்கு வெளியே வசிக்கும் வாசகர்கள் (Diaspora / International), வெளிநாட்டு தபால் கட்டணம் மற்றும் பார்சல் எடையை உறுதிப்படுத்த வாட்ஸ்அப் (WhatsApp) மூலம் தொடர்பு கொள்ளலாம்."
+                    : "Readers outside India (Diaspora / International) can contact our desk on WhatsApp for custom international courier rates based on parcel weight and country."}
+                </p>
+                <div className="pt-1">
+                  <a
+                    href={getGeneralWhatsAppUrl("வணக்கம் மேதகு களஞ்சியம், நான் வெளிநாட்டிலிருந்து (Overseas Order) நூல்களை வாங்க தொடர்பு கொள்கிறேன்.")}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 hover:text-emerald-950 hover:underline font-tamil"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    <span>{isTa ? "வெளிநாட்டு ஆர்டர் உதவி பெற" : "Contact for Overseas Order"}</span>
+                  </a>
+                </div>
               </div>
 
               {/* Courier Rate Card */}
@@ -693,12 +735,12 @@ export default function AccountPage() {
                     </div>
                     <div>
                       <h2 className="text-lg font-bold font-tamil text-[#111111]">
-                        {isTa ? "நேரடி WhatsApp ஆர்டர் வழிகாட்டி" : "WhatsApp Ordering Protocol"}
+                        {isTa ? "இணையதள நேரடி கொள்முதல் மற்றும் அஞ்சல் கொள்கை" : "On-Site Purchasing & Postal Dispatch Protocol"}
                       </h2>
                       <p className="text-xs text-[#666666] font-tamil">
                         {isTa
-                          ? "நமது நூலகத்தில் அனைத்து ஆர்டர்களும் புலனம் வழியாகவே பாதுகாப்பாக பதிவு செய்யப்படுகின்றன."
-                          : "All orders are fulfilled directly via official WhatsApp without intermediary markups."}
+                          ? "நமது தளத்தில் அனைத்து உள்நாட்டு ஆர்டர்களும் இணையதளக் கூடை வழியாக மட்டுமே பாதுகாப்பாக ஏற்றுக்கொள்ளப்படுகின்றன."
+                          : "All domestic orders are fulfilled directly through our secure on-site checkout."}
                       </p>
                     </div>
                   </div>
@@ -707,24 +749,24 @@ export default function AccountPage() {
                     {[
                       {
                         step: "1",
-                        title: isTa ? "நூலைத் தேர்ந்தெடுத்தல்" : "Select Your Book",
+                        title: isTa ? "நூலைத் தேர்ந்தெடுத்து கூடையில் சேர்த்தல்" : "Select Books & Add to Cart",
                         desc: isTa
-                          ? "நூலின் பக்கத்தில் உள்ள 'புலனம் வழி வாங்குக' பட்டனை அழுத்தவும்."
-                          : "Tap 'Order on WhatsApp' on any book or wishlist item.",
+                          ? "எந்த ஒரு வரலாற்று நூலையும் 'கூடையில் சேர்' அல்லது 'இப்போதே வாங்குக' மூலம் இணையதளத்தில் தேர்வு செய்யலாம்."
+                          : "Choose any historical book across the catalog and add it directly to your on-site cart.",
                       },
                       {
                         step: "2",
-                        title: isTa ? "பணம் செலுத்தும் விவரம் பெறுதல்" : "Payment Confirmation",
+                        title: isTa ? "பாதுகாப்பான இணையதள கட்டணம் (UPI / Card)" : "Secure On-Site Payment",
                         desc: isTa
-                          ? "களஞ்சியத்தின் அதிகாரப்பூர்வ GPay / PhonePe / Bank விவரங்கள் WhatsApp-இல் பகிரப்படும்."
-                          : "Official UPI/Bank transfer details will be shared in WhatsApp chat.",
+                          ? "Google Pay, PhonePe, Paytm, கார்டுகள் அல்லது நெட் பேங்கிங் மூலம் இணையதளத்திலேயே பாதுகாப்பாக கட்டணம் செலுத்தலாம்."
+                          : "Pay instantly on our website using UPI, Google Pay, PhonePe, Debit/Credit Cards, or Net Banking.",
                       },
                       {
                         step: "3",
-                        title: isTa ? "அஞ்சல் கண்காணிப்பு எண் (AWB Tracking)" : "Dispatch & Live Tracking",
+                        title: isTa ? "நேரடி அஞ்சல் கண்காணிப்பு (AWB Tracking)" : "Postal Dispatch & Live Tracking",
                         desc: isTa
-                          ? "பணம் செலுத்தியதும் அதே நாளில் பார்சல் அனுப்பப்பட்டு ST Courier அல்லது India Post கண்காணிப்பு எண் வழங்கப்படும்."
-                          : "Same-day dispatch with official courier AWB tracking receipt.",
+                          ? "ஆர்டர் செய்யப்பட்டதும் அதே நாளில் பார்சல் அனுப்பப்பட்டு ST Courier அல்லது India Post கண்காணிப்பு எண் வழங்கப்படும்."
+                          : "Same-day postal dispatch with live ST Courier or India Post AWB tracking.",
                       },
                     ].map((st) => (
                       <div
@@ -740,6 +782,28 @@ export default function AccountPage() {
                         </div>
                       </div>
                     ))}
+
+                    {/* Overseas Diaspora Notice */}
+                    <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-2 font-tamil">
+                      <div className="flex items-center gap-2 text-xs font-bold text-amber-950">
+                        <Globe className="h-4 w-4 text-amber-700 shrink-0" />
+                        <span>{isTa ? "வெளிநாட்டு வாசகர்கள் கவனத்திற்கு (Overseas Orders)" : "Overseas / International Diaspora Notice"}</span>
+                      </div>
+                      <p className="text-xs text-amber-900 leading-relaxed">
+                        {isTa
+                          ? "வெளிநாட்டு அஞ்சல் சேவைக்கு (DHL / International Post) மட்டும் வாட்ஸ்அப் வழி தொடர்பு கொண்டு பார்சல் எடை மற்றும் நாட்டின் அஞ்சல் கட்டணங்களை உறுதி செய்து ஆர்டர் செய்யலாம்."
+                          : "WhatsApp ordering is reserved exclusively for overseas / international readers to calculate parcel weight and international shipping rates."}
+                      </p>
+                      <a
+                        href={getGeneralWhatsAppUrl("வணக்கம் மேதகு களஞ்சியம், நான் வெளிநாட்டிலிருந்து (Overseas Order) நூல்களை வாங்க தொடர்பு கொள்கிறேன்.")}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold shadow-xs transition-all active:scale-95"
+                      >
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        <span>{isTa ? "வெளிநாட்டு ஆர்டருக்கு WhatsApp-இல் பேசுக" : "Inquire Overseas Order on WhatsApp"}</span>
+                      </a>
+                    </div>
                   </div>
                 </div>
               </GlassPanel>

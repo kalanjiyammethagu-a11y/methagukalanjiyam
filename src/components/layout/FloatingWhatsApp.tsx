@@ -26,7 +26,7 @@ export function FloatingWhatsApp() {
 
   return (
     <aside
-      aria-label={isTa ? "வாடிக்கையாளர் உதவி மையம்" : "Customer Support"}
+      aria-label={isTa ? "வெளிநாட்டு ஆர்டர் & உதவி மையம்" : "Overseas Orders & Customer Support"}
       className={cn(
         "fixed right-4 sm:right-5 z-40 flex items-center gap-2 group transition-all duration-200",
         isBookDetail
@@ -36,7 +36,7 @@ export function FloatingWhatsApp() {
     >
       {/* Tooltip badge on hover/focus */}
       <span className="hidden sm:inline-block px-3 py-1.5 rounded-xl bg-white text-emerald-950 font-bold text-xs shadow-lg border border-black/8 opacity-0 group-hover:opacity-100 transition-opacity font-tamil pointer-events-none">
-        {isTa ? "வாடிக்கையாளர் உதவி மையம்" : "Customer Support"}
+        {isTa ? "வெளிநாட்டு ஆர்டர் & உதவி மையம்" : "Overseas Orders & Support"}
       </span>
 
       {/* Floating Action Button */}
@@ -46,8 +46,8 @@ export function FloatingWhatsApp() {
         rel="noopener noreferrer"
         aria-label={
           isTa
-            ? `வாட்ஸ்அப் உதவி மையத்தைத் தொடர்புகொள்க — +${WHATSAPP_NUMBER}`
-            : `Contact Customer Support via WhatsApp (+${WHATSAPP_NUMBER})`
+            ? `வெளிநாட்டு ஆர்டர் மற்றும் உதவி மையம் — +${WHATSAPP_NUMBER}`
+            : `Overseas Orders & Support via WhatsApp (+${WHATSAPP_NUMBER})`
         }
         className="h-14 w-14 rounded-full bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white flex items-center justify-center shadow-2xl shadow-emerald-900/40 border-2 border-white transition-all duration-300 min-h-[48px] min-w-[48px]"
       >

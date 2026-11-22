@@ -325,10 +325,10 @@ export function MobileNav({
             </span>
           </button>
 
-          {/* Customer Support via WhatsApp */}
+          {/* Customer Support & Overseas Orders via WhatsApp */}
           <a
             href={`https://wa.me/916384654946?text=${encodeURIComponent(
-              "வணக்கம் மேதகு களஞ்சியம், எனக்கு வாடிக்கையாளர் உதவி தேவைப்படுகிறது."
+              "வணக்கம் மேதகு களஞ்சியம், வெளிநாட்டு ஆர்டர் மற்றும் உதவி மையம் தொடர்பாக தொடர்பு கொள்கிறேன்."
             )}`}
             target="_blank"
             rel="noopener noreferrer"
@@ -336,7 +336,7 @@ export function MobileNav({
           >
             <MessageCircle className="h-4 w-4 fill-white" />
             <span className={isTa ? "font-tamil" : "font-sans"}>
-              {isTa ? "வாடிக்கையாளர் உதவி மையம் (WhatsApp)" : "Customer Support (WhatsApp)"}
+              {isTa ? "வெளிநாட்டு ஆர்டர் & உதவி மையம்" : "Overseas Orders & Support"}
             </span>
           </a>
         </div>

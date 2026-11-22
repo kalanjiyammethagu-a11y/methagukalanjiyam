@@ -177,7 +177,7 @@ export function SettingsModal() {
           </div>
         </div>
 
-        {/* 5. Postal Address for WhatsApp Autofill */}
+        {/* 5. Postal Address for On-Site Checkout */}
         <div className="space-y-3 pt-4 border-t border-black/8">
           <div>
             <label className="text-xs font-bold text-[#333333] uppercase tracking-wider block font-tamil">

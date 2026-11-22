@@ -98,18 +98,28 @@ export default function TermsPage() {
             <ul className="space-y-2 text-sm text-[#333333] font-tamil leading-relaxed list-disc list-inside">
               <li>
                 {isTa
-                  ? "நூல்களை வாங்குவதற்கு 'கூடையில் சேர்த்தல்' அல்லது 'புலனம் (WhatsApp) வழி தொடர்புகொள்ளுதல்' முறைகளைப் பயன்படுத்தலாம்."
-                  : "Books can be acquired via automated cart checkout or direct WhatsApp desk ordering."}
+                  ? "இந்திய வாடிக்கையாளர்கள் (தமிழ்நாடு மற்றும் பிற இந்திய மாநிலங்கள்) இணையதளக் கூடை (Cart) வழியாக மட்டுமே நேரடி இணையதளப் பரிவர்த்தனை (UPI / கார்டுகள் / NetBanking) மூலம் நூல்களை வாங்க முடியும்."
+                  : "Domestic customers across India must purchase books exclusively through automated in-site cart checkout via secure UPI, Debit/Credit Cards, or NetBanking."}
               </li>
               <li>
                 {isTa
-                  ? "நூல்கள் கையிருப்பில் உள்ளதா என்பதை உறுதி செய்த பின்னரே அதிகாரப்பூர்வப் பணப் பரிமாற்றம் மேற்கொள்ளப்படும்."
+                  ? "வெளிநாட்டுத் தமிழ் வாசகர்கள் (Overseas Diaspora), தங்கள் நாட்டின் அஞ்சல் கட்டணம் மற்றும் எடையைக் கணக்கிட கூடைப் பக்கத்தில் உள்ள 'வெளிநாட்டு வாட்ஸ்அப் ஆர்டர்' (Overseas Order) வழியே நேரடியாகத் தொடர்பு கொண்டு பெற்றுக்கொள்ளலாம்."
+                  : "Overseas diaspora readers can coordinate postal courier rates and package weights via the dedicated Overseas WhatsApp desk directly from the cart."}
+              </li>
+              <li>
+                {isTa
+                  ? "இணையதளத்தில் பதிவு செய்த பயனர்கள் (User Account) மட்டுமே ஆர்டர் செய்ய முடியும்; விருந்தினர் ஆர்டர்கள் (Guest Checkout) அனுமதிக்கப்படாது."
+                  : "Only verified registered accounts can place orders; guest checkout is strictly disabled for delivery tracking and order integrity."}
+              </li>
+              <li>
+                {isTa
+                  ? "நூல்கள் கையிருப்பில் உள்ளதா என்பதை உறுதி செய்த பின்னரே அதிகாரப்பூர்வப் பணப் பரிமாற்றம் ஏற்றுக்கொள்ளப்படும்."
                   : "Stock availability is strictly verified before finalizing financial transactions to eliminate order uncertainty."}
               </li>
               <li>
                 {isTa
-                  ? "பணம் அனுப்பிய பின், உங்களது பெயர், தொடர்பு எண் மற்றும் முழு முகவரியைத் தெளிவாக அனுப்பி வைக்க வேண்டும்."
-                  : "Upon payment confirmation, please supply accurate postal name, complete pin code, and delivery mobile number."}
+                  ? "ஆர்டரின் போது, உங்களது பெயர், தொடர்பு எண் மற்றும் துல்லியமான அஞ்சல் முகவரியைத் தெளிவாகக் குறிப்பிட வேண்டும்."
+                  : "During checkout, please provide an accurate postal recipient name, complete postal pincode, and active mobile number."}
               </li>
             </ul>
           </section>
@@ -135,8 +145,8 @@ export default function TermsPage() {
                 </h3>
                 <p className="text-xs sm:text-sm text-[#222222] font-tamil leading-relaxed">
                   {isTa
-                    ? "நீங்கள் எங்களின் இணையப் பக்கத்தில் எத்தனை நூல்களைத் தேர்ந்தெடுத்து வாங்கினாலும், ஒட்டுமொத்தப் பொதிக்கு சேர்த்து ஒரே ஒரு முறை மட்டும் ₹60 கட்டணம் செலுத்தினால் போதுமானது."
-                    : "No matter how many books you add to your order, you only pay a single flat postal fee of ₹60 per parcel across Tamil Nadu."}
+                    ? "நீங்கள் எங்களின் இணையப் பக்கத்தில் எத்தனை நூல்களைத் தேர்ந்தெடுத்து வாங்கினாலும், தமிழ்நாடு முழுவதும் ஒட்டுமொத்தப் பொதிக்கு ஒரே ஒரு முறை மட்டும் ₹60 கட்டணம் (பிற இந்திய மாநிலங்களுக்கு ₹100). வெளிநாட்டு ஆர்டர்களுக்கு சர்வதேச அஞ்சல் மற்றும் கூரியர் கட்டணம் எடைக்கேற்ப வாட்ஸ்அப்பில் தெரிவிக்கப்படும்."
+                    : "Flat postal shipping is ₹60 across Tamil Nadu and ₹100 for other Indian states, regardless of quantity. For overseas diaspora orders, courier fees are quoted via WhatsApp based on parcel weight and destination."}
                 </p>
               </div>
             </div>

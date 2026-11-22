@@ -11,6 +11,7 @@ import {
   ShoppingBag,
   Truck,
   AlertTriangle,
+  ShieldCheck,
 } from "lucide-react";
 import {
   BookmarkRibbonIcon,
@@ -278,6 +279,26 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
               ? "தமிழ்நாடு முழுவதும் ₹60 அஞ்சல் கட்டணம் • ST Courier / India Post டெலிவரி"
               : "Flat ₹60 shipping across Tamil Nadu via ST Courier / India Post"}
           </span>
+        </div>
+
+        {/* Purchase Policy Notice: In-Site Purchase & Overseas Support */}
+        <div className="p-2.5 rounded-xl bg-[#0A6847]/5 border border-[#0A6847]/15 flex items-start gap-2 text-xs text-[#0A6847] font-tamil">
+          <ShieldCheck className="h-4 w-4 shrink-0 mt-0.5 text-[#0A6847]" />
+          <div className="leading-snug text-neutral-800">
+            <span className="font-bold text-[#0A6847]">
+              {isTa ? "இணையதள நேரடி கொள்முதல்:" : "On-Site Direct Purchase:"}{" "}
+            </span>
+            <span>
+              {isTa
+                ? "கூடையில் சேர்த்து UPI / Card மூலம் பாதுகாப்பாக வாங்கலாம்."
+                : "Add to cart and purchase directly via UPI or Cards."}{" "}
+            </span>
+            <span className="text-neutral-500">
+              {isTa
+                ? "(வெளிநாட்டு வாசகர்கள் கூடையின் வழியே வாட்ஸ்அப்பில் தொடர்பு கொள்ளலாம்)."
+                : "(Overseas orders are coordinated via WhatsApp from the cart)."}
+            </span>
+          </div>
         </div>
       </GlassPanel>
 
