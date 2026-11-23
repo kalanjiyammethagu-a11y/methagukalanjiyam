@@ -244,10 +244,9 @@ export async function calculateOrderSummaryAsync(
   // Shipping calculation: Tamil Nadu = ₹60, Other India = ₹100
   const normalizedState = (state || "").trim().toLowerCase();
   const isTamilNadu =
-    normalizedState === "tamil nadu" ||
-    normalizedState === "tamilnadu" ||
-    normalizedState === "tn" ||
-    normalizedState === "தமிழ்நாடு";
+    normalizedState.includes("tamil") ||
+    normalizedState.includes("தமிழ்நாடு") ||
+    normalizedState === "tn";
 
   const shippingFee = isTamilNadu ? 60 : 100;
   const totalAmount = subtotal + shippingFee;
@@ -308,10 +307,9 @@ export function calculateOrderSummary(
   // Shipping calculation: Tamil Nadu = ₹60, Other India = ₹100
   const normalizedState = (state || "").trim().toLowerCase();
   const isTamilNadu =
-    normalizedState === "tamil nadu" ||
-    normalizedState === "tamilnadu" ||
-    normalizedState === "tn" ||
-    normalizedState === "தமிழ்நாடு";
+    normalizedState.includes("tamil") ||
+    normalizedState.includes("தமிழ்நாடு") ||
+    normalizedState === "tn";
 
   const shippingFee = isTamilNadu ? 60 : 100;
   const totalAmount = subtotal + shippingFee;

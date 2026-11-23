@@ -24,7 +24,8 @@ import { cn } from "@/lib/utils";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo") || "/account";
+  const rawRedirect = searchParams.get("redirectTo") || searchParams.get("redirect") || "/account";
+  const redirectTo = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/account";
   const { locale } = useLanguage();
   const isTa = locale === "ta";
 

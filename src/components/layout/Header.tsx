@@ -72,7 +72,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
     },
     {
       href: "/videos",
-      labelTa: "வீடியோக்கள்",
+      labelTa: "காணொளிகள்",
       labelEn: "Videos",
     },
     {
@@ -98,7 +98,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
         <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
           <div
             suppressHydrationWarning
-            className={`rounded-2xl px-3.5 sm:px-5 lg:px-6 flex items-center justify-between gap-3 lg:gap-6 border transition-all duration-300 ${
+            className={`rounded-2xl px-2.5 sm:px-5 lg:px-6 flex items-center justify-between gap-1.5 sm:gap-4 lg:gap-6 border transition-all duration-300 ${
               isScrolled
                 ? "py-2 bg-[var(--color-surface-card)]/98 backdrop-blur-2xl border-[var(--color-border-subtle)] shadow-md shadow-black/5"
                 : "py-2.5 bg-[var(--color-surface-card)]/92 backdrop-blur-xl border-[var(--color-border-subtle)]/80 shadow-xs"
@@ -107,10 +107,10 @@ export function Header({ onOpenSearch }: HeaderProps) {
             {/* Left: Brand Logo & Editorial Wordmark */}
             <Link
               href="/"
-              className="flex items-center gap-2.5 sm:gap-3 group transition-transform active:scale-98 motion-reduce:active:scale-100 min-h-[44px] shrink-0"
+              className="flex items-center gap-2 sm:gap-3 group transition-transform active:scale-98 motion-reduce:active:scale-100 min-h-[44px] shrink-0"
               aria-label={isTa ? "மேதகு களஞ்சியம் — முகப்பு" : "Methagu Kalanjiyam — Home"}
             >
-              <div className="relative h-9 w-9 sm:h-10 sm:w-10 rounded-full overflow-hidden border border-[var(--color-border-strong)] ring-2 ring-[var(--color-accent)]/15 shadow-2xs bg-white shrink-0 group-hover:scale-105 motion-reduce:group-hover:scale-100 transition-transform">
+              <div className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full overflow-hidden border border-[var(--color-border-strong)] ring-2 ring-[var(--color-accent)]/15 shadow-2xs bg-white shrink-0 group-hover:scale-105 motion-reduce:group-hover:scale-100 transition-transform">
                 <Image
                   src="/icons/favicon.png"
                   alt={isTa ? "மேதகு களஞ்சியம் லோகோ" : "Methagu Kalanjiyam Logo"}
@@ -122,7 +122,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
               </div>
               <div className="flex flex-col text-left">
                 <span
-                  className={`font-bold text-sm sm:text-base lg:text-lg tracking-tight text-[var(--color-ink-primary)] leading-tight transition-colors group-hover:text-[var(--color-accent)] whitespace-nowrap ${
+                  className={`font-bold text-xs xs:text-sm sm:text-base lg:text-lg tracking-tight text-[var(--color-ink-primary)] leading-tight transition-colors group-hover:text-[var(--color-accent)] whitespace-nowrap ${
                     isTa ? "font-tamil font-bold" : "font-sans font-extrabold"
                   }`}
                 >
@@ -140,7 +140,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
 
             {/* Center: Editorial Navigation Links */}
             <nav
-              className="hidden lg:flex items-center gap-1 xl:gap-2"
+              className="hidden xl:flex items-center gap-1 xl:gap-2"
               aria-label={isTa ? "முதன்மை வழிசெலுத்தல்" : "Main Navigation"}
             >
               {navLinks.map((link) => {
@@ -271,7 +271,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl text-[var(--color-ink-primary)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] flex items-center justify-center active:scale-95 transition-all cursor-pointer"
+                className="xl:hidden min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl text-[var(--color-ink-primary)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] flex items-center justify-center active:scale-95 transition-all cursor-pointer"
                 aria-label={isTa ? "வழிசெலுத்தல் பட்டியினை திறக்குக" : "Open Navigation Menu"}
                 aria-expanded={mobileMenuOpen}
                 aria-controls="mobile-navigation-drawer"

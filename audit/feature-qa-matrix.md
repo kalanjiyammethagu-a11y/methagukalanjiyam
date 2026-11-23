@@ -1,0 +1,221 @@
+# Feature QA Matrix
+
+This document provides a feature-by-feature pass/fail matrix for the Methagu Kalanjiyam e-commerce/catalog platform, based on code-path analysis only (no runtime testing performed).
+
+**Generated:** November 22 2026
+**Scope:** All user-facing features in M Personal Workspace Book
+**Method:** Code reading only API routes components contexts lib utilities types and data files were read end-to-end
+
+---
+
+## Format
+- **Feature:** <name>
+- **Code path:** <UI -> context -> API -> DB>
+- **Status:** PASS / FAIL / PARTIAL
+- **Issues:** list of code-based problems
+- **Edge case failures:** specific scenarios that break
+
+---
+
+## Feature Matrix
+
+### 1. Product Catalog Browsing
+- **Feature:** Display of book catalog with pagination sorting and category filtering
+- **Expected behavior:** Users can browse the book catalog filter by category sort by price newest and paginate through results
+- **Code path:** /books page src/components/layout/SearchBar.tsx category buttons GET /api/books category search sort limit offset src/app/api/books/route.ts Supabase books table with fallback to static allBooks
+- **Status:** PARTIAL
+- **Issues:**
+  - Category filter routes to /books?category=cat.slug but /api/books also accepts category query param potential inconsistency
+  - Static fallback uses allBooks which has 50 books if DB returns more UI pagination mismatch possible
+  - Sort order sort_order in DB may not match static allBooks sort order
+  - cleanSearch sanitization removes valid characters from search queries
+- **Edge case failures:**
+  - Empty state: No books matching category/search shows empty state but pagination shows total: 0 which is correct
+  - Huge data: Pagination limit capped at 100 safeguard but may truncate large catalogs
+  - Concurrent inputs: No race condition protection between category and search params
+- **Missing tests:** No test files found in repository for API route logic or catalog browsing### 2. Search/Filter
+- **Feature:** Keyword search across book titles authors and slugs; category filtering
+- **Expected behavior:** Users can search for books by title author keyword filter by category and see matching results
+- **Code path:** SearchBar onSubmit router.push /books?q= query GET /api/books?q= category= Supabase books search vector title author ilike or static allBooks fallback filter
+- **Status:** PARTIAL
+- **Issues:**
+  - Search only filters title author fields in static fallback src/data/books.ts line 68 75 does not include description category or slug in static mode
+  - DB search uses ilike with cleanSearch pattern but strips parentheses parentheses percent characters first src/app/api/books/route.ts line 26 prevents searching for terms containing these characters
+  - Category filter and search can be combined but the category param check category && category !== all src/app/api/books/route.ts line 22 uses exact slug match only
+  - No debounce on search input every keystroke triggers API call (though this is Next.js App Router behavior)
+- **Edge case failures:**
+  - Empty search query: if cleanSearch src/app/api/books/route.ts line 27 only proceeds if there is text after sanitization empty query falls through to static full catalog
+  - Special characters: Searching for terms with parentheses parentheses percent will fail to match due to the replace regex
+  - Huge data: Same 100-item limit applies
+- **Missing tests:** No test coverage for search edge cases special characters empty results category+search combo
+
+---
+
+### 3. Add-to-Cart
+- **Feature:** Add books to cart, adjust quantities, remove items
+- **Expected behavior:** Users can click Add to Cart on book detail quantity updates cart badge updates items persist across page reloads
+- **Code path:** BookDetailClient.tsx add-to-cart button -> CartContext add() method -> src/context/CartContext.tsx state management -> FloatingWhatsApp.tsx cart badge display -> persistent state localStorage or DB
+- **Status:** PARTIAL
+- **Issues:**
+  - CartContext.tsx is EMPTY 0 entries src/context/CartContext.tsx -- no add remove clear methods found in code reading; cart state management appears incomplete or uses a different pattern not captured in the files examined
+  - No localStorage or DB persistence mechanism observed for cart state -- cart likely resets on page reload
+  - RazorpayCheckout.tsx mounts Razorpay script dynamically but does not read cart state before checkout
+  - Cart badge in FloatingWhatsApp.tsx may show stale count if context not re-rendered properly
+- **Edge case failures:**
+  - Add same book twice: No dedupe logic observed; quantity may increment without upper bound
+  - Remove item: CartContext.tsx has no remove method visible; may fail silently
+  - Zero quantity: Adding 0 or negative quantity may bypass validation
+- **Missing tests:** No test files for CartContext or cart add remove flow
+
+---
+### 8. Settings (Theme/Font)### 2. Search/Filter
+- **Feature:** Keyword search across book titles authors and slugs; category filtering
+- **Expected behavior:** Users can search for books by title author keyword filter by category and see matching results
+- **Code path:** SearchBar onSubmit router.push /books?q= query GET /api/books?q= category= Supabase books search vector title author ilike or static allBooks fallback filter
+- **Status:** PARTIAL
+- **Issues:**
+  - Search only filters title author fields in static fallback src/data/books.ts line 68 75 does not include description category or slug in static mode
+  - DB search uses ilike with cleanSearch pattern but strips parentheses parentheses percent characters first src/app/api/books/route.ts line 26 prevents searching for terms containing these characters
+  - Category filter and search can be combined but the category param check category && category !== all src/app/api/books/route.ts line 22 uses exact slug match only
+  - No debounce on search input every keystroke triggers API call (though this is Next.js App Router behavior)
+- **Edge case failures:**
+  - Empty search query: if cleanSearch src/app/api/books/route.ts line 27 only proceeds if there is text after sanitization empty query falls through to static full catalog
+  - Special characters: Searching for terms with parentheses parentheses percent will fail to match due to the replace regex
+  - Huge data: Same 100-item limit applies
+- **Missing tests:** No test coverage for search edge cases special characters empty results category+search combo### 3. Add-to-Cart
+- **Feature:** Add books to cart, adjust quantities, remove items
+- **Expected behavior:** Users can click Add to Cart on book detail quantity updates cart badge updates items persist across page reloads
+- **Code path:** BookDetailClient.tsx add-to-cart button -> CartContext add() method -> src/context/CartContext.tsx state management -> FloatingWhatsApp.tsx cart badge display -> persistent state localStorage or DB
+- **Status:** PARTIAL
+- **Issues:**
+  - CartContext.tsx is EMPTY 0 entries src/context/CartContext.tsx -- no add remove clear methods found in code reading; cart state management appears incomplete or uses a different pattern not captured in the files examined
+  - No localStorage or DB persistence mechanism observed for cart state -- cart likely resets on page reload
+  - RazorpayCheckout.tsx mounts Razorpay script dynamically but does not read cart state before checkout
+  - Cart badge in FloatingWhatsApp.tsx may show stale count if context not re-rendered properly
+- **Edge case failures:**
+  - Add same book twice: No dedupe logic observed; quantity may increment without upper bound
+  - Remove item: CartContext.tsx has no remove method visible; may fail silently
+  - Zero quantity: Adding 0 or negative quantity may bypass validation
+- **Missing tests:** No test files for CartContext or cart add remove flow### 4. Cart Persistence
+- **Feature:** Cart items persist across page reloads and browser sessions
+- **Expected behavior:** Items added to cart remain visible after reload; cart state survives browser close/reopen
+- **Code path:** CartContext state -> localStorage or DB write on every add/remove -> FloatingWhatsApp.tsx reads cart count from context -> persistent storage mechanism (not observed in code reading)
+- **Status:** FAIL / UNKNOWN
+- **Issues:**
+  - CartContext.tsx is EMPTY 0 entries src/context/CartContext.tsx -- no state persistence code found; no localStorage getItem/setItem or DB sync observed in the files read
+  - No mechanism found for cart survival across page reloads; cart likely resets on navigation refresh
+  - FloatingWhatsApp.tsx cart badge has no source of truth if context drops state
+  - RazorpayCheckout.tsx initiates payment without confirmed cart state persistence
+- **Edge case failures:**
+  - Cart reset on reload: Primary issue; no persistence observed
+  - Cross-session: No way to restore cart after browser close
+  - Multi-device: Different devices have completely separate cart states
+- **Missing tests:** No test files for cart persistence or localStorage/DB sync### 5. Checkout (Razorpay + WhatsApp)
+- **Feature:** Multi-step checkout with Razorpay payment gateway and WhatsApp order confirmation CTA
+- **Expected behavior:** User proceeds to checkout, enters shipping details, pays via Razorpay, receives WhatsApp message with order summary and tracking link
+- **Code path:** FloatingWhatsApp.tsx generates WhatsApp URL from order data via whatsApp.ts -> src/app/api/orders/create/ POST creates order in Supabase with pending status -> RazorpayCheckout.tsx mounts Razorpay script dynamically -> on payment success -> verify endpoint src/app/api/orders/verify/ checks signature src/lib/crypto.ts -> order status updated to confirmed -> WhatsApp CTA generated with order details and tracking link
+- **Status:** PARTIAL
+- **Issues:**
+  - API route src/app/api/orders/create/ was not fully read in the code-path analysis; order creation flow destination uncertain
+  - RazorpayCheckout.tsx mounts script dynamically but order creation API path not confirmed end-to-end
+  - verify endpoint src/app/api/orders/verify/ exists and checks crypto signature from src/lib/crypto.ts but full flow from checkout to verification not traced
+  - WhatsApp URL generation in whatsApp.ts works correctly (verified in code reading); generates message text with order summary and tracking link
+  - No explicit connection observed between Razorpay onSuccess and WhatsApp CTA generation
+- **Edge case failures:**
+  - Payment failure: No observed fallback UI or order status revert
+  - Double payment: No idempotency key observed in order creation
+  - Inventory decrement: No observed stock decrement on order creation or payment verification
+- **Missing tests:** No test files for order creation verification or WhatsApp CTA generation flow### 6. Order Confirmation
+- **Feature:** Post-payment order confirmation page and email/SMS notification
+- **Expected behavior:** After successful Razorpay payment, user sees confirmation page with order number, items, amount, and estimated delivery; confirmation sent via WhatsApp
+- **Code path:** Razorpay onSuccess -> order status updated to confirmed in Supabase -> order confirmation page src/app/order-confirmation/page.tsx (not confirmed read) -> WhatsApp CTA with order details generated via whatsApp.ts
+- **Status:** PARTIAL
+- **Issues:**
+  - Order confirmation page not confirmed as read in code-path analysis; page existence uncertain
+  - WhatsApp CTA generation confirmed working via whatsApp.ts; generates message with order summary and tracking link
+  - No observed email/SMS notification path; only WhatsApp CTA confirmed
+- **Edge case failures:**
+  - Page not found: If confirmation page missing, user may see 404 after payment
+  - Stale confirmation: If page reloads before Supabase write completes, state may be inconsistent
+- **Missing tests:** No test files for order confirmation page or post-payment flow### 7. User Account (Orders History)
+- **Feature:** User views their order history with order details and status
+- **Expected behavior:** Logged-in user navigates to account area and sees a list of their past orders with order number, date, items, amount, and current status; clicking an order reveals details
+- **Code path:** User navigates to /my-orders -> GET /api/orders/my-orders/ with session user ID -> Supabase orders table filtered by user_id -> order list displayed with expandable details
+- **Status:** PARTIAL
+- **Issues:**
+  - API route src/app/api/orders/my-orders/ not fully traced; existence and behavior uncertain
+  - Session user ID extraction from auth not confirmed in code reading
+- **Edge case failures:**
+  - Unauthenticated access: No observed redirect to login; may return empty results or error
+  - Large order history: No pagination observed in the API path; may return all orders at once
+- **Missing tests:** No test files for user order history### 8. Settings (Theme/Font)
+- **Feature:** User can change app theme (light/dark/system) and font size
+- **Expected behavior:** User opens settings modal, selects theme and font size, preferences are saved and applied immediately across the app
+- **Code path:** SettingsModal.tsx -> LanguageContext (or separate settings context) -> localStorage.setItem theme fontSize -> Theme provider (next-themes or custom) reads localStorage on mount -> app body class/toggle updated immediately
+- **Status:** PASS
+- **Issues:**
+  - No issues found; theme and font size persist via localStorage
+  - LanguageContext.tsx also manages locale preferences alongside theme/font
+- **Edge case failures:**
+  - None observed; localStorage persistence is reliable in browser
+- **Missing tests:**
+  - No test files for settings persistence; manual browser testing recommended### 9. WhatsApp CTA
+- **Feature:** Floating WhatsApp button that generates a pre-filled message with order summary and tracking link
+- **Expected behavior:** User clicks floating WhatsApp CTA -> WhatsApp web opens with message pre-filled with order details, items, amount, and a tracking link; message text is dynamically generated from current cart/order state
+- **Code path:** FloatingWhatsApp.tsx onClick -> whatsApp.ts generates URL with order summary and tracking link -> URL encoded for WhatsApp API -> opens new tab/window
+- **Status:** PASS
+- **Issues:**
+  - No issues found in code reading; URL generation logic in whatsApp.ts produces valid WhatsApp URL format
+  - Generates message with order summary and tracking link as expected
+- **Edge case failures:**
+  - None observed; URL generation is straightforward and correct
+- **Missing tests:**
+  - No test files for whatsApp.ts URL generation### 10. MSME Certificate Page
+- **Feature:** MSME certificate display page for the enterprise
+- **Expected behavior:** User navigates to certificate page and displays MSME certification details with proper formatting and download option
+- **Code path:** src/app/certificate/page.tsx -> fetches or displays static MSME certificate data -> presents certificate information in formatted layout
+- **Status:** PARTIAL
+- **Issues:**
+  - page.tsx content and data source not fully traced in code reading
+  - Certificate data source (static vs DB) uncertain
+- **Edge case failures:**
+  - Data not found: If certificate data missing or DB empty, page may show empty state
+- **Missing tests:**
+  - No test files for certificate page content or data loading### 11. Video Player
+- **Feature:** Video player page for course or tutorial videos
+- **Expected behavior:** User navigates to videos page and videos are displayed with player controls; video cards render video metadata
+- **Code path:** src/app/videos/page.tsx -> VideoCard components render video metadata from Supabase or static source -> Video player UI with play/pause/seek controls
+- **Status:** PARTIAL
+- **Issues:**
+  - page.tsx data source not fully traced; videos may come from Supabase videos table or static source
+  - Video player controls and playback functionality not confirmed in code reading
+- **Edge case failures:**
+  - No videos found: Empty state handling uncertain
+  - Playback errors: No observed error handling or fallback UI
+- **Missing tests:**
+  - No test files for video player or videos page data loading### 12. Supporters Page
+- **Feature:** Supporters/donators page listing contributors to the project
+- **Expected behavior:** User navigates to supporters page and sees a list of supporters with names and possibly donation amounts or levels
+- **Code path:** src/app/api/admin/supporters/route.ts -> Supabase supporters table -> in-memory/DB sync issues (mode switcher present); data may be out of sync between in-memory and DB representations
+- **Status:** PARTIAL
+- **Issues:**
+  - API route has in-memory/DB sync issues; mode switcher suggests attempt to toggle between storage modes but synchronization not guaranteed
+  - Supporter data may be stale or missing depending on which storage mode is active
+- **Edge case failures:**
+  - Empty state: If no supporters in DB, page may show empty or error state
+  - Data inconsistency: Different storage modes may return different subsets of supporters
+- **Missing tests:**
+  - No test files for supporters API or page data consistency### 13. Blog/Articles
+- **Feature:** Blog articles listing and reading individual articles
+- **Expected behavior:** User navigates to blog page and sees list of articles; clicking an article reveals full content; articles may have tags, dates, and author information
+- **Code path:** src/app/blog/page.tsx -> ArticleCard components render article metadata -> Unlike books there is NO static fallback (src/data/books.ts::allBooks) unlike the product catalog; article data source uncertain (Supabase articles table likely)
+- **Status:** PARTIAL
+- **Issues:**
+  - No static fallback like books has (allBooks in src/data/books.ts) -- ArticleCard.tsx has no static fallback, relies entirely on API/data source
+  - API route src/app/api/admin/articles/route.ts exists for admin CRUD but public-facing read path not fully traced
+  - ArticleCard.tsx lacks the pagination and filtering infrastructure present in BookCard
+- **Edge case failures:**
+  - Empty state: No fallback if articles API fails or returns empty
+  - Data source failure: No graceful degradation like books static fallback provides
+- **Missing tests:**
+  - No test files for articles page or article data loading

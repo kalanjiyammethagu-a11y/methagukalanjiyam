@@ -21,8 +21,15 @@ export function sanitizeHtml(dirtyHtml: string): string {
   }
 
   let clean = dirtyHtml;
-  for (const pattern of DANGEROUS_PATTERNS) {
-    clean = clean.replace(pattern, "");
+  let prev = "";
+  let iterations = 0;
+  // Loop to defeat nested tag evasion like <scr<script>ipt>
+  while (clean !== prev && iterations < 5) {
+    prev = clean;
+    iterations++;
+    for (const pattern of DANGEROUS_PATTERNS) {
+      clean = clean.replace(pattern, "");
+    }
   }
 
   return clean;

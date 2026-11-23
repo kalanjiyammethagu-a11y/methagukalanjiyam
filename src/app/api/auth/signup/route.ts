@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email, password, full_name, phone, locale } = parseResult.data;
+    const { email, password, full_name, locale } = parseResult.data;
     const normalizedEmail = email.toLowerCase().trim();
     const adminSupabase = createAdminClient();
 
@@ -111,7 +111,6 @@ export async function POST(req: NextRequest) {
     await (adminSupabase.from("profiles") as any).upsert({
       id: newUserId,
       full_name,
-      phone: phone || null,
       role: "customer",
       locale,
       created_at: new Date().toISOString(),

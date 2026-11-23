@@ -158,7 +158,7 @@ export async function middleware(request: NextRequest) {
   // 1. Strict CSRF verification on state-changing API endpoints
   if (
     ["POST", "PUT", "DELETE", "PATCH"].includes(request.method) &&
-    (pathname.startsWith("/api/orders") || pathname.startsWith("/api/auth"))
+    (pathname.startsWith("/api/orders") || pathname.startsWith("/api/auth") || pathname.startsWith("/api/admin"))
   ) {
     const origin = request.headers.get("origin");
     const host = request.headers.get("host");

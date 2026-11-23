@@ -2,6 +2,34 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { Database } from "@/types/database";
 
+async function verifyEdgeToken(signedToken: string): Promise<boolean> {
+  const parts = signedToken.split(".");
+  if (parts.length !== 2 || !parts[0] || !parts[1]) return false;
+  const [payload, signature] = parts;
+  const secret =
+    process.env.AUTH_SECRET ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.RAZORPAY_KEY_SECRET;
+  if (!secret) return false;
+
+  try {
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"]
+    );
+    const sigBytes = new Uint8Array(
+      signature.match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16)) || []
+    );
+    return await crypto.subtle.verify("HMAC", key, sigBytes, encoder.encode(payload));
+  } catch {
+    return false;
+  }
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -77,13 +105,13 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Basic structure check: payload.signature
-    const parts = adminSessionToken.split(".");
-    if (parts.length !== 2 || !parts[0] || !parts[1]) {
+    // Cryptographic HMAC signature check (protects against cookie forgery)
+    const isValidSignature = await verifyEdgeToken(adminSessionToken);
+    if (!isValidSignature) {
       const url = request.nextUrl.clone();
       url.pathname = "/admin/login";
       const redirectRes = NextResponse.redirect(url);
-      redirectRes.cookies.set("mk_admin_session", "", { path: "/admin", maxAge: 0 });
+      redirectRes.cookies.set("mk_admin_session", "", { path: "/", maxAge: 0 });
       return redirectRes;
     }
   }

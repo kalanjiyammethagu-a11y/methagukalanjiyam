@@ -1,31 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
-import { validateAdminSession } from "@/lib/auth-service";
+import { requireAdmin } from "@/lib/auth-service";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { adminImageFolderSchema } from "@/lib/validators/admin";
 
 export const dynamic = "force-dynamic";
-
-async function checkAdmin(req: NextRequest) {
-  const adminCookie = req.cookies.get("mk_admin_session")?.value;
-  if (!adminCookie) return false;
-  const { valid } = await validateAdminSession(adminCookie);
-  return valid;
-}
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
 export async function POST(req: NextRequest) {
   try {
-    const isAdmin = await checkAdmin(req);
-    if (!isAdmin) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await requireAdmin(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
-    const folder = (formData.get("folder") as string) || "books";
+    const rawFolder = formData.get("folder") as string | null;
+    const folderParsed = adminImageFolderSchema.safeParse(rawFolder || "books");
+    if (!folderParsed.success) {
+      return NextResponse.json(
+        { error: "Invalid target folder. Allowed: books, blogs, articles, supporters, members." },
+        { status: 400 }
+      );
+    }
+    const folder = folderParsed.data;
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });

@@ -23,9 +23,10 @@ export async function GET(req: NextRequest) {
         query = query.eq("categories.slug", category);
       }
 
-      if (search.trim()) {
+      const cleanSearch = search.trim().replace(/[(),%]/g, "");
+      if (cleanSearch) {
         query = query.or(
-          `title.ilike.%${search.trim()}%,author.ilike.%${search.trim()}%,slug.ilike.%${search.trim()}%`
+          `title.ilike.%${cleanSearch}%,author.ilike.%${cleanSearch}%,slug.ilike.%${cleanSearch}%`
         );
       }
 

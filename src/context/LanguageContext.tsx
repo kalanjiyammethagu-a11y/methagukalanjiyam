@@ -196,8 +196,17 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const getFormattedAddress = React.useCallback((): string => {
-    if (!deliveryAddress.fullName || !deliveryAddress.doorStreet) return "";
-    return `${deliveryAddress.fullName}, ${deliveryAddress.doorStreet}, ${deliveryAddress.cityArea}, ${deliveryAddress.districtState} - ${deliveryAddress.pincode} (தொலைபேசி: ${deliveryAddress.phone})`;
+    const parts: string[] = [];
+    if (deliveryAddress.fullName?.trim()) parts.push(deliveryAddress.fullName.trim());
+    if (deliveryAddress.doorStreet?.trim()) parts.push(deliveryAddress.doorStreet.trim());
+    const cityLocalityParts = [
+      deliveryAddress.cityArea?.trim(),
+      deliveryAddress.districtState?.trim(),
+      deliveryAddress.pincode?.trim(),
+    ].filter(Boolean);
+    if (cityLocalityParts.length > 0) parts.push(cityLocalityParts.join(" - "));
+    if (deliveryAddress.phone?.trim()) parts.push(`(தொலைபேசி: ${deliveryAddress.phone.trim()})`);
+    return parts.join(", ").trim();
   }, [deliveryAddress]);
 
   const clearSensitiveStorage = React.useCallback(() => {
@@ -289,34 +298,61 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const openSettings = React.useCallback(() => setIsSettingsOpen(true), []);
   const closeSettings = React.useCallback(() => setIsSettingsOpen(false), []);
 
+  const contextValue = React.useMemo<LanguageContextType>(
+    () => ({
+      locale,
+      toggleLocale,
+      setLocale,
+      t,
+      fontSize,
+      setFontSize,
+      readingTheme,
+      setReadingTheme,
+      shippingRegion,
+      setShippingRegion,
+      deliveryAddress,
+      setDeliveryAddress,
+      getFormattedAddress,
+      clearSensitiveStorage,
+      wishlist,
+      toggleWishlist,
+      isInWishlist,
+      toast,
+      showToast,
+      hideToast,
+      isSettingsOpen,
+      openSettings,
+      closeSettings,
+    }),
+    [
+      locale,
+      toggleLocale,
+      setLocale,
+      t,
+      fontSize,
+      setFontSize,
+      readingTheme,
+      setReadingTheme,
+      shippingRegion,
+      setShippingRegion,
+      deliveryAddress,
+      setDeliveryAddress,
+      getFormattedAddress,
+      clearSensitiveStorage,
+      wishlist,
+      toggleWishlist,
+      isInWishlist,
+      toast,
+      showToast,
+      hideToast,
+      isSettingsOpen,
+      openSettings,
+      closeSettings,
+    ]
+  );
+
   return (
-    <LanguageContext.Provider
-      value={{
-        locale,
-        toggleLocale,
-        setLocale,
-        t,
-        fontSize,
-        setFontSize,
-        readingTheme,
-        setReadingTheme,
-        shippingRegion,
-        setShippingRegion,
-        deliveryAddress,
-        setDeliveryAddress,
-        getFormattedAddress,
-        clearSensitiveStorage,
-        wishlist,
-        toggleWishlist,
-        isInWishlist,
-        toast,
-        showToast,
-        hideToast,
-        isSettingsOpen,
-        openSettings,
-        closeSettings,
-      }}
-    >
+    <LanguageContext.Provider value={contextValue}>
       {children}
       <Toast toast={toast} onClose={hideToast} locale={locale} />
     </LanguageContext.Provider>

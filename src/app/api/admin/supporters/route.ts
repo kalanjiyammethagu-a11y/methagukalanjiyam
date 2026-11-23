@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { validateAdminSession } from "@/lib/auth-service";
+import { requireAdmin } from "@/lib/auth-service";
 import { mockSupporters } from "@/data/admin-mock";
+import { adminSupporterSchema, adminSupporterUpdateSchema } from "@/lib/validators/admin";
 import type { AdminSupporter } from "@/types/admin";
 
 export const dynamic = "force-dynamic";
@@ -9,18 +10,11 @@ export const dynamic = "force-dynamic";
 // In-memory store for fallback/dev/mock mode so edits persist within server lifecycle
 let inMemorySupporters: AdminSupporter[] = [...mockSupporters];
 
-async function checkAdmin(req: NextRequest) {
-  const adminCookie = req.cookies.get("mk_admin_session")?.value;
-  if (!adminCookie) return false;
-  const { valid } = await validateAdminSession(adminCookie);
-  return valid;
-}
-
 export async function GET(req: NextRequest) {
   try {
-    const isAdmin = await checkAdmin(req);
-    if (!isAdmin) {
-      return NextResponse.json({ error: "Unauthorized admin access" }, { status: 401 });
+    const auth = await requireAdmin(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     try {
@@ -58,12 +52,20 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const isAdmin = await checkAdmin(req);
-    if (!isAdmin) {
-      return NextResponse.json({ error: "Unauthorized admin access" }, { status: 401 });
+    const auth = await requireAdmin(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     const body = await req.json();
+    const parseResult = adminSupporterSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: "Invalid supporter data", details: parseResult.error.flatten() },
+        { status: 400 }
+      );
+    }
+
     const {
       nameEn,
       nameTa,
@@ -73,14 +75,7 @@ export async function POST(req: NextRequest) {
       instagramUrl,
       whatsappUrl,
       isActive,
-    } = body;
-
-    if (!nameEn && !nameTa) {
-      return NextResponse.json(
-        { error: "Member name is required." },
-        { status: 400 }
-      );
-    }
+    } = parseResult.data;
 
     const newSupporter: AdminSupporter = {
       id: `sup-${Date.now()}`,
@@ -123,17 +118,20 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const isAdmin = await checkAdmin(req);
-    if (!isAdmin) {
-      return NextResponse.json({ error: "Unauthorized admin access" }, { status: 401 });
+    const auth = await requireAdmin(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     const body = await req.json();
-    const { id, ...updates } = body;
-
-    if (!id) {
-      return NextResponse.json({ error: "Member ID is required" }, { status: 400 });
+    const parseResult = adminSupporterUpdateSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: "Invalid supporter update data", details: parseResult.error.flatten() },
+        { status: 400 }
+      );
     }
+    const { id, ...updates } = parseResult.data;
 
     let found = false;
     inMemorySupporters = inMemorySupporters.map((s) => {
@@ -181,9 +179,9 @@ export async function PATCH(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const isAdmin = await checkAdmin(req);
-    if (!isAdmin) {
-      return NextResponse.json({ error: "Unauthorized admin access" }, { status: 401 });
+    const auth = await requireAdmin(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     const { searchParams } = new URL(req.url);

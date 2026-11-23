@@ -5,6 +5,23 @@ import { z } from "zod";
  */
 const PHONE_REGEX = /^[6-9][0-9]{9}$/;
 
+const normalizePhone = (val: unknown) => {
+  if (typeof val !== "string") return val;
+  const digits = val.replace(/\D/g, "");
+  if (digits.length === 12 && digits.startsWith("91")) {
+    return digits.slice(2);
+  }
+  if (digits.length === 11 && digits.startsWith("0")) {
+    return digits.slice(1);
+  }
+  return digits;
+};
+
+const normalizePincode = (val: unknown) => {
+  if (typeof val !== "string") return val;
+  return val.replace(/\D/g, "").slice(0, 6);
+};
+
 /**
  * Strict regex for Indian Postal Pincode (6 digits, non-zero first digit)
  */
@@ -20,13 +37,13 @@ const RAZORPAY_SIGNATURE_REGEX = /^[a-f0-9]{64}$/;
 export const addressSchema = z
   .object({
     full_name: z.string().trim().min(2, "Full name is required").max(100, "Name too long"),
-    phone: z.string().trim().regex(PHONE_REGEX, "Enter a valid 10-digit mobile number"),
+    phone: z.preprocess(normalizePhone, z.string().trim().regex(PHONE_REGEX, "Enter a valid 10-digit mobile number")),
     house_name: z.string().trim().min(2, "Flat/House/Building details required").max(150, "House details too long"),
     street: z.string().trim().max(150, "Street address too long").optional(),
     landmark: z.string().trim().max(150, "Landmark too long").optional(),
     city: z.string().trim().min(2, "City is required").max(80, "City name too long"),
     state: z.string().trim().min(2, "State is required").max(80, "State name too long"),
-    pincode: z.string().trim().regex(PINCODE_REGEX, "Enter a valid 6-digit postal pincode"),
+    pincode: z.preprocess(normalizePincode, z.string().trim().regex(PINCODE_REGEX, "Enter a valid 6-digit postal pincode")),
     label: z.string().trim().max(30).default("Home"),
     is_default: z.boolean().default(false),
   })
@@ -48,7 +65,7 @@ export const createOrderSchema = z
     shipping_address: addressSchema,
     customer_notes: z.string().trim().max(500, "Notes cannot exceed 500 characters").optional(),
     is_guest_checkout: z.boolean().default(false),
-    guest_phone: z.string().trim().regex(PHONE_REGEX, "Enter a valid 10-digit mobile number").optional(),
+    guest_phone: z.preprocess(normalizePhone, z.string().trim().regex(PHONE_REGEX, "Enter a valid 10-digit mobile number").optional()),
     guest_email: z.string().trim().email("Enter a valid email address").max(150).optional(),
   })
   .strict();

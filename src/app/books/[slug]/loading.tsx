@@ -24,10 +24,9 @@ export default function BookDetailLoading() {
             <div className="flex justify-center">
               <div className="w-56 sm:w-64 lg:w-72 aspect-[3/4] rounded-2xl bg-black/[0.07] border border-black/5" />
             </div>
-            {/* Wishlist & Share buttons skeleton */}
-            <div className="flex justify-center gap-3 pt-2">
-              <div className="h-11 w-11 rounded-xl bg-black/10" />
-              <div className="h-11 w-11 rounded-xl bg-black/10" />
+            {/* Share button skeleton */}
+            <div className="flex justify-center pt-2">
+              <div className="h-11 w-32 rounded-xl bg-black/10" />
             </div>
           </div>
         </div>

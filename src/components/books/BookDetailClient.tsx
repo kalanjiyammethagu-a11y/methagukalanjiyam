@@ -14,7 +14,6 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import {
-  BookmarkRibbonIcon,
   PostalSealIcon,
   ArchivalWaxSealIcon,
 } from "@/components/ui/Icons";
@@ -31,10 +30,10 @@ export interface BookDetailClientProps {
 }
 
 /**
- * Action buttons below book cover (Wishlist & Share)
+ * Action button below book cover (Share)
  */
 export function BookCoverActions({ book }: { book: BookItem }) {
-  const { locale, isInWishlist, toggleWishlist } = useLanguage();
+  const { locale } = useLanguage();
   const [copiedToast, setCopiedToast] = React.useState(false);
   const isTa = locale === "ta";
 
@@ -64,45 +63,16 @@ export function BookCoverActions({ book }: { book: BookItem }) {
         </div>
       )}
 
-      <div className="flex items-center justify-center gap-3 mt-6">
-        <button
-          type="button"
-          onClick={() => toggleWishlist(book.id, book.title, book.titleEn)}
-          className={cn(
-            "min-h-[44px] min-w-[44px] h-11 w-11 rounded-xl border flex items-center justify-center transition-all cursor-pointer active:scale-[0.98] shadow-2xs",
-            isInWishlist(book.id)
-              ? "bg-[#0A6847] border-[#0A6847] text-white shadow-xs"
-              : "border-black/10 text-zinc-600 hover:text-[#0A6847] hover:border-[#0A6847]/30 hover:bg-[#0A6847]/5"
-          )}
-          aria-label={
-            isInWishlist(book.id)
-              ? isTa
-                ? "வாசிப்புப் பட்டியலிலிருந்து நீக்குக"
-                : "Remove from reading list"
-              : isTa
-              ? "வாசிப்புப் பட்டியலில் சேர்"
-              : "Bookmark this book"
-          }
-          title={
-            isInWishlist(book.id)
-              ? isTa
-                ? "சேமிக்கப்பட்டது"
-                : "Saved"
-              : isTa
-              ? "சேமிக்க"
-              : "Save"
-          }
-        >
-          <BookmarkRibbonIcon className="h-5 w-5" />
-        </button>
+      <div className="flex items-center justify-center mt-6">
         <button
           type="button"
           onClick={handleShare}
-          className="min-h-[44px] min-w-[44px] h-11 w-11 rounded-xl border border-black/10 flex items-center justify-center text-[#555555] hover:text-[#0A6847] hover:border-[#0A6847]/30 hover:bg-[#0A6847]/5 transition-colors cursor-pointer"
-          aria-label={isTa ? "பகிர்" : "Share"}
-          title={isTa ? "பகிர்" : "Share"}
+          className="min-h-[44px] px-5 py-2.5 rounded-xl border border-black/10 flex items-center justify-center gap-2 text-zinc-600 hover:text-[#0A6847] hover:border-[#0A6847]/30 hover:bg-[#0A6847]/5 transition-colors cursor-pointer text-xs sm:text-sm font-medium font-tamil"
+          aria-label={isTa ? "நூலைப் பகிர்க" : "Share this book"}
+          title={isTa ? "நூலைப் பகிர்க" : "Share this book"}
         >
-          <Share2 className="h-4.5 w-4.5" />
+          <Share2 className="h-4 w-4" />
+          <span>{isTa ? "நூலைப் பகிர்க" : "Share Book"}</span>
         </button>
       </div>
     </>
@@ -141,7 +111,7 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
       type: "cart",
       titleTa: "கூடையில் சேர்க்கப்பட்டது",
       titleEn: "Added to Cart",
-      messageTa: `"${book.title}" (${quantity} ${quantity > 1 ? "பிரதிகள்" : "பிரதி"}) உங்கள் கூடையில் சேர்க்கப்பட்டது.`,
+      messageTa: `"${book.title}" உங்கள் கூடையில் சேர்க்கப்பட்டது.`,
       messageEn: `"${book.titleEn}" (${quantity} item${quantity > 1 ? "s" : ""}) added to your cart.`,
       actionLabelTa: "கூடை காண்க",
       actionLabelEn: "View Cart",
@@ -181,21 +151,16 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
             )}
           </div>
 
-          {/* Stock Status Badge */}
+          {/* Stock Status Badge (Binary: In Stock or Out of Stock only) */}
           <div>
             {isSoldOut ? (
               <Badge variant="sold_out">
-                {isTa ? "விற்றுத் தீர்ந்தது" : "Sold Out"}
+                {isTa ? "கையிருப்பில் இல்லை" : "Out of Stock"}
               </Badge>
-            ) : isLowStock ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 text-amber-900 border border-amber-400/40 text-xs font-bold font-tamil animate-pulse">
-                <AlertTriangle className="h-3.5 w-3.5 text-amber-700" />
-                <span>{isTa ? `கடைசி ${book.stock} பிரதிகள்!` : `Only ${book.stock} left!`}</span>
-              </span>
             ) : (
               <Badge variant="in_stock">
                 <Check className="h-3 w-3" />
-                <span>{isTa ? `${book.stock} பிரதிகள் கையிருப்பு` : `${book.stock} in stock`}</span>
+                <span>{isTa ? "இருப்பில் உள்ளது" : "In Stock"}</span>
               </Badge>
             )}
           </div>
@@ -239,7 +204,7 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
               <Truck className="h-4 w-4 text-[#0A6847] shrink-0" />
               <span>
                 {isTa
-                  ? "தமிழ்நாடு: 2-3 நாட்களில் ST Courier / Speed Post மூலம் விரைவு டெலிவரி"
+                  ? "தமிழ்நாடு: 2-3 நாட்களில் ST கூரியர் / விரைவு அஞ்சல் வழி விரைவு வழங்கல்"
                   : "Tamil Nadu: 2-3 Days Fast Delivery via ST Courier / India Post"}
               </span>
             </div>
@@ -269,14 +234,14 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
           <span className="font-tamil">
             {shippingRegion === "other-india"
               ? isTa
-                ? "பிற இந்திய மாநிலங்களுக்கு ₹100 அஞ்சல் கட்டணம் • Speed Post டெலிவரி"
+                ? "பிற இந்திய மாநிலங்களுக்கு ₹100 அஞ்சல் கட்டணம் • விரைவு அஞ்சல் வழி வழங்கல்"
                 : "Flat ₹100 shipping to other Indian states via Speed Post"
               : shippingRegion === "diaspora"
               ? isTa
                 ? "வெளிநாட்டுப் பார்சல் அஞ்சல் கட்டணம் எடைக்கேற்ப நிர்ணயிக்கப்படும் (DHL / India Post)"
                 : "International diaspora shipping calculated by parcel weight via DHL / India Post"
               : isTa
-              ? "தமிழ்நாடு முழுவதும் ₹60 அஞ்சல் கட்டணம் • ST Courier / India Post டெலிவரி"
+              ? "தமிழ்நாடு முழுவதும் ₹60 அஞ்சல் கட்டணம் • ST கூரியர் / இந்திய அஞ்சல் வழி வழங்கல்"
               : "Flat ₹60 shipping across Tamil Nadu via ST Courier / India Post"}
           </span>
         </div>

@@ -49,14 +49,14 @@ export async function POST(req: NextRequest) {
 
     // Also invalidate any admin cookies
     response.cookies.set("mk_admin_session", "", {
-      path: "/admin",
+      path: "/",
       maxAge: 0,
       httpOnly: true,
       secure: isProduction,
       sameSite: "strict",
     });
     response.cookies.set("mk_admin_preauth", "", {
-      path: "/admin",
+      path: "/",
       maxAge: 0,
       httpOnly: true,
       secure: isProduction,

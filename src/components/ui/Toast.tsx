@@ -37,7 +37,7 @@ export function Toast({ toast, onClose, locale }: ToastProps) {
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-20 sm:bottom-6 inset-x-4 sm:inset-x-auto sm:right-6 z-[var(--z-toast)] flex justify-center sm:justify-end pointer-events-none animate-in fade-in slide-in-from-bottom-5 duration-200"
+      className="fixed bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))] sm:bottom-6 inset-x-4 sm:inset-x-auto sm:right-6 z-[var(--z-toast)] flex justify-center sm:justify-end pointer-events-none animate-in fade-in slide-in-from-bottom-5 duration-200"
     >
       <div className="w-full sm:max-w-md pointer-events-auto bg-[var(--color-surface-card)]/95 backdrop-blur-2xl border border-[var(--color-border-subtle)] rounded-2xl p-4 shadow-2xl flex items-start gap-3.5 text-[var(--color-ink-primary)] transition-all">
         {/* Leading Icon Badge */}

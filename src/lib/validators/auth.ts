@@ -39,12 +39,6 @@ export const userSignUpSchema = z
         PASSWORD_REGEX,
         "Password must contain at least one uppercase letter, one lowercase letter, and one number"
       ),
-    phone: z
-      .string()
-      .trim()
-      .regex(/^[6-9][0-9]{9}$/, "Enter a valid 10-digit mobile number")
-      .optional()
-      .or(z.literal("")),
     locale: z.enum(["ta", "en"]).default("ta"),
   })
   .strict();

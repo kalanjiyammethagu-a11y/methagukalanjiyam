@@ -8,11 +8,53 @@ import { Badge } from "@/components/ui/Badge";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { BookCard } from "@/components/books/BookCard";
 import { BookDetailClient, BookCoverActions } from "@/components/books/BookDetailClient";
-import { allBooks, getBookBySlug, getRelatedBooks } from "@/data/books";
+import { allBooks, getBookBySlug, getRelatedBooks, type BookItem } from "@/data/books";
 import { safeJsonLdStringify } from "@/lib/sanitize";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+export const revalidate = 60;
 
 interface BookPageProps {
   params: Promise<{ slug: string }>;
+}
+
+async function resolveBook(slug: string): Promise<BookItem | undefined> {
+  const staticBook = getBookBySlug(slug);
+  try {
+    const adminSupabase = createAdminClient();
+    const { data: dbBook } = await (adminSupabase.from("books") as any)
+      .select("*, categories(name_ta, name_en, slug)")
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (dbBook) {
+      return {
+        id: dbBook.id,
+        slug: dbBook.slug,
+        title: dbBook.title,
+        titleEn: dbBook.title_en || staticBook?.titleEn || dbBook.title,
+        author: dbBook.author,
+        authorEn: dbBook.author_en || staticBook?.authorEn || dbBook.author,
+        price: Number(dbBook.price),
+        discountPrice: dbBook.discount_price ? Number(dbBook.discount_price) : undefined,
+        categorySlug: dbBook.categories?.slug || staticBook?.categorySlug || "history",
+        categoryTa: dbBook.categories?.name_ta || staticBook?.categoryTa || "வரலாறு",
+        categoryEn: dbBook.categories?.name_en || staticBook?.categoryEn || "History",
+        image: dbBook.cover_front || dbBook.cover_url || staticBook?.image || "/images/books/book-01.webp",
+        featured: Boolean(dbBook.is_featured),
+        stock: Number(dbBook.stock ?? 10),
+        pages: dbBook.pages || staticBook?.pages,
+        year: String(dbBook.publication_year || staticBook?.year || "2024"),
+        publisher: dbBook.publisher || staticBook?.publisher,
+        isbn: dbBook.isbn || staticBook?.isbn,
+        descriptionTa: dbBook.description_ta || staticBook?.descriptionTa || "",
+        descriptionEn: dbBook.description_en || staticBook?.descriptionEn || "",
+      };
+    }
+  } catch {
+    // Return static if DB is unreachable
+  }
+  return staticBook;
 }
 
 export function generateStaticParams() {
@@ -25,7 +67,7 @@ export async function generateMetadata({
   params,
 }: BookPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const book = getBookBySlug(slug);
+  const book = await resolveBook(slug);
 
   if (!book) {
     return {
@@ -73,7 +115,7 @@ export async function generateMetadata({
 
 export default async function BookDetailPage({ params }: BookPageProps) {
   const { slug } = await params;
-  const book = getBookBySlug(slug);
+  const book = await resolveBook(slug);
 
   if (!book) {
     notFound();
@@ -159,7 +201,7 @@ export default async function BookDetailPage({ params }: BookPageProps) {
                   </div>
                 </div>
 
-                {/* Wishlist & Share action buttons below cover */}
+                {/* Share action button below cover */}
                 <BookCoverActions book={book} />
               </GlassPanel>
             </div>

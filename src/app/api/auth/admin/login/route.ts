@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
       );
 
       response.cookies.set("mk_admin_session", sessionToken, {
-        path: "/admin",
+        path: "/",
         httpOnly: true,
         secure: isProduction,
         sameSite: "strict",
@@ -184,13 +184,13 @@ export async function POST(req: NextRequest) {
         email: normalizedEmail.replace(/(.{2})(.*)(?=@)/, (_, a, b) => a + "*".repeat(b.length)),
         message: "A 6-digit verification code has been dispatched to your administrator email.",
         expiresInMinutes,
-        simulatedOtp: emailResult.simulated ? otpCode : undefined,
+        simulatedOtp: !isProduction && emailResult.simulated ? otpCode : undefined,
       },
       { status: 200 }
     );
 
     response.cookies.set("mk_admin_preauth", preAuthToken, {
-      path: "/admin",
+      path: "/",
       httpOnly: true,
       secure: isProduction,
       sameSite: "strict",

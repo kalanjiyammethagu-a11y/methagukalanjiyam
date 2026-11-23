@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
       if (verification.lockout) {
         // Clear pre-auth cookie if maximum attempts exceeded
         response.cookies.set("mk_admin_preauth", "", {
-          path: "/admin",
+          path: "/",
           maxAge: 0,
         });
       }
@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
 
     // 1. Issue full admin session cookie (HttpOnly, Strict, Secure, 8-hour max)
     response.cookies.set("mk_admin_session", sessionToken, {
-      path: "/admin",
+      path: "/",
       httpOnly: true,
       secure: isProduction,
       sameSite: "strict",
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Clear pre-auth cookie (consumed)
     response.cookies.set("mk_admin_preauth", "", {
-      path: "/admin",
+      path: "/",
       maxAge: 0,
       httpOnly: true,
       secure: isProduction,

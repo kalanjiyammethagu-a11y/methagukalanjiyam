@@ -77,58 +77,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Update order in Supabase
+    // 3. Update order in Supabase with atomic idempotency
     let orderId = `order-${Date.now()}`;
     let orderNumber = `MK-TEST-${Date.now().toString().slice(-4)}`;
 
     if (!isPlaceholderDb) {
       const adminSupabase = createAdminClient();
 
-      // Fetch existing order with items and shipping details
-      const { data: order, error: orderFetchError } = await (adminSupabase
+      // Atomic update: only update if order is not already paid
+      const { data: updatedOrders, error: updateError } = await (adminSupabase
         .from("orders") as any)
-        .select("id, order_number, status, payment_status, razorpay_payment_id, total_amount, shipping_address, guest_phone, guest_email, order_items (*)")
-        .eq("razorpay_order_id", razorpay_order_id)
-        .single();
-
-      if (orderFetchError || !order) {
-        console.error("Order fetch error during verify:", orderFetchError);
-        return NextResponse.json(
-          { error: "Matching order record not found in database" },
-          { status: 404 }
-        );
-      }
-
-      orderId = order.id;
-      orderNumber = order.order_number;
-
-      // Idempotency & Replay Attack Defense
-      if (order.payment_status === "paid") {
-        if (order.razorpay_payment_id === razorpay_payment_id) {
-          // Idempotent duplicate verification: already verified with same payment ID
-          return NextResponse.json(
-            {
-              success: true,
-              message: "Payment already verified and order confirmed.",
-              order_id: orderId,
-              order_number: orderNumber,
-            },
-            { status: 200 }
-          );
-        } else {
-          // Replay attempt: Order already paid with a DIFFERENT payment ID
-          console.warn(
-            `Replay attack prevented: Order ${order.id} is already paid with ${order.razorpay_payment_id}, rejected new payment ${razorpay_payment_id}`
-          );
-          return NextResponse.json(
-            { error: "Order is already paid with a different payment reference" },
-            { status: 409 }
-          );
-        }
-      }
-
-      // Update order state to paid and confirmed
-      const { error: updateError } = await (adminSupabase.from("orders") as any)
         .update({
           payment_status: "paid",
           status: "confirmed",
@@ -136,7 +94,11 @@ export async function POST(req: NextRequest) {
           razorpay_signature: razorpay_signature,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", order.id);
+        .eq("razorpay_order_id", razorpay_order_id)
+        .neq("payment_status", "paid")
+        .select(
+          "id, order_number, status, payment_status, razorpay_payment_id, total_amount, shipping_address, guest_phone, guest_email, order_items (*)"
+        );
 
       if (updateError) {
         console.error("Order update error on payment success:", updateError);
@@ -145,6 +107,68 @@ export async function POST(req: NextRequest) {
           { status: 500 }
         );
       }
+
+      // If atomic update matched 0 rows, evaluate why (replay, conflict, or terminal state)
+      if (!updatedOrders || updatedOrders.length === 0) {
+        const { data: existingOrder, error: orderFetchError } = await (adminSupabase
+          .from("orders") as any)
+          .select(
+            "id, order_number, status, payment_status, razorpay_payment_id, total_amount, shipping_address, guest_phone, guest_email, order_items (*)"
+          )
+          .eq("razorpay_order_id", razorpay_order_id)
+          .maybeSingle();
+
+        if (orderFetchError || !existingOrder) {
+          console.error("Order fetch error during verify:", orderFetchError);
+          return NextResponse.json(
+            { error: "Matching order record not found in database" },
+            { status: 400 }
+          );
+        }
+
+        // Terminal status check
+        if (existingOrder.status === "cancelled" || existingOrder.status === "refunded") {
+          return NextResponse.json(
+            { error: `Cannot verify payment for order with status: ${existingOrder.status}` },
+            { status: 400 }
+          );
+        }
+
+        // Idempotency & Replay Handling
+        if (existingOrder.payment_status === "paid") {
+          if (existingOrder.razorpay_payment_id === razorpay_payment_id) {
+            // Idempotent duplicate verification: already verified with same payment ID
+            return NextResponse.json(
+              {
+                success: true,
+                message: "Payment already verified and order confirmed.",
+                order_id: existingOrder.id,
+                order_number: existingOrder.order_number,
+              },
+              { status: 200 }
+            );
+          } else {
+            // Replay conflict: Order already paid with a DIFFERENT payment ID
+            console.warn(
+              `Anomaly / Replay Conflict: Order ${existingOrder.id} is already paid with ${existingOrder.razorpay_payment_id}, rejected new payment ${razorpay_payment_id}`
+            );
+            return NextResponse.json(
+              { error: "Order is already paid with a different payment reference" },
+              { status: 409 }
+            );
+          }
+        }
+
+        return NextResponse.json(
+          { error: "Order could not be transitioned to paid status" },
+          { status: 400 }
+        );
+      }
+
+      // First-time successful verification
+      const order = updatedOrders[0];
+      orderId = order.id;
+      orderNumber = order.order_number;
 
       // Record audit log for successful payment confirmation
       await (adminSupabase.from("audit_logs") as any).insert({

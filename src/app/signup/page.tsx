@@ -8,7 +8,6 @@ import {
   Mail,
   Lock,
   User,
-  Phone,
   Eye,
   EyeOff,
   ArrowRight,
@@ -25,7 +24,8 @@ import { useLanguage } from "@/context/LanguageContext";
 function SignUpContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo") || "/account";
+  const rawRedirect = searchParams.get("redirectTo") || searchParams.get("redirect") || "/account";
+  const redirectTo = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/account";
   const { locale } = useLanguage();
   const isTa = locale === "ta";
 
@@ -37,7 +37,6 @@ function SignUpContent() {
   const [password, setPassword] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
   const [fullName, setFullName] = React.useState("");
-  const [phone, setPhone] = React.useState("");
   const [userLocale, setUserLocale] = React.useState<"ta" | "en">(isTa ? "ta" : "en");
 
   // UI State
@@ -119,7 +118,6 @@ function SignUpContent() {
           email: email.trim().toLowerCase(),
           password,
           full_name: fullName.trim(),
-          phone: phone.trim() || undefined,
           locale: userLocale,
         }),
       });
@@ -388,27 +386,6 @@ function SignUpContent() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder={isTa ? "எ.கா. க. மாதவன்" : "e.g. John Doe"}
-                    className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#222222] text-base sm:text-sm outline-none focus:border-[#0A6847] focus:ring-1 focus:ring-[#0A6847]"
-                  />
-                </div>
-              </div>
-
-              {/* Phone (Optional) */}
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="signup-phone"
-                  className="block text-xs font-semibold text-[#333333] dark:text-[#dddddd] font-tamil"
-                >
-                  {isTa ? "கைபேசி எண் (விருப்பத்தேர்வு)" : "Phone Number (Optional)"}
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#888888]" />
-                  <input
-                    id="signup-phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                    placeholder="9876543210"
                     className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#222222] text-base sm:text-sm outline-none focus:border-[#0A6847] focus:ring-1 focus:ring-[#0A6847]"
                   />
                 </div>

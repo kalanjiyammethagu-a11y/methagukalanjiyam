@@ -36,7 +36,7 @@ import { allBooks } from "@/data/books";
 function ProgressSteps({ current, locale }: { current: number; locale: "ta" | "en" }) {
   const steps = [
     { labelTa: "கூடை", labelEn: "Cart" },
-    { labelTa: "முகவரி", labelEn: "Address" },
+    { labelTa: "அஞ்சல் முகவரி", labelEn: "Address" },
     { labelTa: "பணம்", labelEn: "Payment" },
   ];
 
@@ -54,8 +54,8 @@ function ProgressSteps({ current, locale }: { current: number; locale: "ta" | "e
                 i < current
                   ? "bg-[#0A6847] text-white"
                   : i === current
-                  ? "bg-[#0A6847] text-white ring-4 ring-[#0A6847]/15"
-                  : "bg-black/8 text-[#999999]"
+                    ? "bg-[#0A6847] text-white ring-4 ring-[#0A6847]/15"
+                    : "bg-black/8 text-[#999999]"
               )}
             >
               {i < current ? "✓" : i + 1}
@@ -229,13 +229,13 @@ export default function CartPage() {
     const booksList = items
       .map(
         (it) =>
-          `• ${isTa ? it.title : it.titleEn} (x${it.quantity}) - ₹${
-            it.price * it.quantity
+          `• ${isTa ? it.title : it.titleEn} (x${it.quantity}) - ₹${it.price * it.quantity
           }`
       )
       .join("\n");
-    const addressStr = addressForm.fullName
-      ? `\n\nடெலிவரி முகவரி (Delivery Address):\n${getFormattedAddress()}`
+    const formattedAddr = getFormattedAddress();
+    const addressStr = formattedAddr
+      ? `\n\nஅஞ்சல் முகவரி (Postal Address):\n${formattedAddr}`
       : "";
     const msg = encodeURIComponent(
       `வணக்கம் மேதகு களஞ்சியம்,\nநான் வெளிநாட்டிலிருந்து (Overseas / International Order) நூல்களை வாங்க விரும்புகிறேன்.\n\n📚 கூடையில் உள்ள நூல்கள்:\n${booksList}\n\nமொத்த நூல் மதிப்பு: ₹${subtotal}${addressStr}\n\nதயவுசெய்து சர்வதேச அஞ்சல் கட்டணம் (DHL / International Post) மற்றும் கட்டண விவரங்களைத் தெரிவிக்கவும்.`
@@ -246,9 +246,9 @@ export default function CartPage() {
   // Validation
   const isAddressFilled = Boolean(
     addressForm.fullName.trim() &&
-      addressForm.phone.trim().length >= 10 &&
-      addressForm.doorStreet.trim() &&
-      addressForm.pincode.trim().length >= 6
+    addressForm.phone.trim().length >= 10 &&
+    addressForm.doorStreet.trim() &&
+    addressForm.pincode.trim().length >= 6
   );
 
   const currentStep = isEmpty ? 0 : isAddressFilled ? 2 : 1;
@@ -327,9 +327,9 @@ export default function CartPage() {
       console.error("Order creation failed:", err);
       setOrderError(
         err.message ||
-          (isTa
-            ? "ஆர்டர் உருவாக்குவதில் பிழை ஏற்பட்டது. தயவுசெய்து சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்."
-            : "Failed to create order on server. Please try again.")
+        (isTa
+          ? "ஆர்டர் உருவாக்குவதில் பிழை ஏற்பட்டது. தயவுசெய்து சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்."
+          : "Failed to create order on server. Please try again.")
       );
       setCreatedOrder(null);
     } finally {
@@ -578,7 +578,7 @@ export default function CartPage() {
                     </div>
                     <div>
                       <h2 className="text-base font-bold text-[#111111] font-tamil">
-                        {isTa ? "தபால் டெலிவரி முகவரி" : "Postal Delivery Address"}
+                        {isTa ? "அஞ்சல் முகவரி" : "Postal Delivery Address"}
                       </h2>
                       <p className="text-xs text-[#666666] font-tamil">
                         {isTa
@@ -996,8 +996,8 @@ export default function CartPage() {
                             ? "Speed Post நேரடி டிராக்கிங் AWB எண் வழங்கப்படும்"
                             : "Speed Post Live AWB Tracking Provided"
                           : isTa
-                          ? "ST Courier / Speed Post நேரடி பார்சல் டிராக்கிங்"
-                          : "ST Courier / Speed Post Fast Dispatch"}
+                            ? "ST Courier / Speed Post நேரடி பார்சல் டிராக்கிங்"
+                            : "ST Courier / Speed Post Fast Dispatch"}
                       </span>
                     </div>
                   </div>

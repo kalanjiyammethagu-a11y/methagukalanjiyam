@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { validateAdminSession } from "@/lib/auth-service";
+import { requireAdmin } from "@/lib/auth-service";
+import { adminCategorySchema, adminCategoryUpdateSchema } from "@/lib/validators/admin";
 
 export const dynamic = "force-dynamic";
-
-async function checkAdmin(req: NextRequest) {
-  const adminCookie = req.cookies.get("mk_admin_session")?.value;
-  if (!adminCookie) return false;
-  const { valid } = await validateAdminSession(adminCookie);
-  return valid;
-}
 
 // Fallback mock categories if DB connection is unavailable
 const fallbackCategories = [
@@ -22,9 +16,9 @@ const fallbackCategories = [
 
 export async function GET(req: NextRequest) {
   try {
-    const isAdmin = await checkAdmin(req);
-    if (!isAdmin) {
-      return NextResponse.json({ error: "Unauthorized admin access" }, { status: 401 });
+    const auth = await requireAdmin(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     try {
@@ -53,20 +47,20 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const isAdmin = await checkAdmin(req);
-    if (!isAdmin) {
-      return NextResponse.json({ error: "Unauthorized admin access" }, { status: 401 });
+    const auth = await requireAdmin(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     const body = await req.json();
-    const { name_ta, name_en, slug, sort_order, is_active } = body;
-
-    if (!name_ta || !name_en) {
+    const parseResult = adminCategorySchema.safeParse(body);
+    if (!parseResult.success) {
       return NextResponse.json(
-        { error: "Tamil and English names are required." },
+        { error: "Invalid category data", details: parseResult.error.flatten() },
         { status: 400 }
       );
     }
+    const { name_ta, name_en, slug, sort_order, is_active } = parseResult.data;
 
     const generatedSlug =
       slug ||
@@ -104,16 +98,24 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const isAdmin = await checkAdmin(req);
-    if (!isAdmin) {
-      return NextResponse.json({ error: "Unauthorized admin access" }, { status: 401 });
+    const auth = await requireAdmin(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     const body = await req.json();
     const { id, ...updates } = body;
 
-    if (!id) {
+    if (!id || typeof id !== "string") {
       return NextResponse.json({ error: "Category ID is required" }, { status: 400 });
+    }
+
+    const parseResult = adminCategoryUpdateSchema.safeParse(updates);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: "Invalid category update data", details: parseResult.error.flatten() },
+        { status: 400 }
+      );
     }
 
     const payload: Record<string, any> = {
@@ -147,9 +149,9 @@ export async function PATCH(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const isAdmin = await checkAdmin(req);
-    if (!isAdmin) {
-      return NextResponse.json({ error: "Unauthorized admin access" }, { status: 401 });
+    const auth = await requireAdmin(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     const { searchParams } = new URL(req.url);

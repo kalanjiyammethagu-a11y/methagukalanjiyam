@@ -1,22 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateAdminSession } from "@/lib/auth-service";
+import { requireAdmin } from "@/lib/auth-service";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { enqueueOrderSync, processQueueItem, getERPQueueItems } from "@/lib/erp/sync-queue";
 
 export const dynamic = "force-dynamic";
 
-async function checkAdmin(req: NextRequest) {
-  const adminCookie = req.cookies.get("mk_admin_session")?.value;
-  if (!adminCookie) return false;
-  const { valid } = await validateAdminSession(adminCookie);
-  return valid;
-}
-
 export async function POST(req: NextRequest) {
   try {
-    const isAdmin = await checkAdmin(req);
-    if (!isAdmin) {
-      return NextResponse.json({ error: "Unauthorized admin access" }, { status: 401 });
+    const auth = await requireAdmin(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     const body = await req.json();

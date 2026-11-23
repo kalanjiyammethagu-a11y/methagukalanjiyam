@@ -22,6 +22,10 @@ const envSchema = z.object({
   ERP_COMPANY: z.string().optional(),
   ERP_DEFAULT_ITEM_GROUP: z.string().optional(),
 
+  AUTH_SECRET: z.string().min(16, "AUTH_SECRET must be at least 16 characters").optional(),
+  RESEND_API_KEY: z.string().optional(),
+  RESEND_FROM_EMAIL: z.string().optional(),
+
   NEXT_PUBLIC_SITE_URL: z.string().url("Invalid site URL").default("https://methagukalanjiyam.in"),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });
@@ -42,12 +46,32 @@ export function getValidatedEnv(): Env {
       .map(([key, errors]) => `  - ${key}: ${errors?.join(", ")}`)
       .join("\n");
 
-    console.warn(
-      `⚠️ [Config Warning] Environment variables configuration issues:\n${errorMessages}`
-    );
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        `[FATAL] Missing or invalid production environment variables:\n${errorMessages}`
+      );
+    } else {
+      console.warn(
+        `⚠️ [Config Warning] Environment variables configuration issues:\n${errorMessages}`
+      );
+    }
   }
 
   validatedEnv = (result.success ? result.data : process.env) as Env;
   return validatedEnv;
+}
+
+/**
+ * Enforces that a required server secret is defined and not a default placeholder.
+ * Throws a fatal error if missing or placeholder.
+ */
+export function requireServerEnv(key: string): string {
+  const value = process.env[key];
+  if (!value || value.trim() === "" || value.includes("placeholder")) {
+    throw new Error(
+      `[FATAL] Required server secret "${key}" is missing or unconfigured.`
+    );
+  }
+  return value.trim();
 }
 

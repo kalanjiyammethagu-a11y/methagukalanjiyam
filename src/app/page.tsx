@@ -83,6 +83,8 @@ const categories = [
   },
 ];
 
+export const revalidate = 60;
+
 export default function HomePage() {
   return (
     <div className="space-y-16 sm:space-y-24 pb-24">
@@ -212,16 +214,16 @@ export default function HomePage() {
                 <ArchivalAudioReelIcon className="h-6 w-6" />
               </div>
               <h3 className="text-lg sm:text-xl font-bold text-[#111111] font-tamil">
-                ஒலி & வீடியோ ஆவணங்கள்
+                ஒலி & காணொளி ஆவணங்கள்
               </h3>
               <p className="text-xs sm:text-sm text-[#444444] leading-relaxed font-tamil font-medium">
-                வரலாற்றுப் பிரகடனங்கள், களத்து உரைகள் மற்றும் தேசிய ஆவணப் பதிவுகளின் பிரத்யேக ஆடியோ-வீடியோ காப்பகம்.
+                வரலாற்றுப் பேரறிவிப்புகள், களத்து உரைகள் மற்றும் தேசிய ஆவணப் பதிவுகளின் தனித்துவமான ஒலி-காணொளி காப்பகம்.
               </p>
             </div>
 
             <div className="pt-6 border-t border-black/8">
               <Button href="/videos" size="sm" variant="glass" className="w-full justify-between font-tamil font-bold">
-                <span>ஆவண வீடியோக்களைக் காண்க (Audio & Video)</span>
+                <span>ஆவணக் காணொளிகளைக் காண்க (Audio & Video)</span>
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>

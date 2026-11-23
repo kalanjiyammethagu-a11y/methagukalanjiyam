@@ -17,11 +17,11 @@ export class ERPNextClient {
   constructor(customConfig?: Partial<ERPConfig>) {
     this.config = {
       url: customConfig?.url || process.env.ERP_URL || "https://erp.methagukalanjiyam.in",
-      apiKey: customConfig?.apiKey || process.env.ERP_API_KEY || "251d72274f50663",
-      apiSecret: customConfig?.apiSecret || process.env.ERP_API_SECRET || "3a8290d0264db86",
+      apiKey: customConfig?.apiKey || process.env.ERP_API_KEY || "",
+      apiSecret: customConfig?.apiSecret || process.env.ERP_API_SECRET || "",
       company: customConfig?.company || process.env.ERP_COMPANY || "Methagu Kalanjiyam",
       defaultItemGroup: customConfig?.defaultItemGroup || process.env.ERP_DEFAULT_ITEM_GROUP || "Books",
-      enabled: customConfig?.enabled ?? (process.env.ERP_ENABLED !== "false"),
+      enabled: customConfig?.enabled ?? (Boolean(process.env.ERP_API_KEY && process.env.ERP_API_SECRET) && process.env.ERP_ENABLED !== "false"),
       autoSyncOrders: customConfig?.autoSyncOrders ?? (process.env.ERP_AUTO_SYNC_ORDERS !== "false"),
     };
 

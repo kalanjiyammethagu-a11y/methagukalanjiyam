@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
 
     // Clear admin cookies
     response.cookies.set("mk_admin_session", "", {
-      path: "/admin",
+      path: "/",
       maxAge: 0,
       httpOnly: true,
       secure: isProduction,
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     });
 
     response.cookies.set("mk_admin_preauth", "", {
-      path: "/admin",
+      path: "/",
       maxAge: 0,
       httpOnly: true,
       secure: isProduction,

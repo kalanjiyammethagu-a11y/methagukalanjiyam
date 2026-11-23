@@ -29,7 +29,7 @@ export const translations = {
     en: "Articles",
   },
   navVideos: {
-    ta: "வீடியோக்கள்",
+    ta: "காணொளிகள்",
     en: "Videos",
   },
   navSupporters: {
@@ -85,19 +85,19 @@ export const translations = {
     en: "Quantity",
   },
   inStock: {
-    ta: "கையிருப்பில்",
+    ta: "இருப்பில் உள்ளது",
     en: "In Stock",
   },
   soldOut: {
-    ta: "விற்றுத் தீர்ந்தது",
-    en: "Sold Out",
+    ta: "கையிருப்பில் இல்லை",
+    en: "Out of Stock",
   },
   featured: {
     ta: "சிறப்பு நூல்",
     en: "Featured",
   },
   deliveryTNNotice: {
-    ta: "தமிழ்நாடு முழுவதும் ₹60 அஞ்சல் கட்டணம் • ST Courier / India Post டெலிவரி",
+    ta: "தமிழ்நாடு முழுவதும் ₹60 அஞ்சல் கட்டணம் • ST கூரியர் / இந்திய அஞ்சல் வழி வழங்கல்",
     en: "Flat ₹60 shipping across Tamil Nadu via ST Courier / India Post",
   },
   deliveryOtherNotice: {
@@ -167,7 +167,7 @@ export const translations = {
     en: "Saved Postal Delivery Address",
   },
   savedAddressDesc: {
-    ta: "இங்கு சேமிக்கப்படும் முகவரி உங்கள் இணையதள ஆர்டரில் தானாகவே இணைக்கப்படும்.",
+    ta: "இங்கு சேமிக்கப்படும் முகவரி உங்கள் இணையதளக் கொள்முதலில் தானாகவே இணைக்கப்படும்.",
     en: "This address will be automatically prefilled during on-site checkout.",
   },
 
@@ -181,7 +181,7 @@ export const translations = {
     en: "Saved Wishlist",
   },
   orderHistoryTitle: {
-    ta: "ஆர்டர் வரலாறுகள்",
+    ta: "கொள்முதல் வரலாறு",
     en: "Order History",
   },
   saveChanges: {
@@ -203,7 +203,7 @@ export const translations = {
     en: "Overview",
   },
   adminOrders: {
-    ta: "ஆர்டர்கள்",
+    ta: "கொள்முதல்கள்",
     en: "Orders",
   },
   adminBooks: {
@@ -243,7 +243,7 @@ export const translations = {
     en: "Total Revenue",
   },
   adminRecentOrders: {
-    ta: "சமீபத்திய ஆர்டர்கள்",
+    ta: "அண்மைய கொள்முதல்கள்",
     en: "Recent Orders",
   },
   adminInventoryAlerts: {
@@ -263,11 +263,11 @@ export const translations = {
     en: "Shipped",
   },
   adminStatusDelivered: {
-    ta: "டெலிவரி ஆனது",
+    ta: "சேர்க்கப்பட்டது",
     en: "Delivered",
   },
   adminStatusCancelled: {
-    ta: "ரத்து செய்யப்பட்டது",
+    ta: "விலக்கப்பட்டது",
     en: "Cancelled",
   },
 } as const;

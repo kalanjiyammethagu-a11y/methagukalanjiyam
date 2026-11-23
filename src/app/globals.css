@@ -96,9 +96,27 @@ html[data-theme="white"] {
   --color-surface-subtle: #F8F9FA;
   --color-surface-card: #FFFFFF;
   --color-surface-tint: #F1F3F5;
+
+  --color-ink-primary: #111827;   /* AAA contrast against white canvas (16.0:1) */
+  --color-ink-secondary: #4B5563; /* AAA contrast against white canvas (7.0:1) */
+  --color-ink-muted: #6B7280;     /* AA contrast against white canvas (4.8:1) */
+
+  --color-accent: #0D5C3A;        /* Deep Tamil Forest Emerald - 8.21:1 on white canvas (exceeds WCAG 3:1 for focus rings) */
+  --color-accent-hover: #08442A;
+  --color-accent-light: #EBF5EF;
+
   --color-border-hairline: #E9ECEF;
   --color-border-subtle: #DEE2E6;
   --color-border-strong: #CED4DA;
+
+  --color-danger: #BE123C;
+  --color-danger-light: #FFE4E6;
+  --color-warning: #B45309;
+  --color-warning-light: #FEF3C7;
+  --color-success: #0D5C3A;
+  --color-success-light: #EBF5EF;
+
+  color-scheme: light;
 }
 
 /* Dark / Night Reading Theme (WCAG AA compliant dark mode) */
@@ -329,6 +347,20 @@ html[data-font-size="extra-large"] {
 
 .pt-safe {
   padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+
+/* Mobile iOS Safari: Prevent viewport auto-zoom on input focus */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="password"],
+  input[type="search"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 /* Accessibility: Prefers-Reduced-Motion Strict Rules */

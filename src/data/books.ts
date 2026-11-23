@@ -21,6 +21,7 @@ export interface BookItem {
   quoteTa?: string;
   quoteEn?: string;
   featured?: boolean;
+  isbn?: string;
 }
 
 export const allBooks: BookItem[] = [
@@ -90,7 +91,7 @@ export const allBooks: BookItem[] = [
     featured: true,
     quoteTa: "களத்து நகர்வுகளும் தப்பிப்புகளும் நேரில் பார்க்கும் உணர்வைத் தரும் வரலாற்றுப் பதிவு.",
     quoteEn: "Tactical breakthroughs and frontline resilience recorded with vivid documentary precision.",
-    descriptionTa: "கட்டுநாயக்கா தாக்குதலுக்கு வழிகாட்டிய மூத்த புலனாய்வுத் தளபதி சேகரிப்பிள்ளை விநாயகமூர்த்தி (விநாயகம்) அவர்களின் தியாக வாழ்வும் போரியல் உத்திகளும் நிறைந்த முதன்மை ஆவணம்.",
+    descriptionTa: "தளபதி விநாயகத்தின் வாழ்க்கை வரலாற்று நூல், ஒரு தரமான போர்த் திரைப்படத்தை நேரில் பார்ப்பது போன்ற உயிர்ப்பான அனுபவத்தைத் தருகிறது. போராளிகளின் நகர்வுகள், பின்வாங்கல்கள், பசி, தாகம் மற்றும் சவால்களைப் படிக்கும்போது, அவர்களுடன் நாமும் களத்தில் பயணிப்பது போன்ற உணர்வு ஏற்படுகிறது. பக்கங்கள் நகர நகர, அந்தப் பயணத்தின் களைப்பையும் மனப்பாரத்தையும் நம்மாலும் நேரடியாக உணர முடிகிறது.",
     descriptionEn: "The definitive monograph on Senior Intelligence Commander Vinayagam, architect of key strategic operations and lifelong freedom fighter.",
   },
   {
@@ -250,25 +251,25 @@ export const allBooks: BookItem[] = [
   },
   {
     id: "b0000000-0000-0000-0000-000000000011",
-    title: "மேதகு செயல்மொழி",
-    titleEn: "Methagu Seyalmozhi — Words of Action",
-    author: "இரா.பொ.இரவிசந்திரன்",
-    authorEn: "R.P. Ravichandran",
-    price: 95,
-    categoryTa: "ஆளூமை கையேடு",
-    categoryEn: "Leadership Manual",
-    categorySlug: "political",
+    title: "வரலாறு எனது வழிகாட்டி",
+    titleEn: "Varalaru Enathu Vazhikaatti — History is My Guide",
+    author: "மேதகு வே. பிரபாகரன்",
+    authorEn: "Hon. V. Prabhakaran",
+    price: 120,
+    categoryTa: "வரலாற்று நேர்காணல்",
+    categoryEn: "Historic Interviews",
+    categorySlug: "archives",
     image: "/images/books/book-08.webp",
     stock: 10,
-    slug: "methagu-seyalmozhi",
+    slug: "varalaru-enathu-vazhikaatti",
     year: "2006",
     pages: 160,
     publisher: "மேதகு களஞ்சியம்",
     publisherEn: "Methagu Kalanjiyam",
-    quoteTa: "சொல்லை விட செயலே வரலாற்றைப் படைக்கும் என்ற தலைவரின் தத்துவம்.",
-    quoteEn: "Actions, rather than words, author living history.",
-    descriptionTa: "தேசியத் தலைவர் பிரபாகரன் அவர்களின் ஆளுமைப் பண்புகள், முடிவெடுக்கும் திறன் மற்றும் திட்டமிடல் நெறிகளை விளக்கும் சிறந்த வழிகாட்டல் நூல்.",
-    descriptionEn: "An analytical study of Leader Prabhakaran's leadership philosophy, discipline, and execution principles.",
+    quoteTa: "வரலாறு தானாக உருவாவதில்லை; கொள்கை உறுதியும் தியாகமுமே வரலாற்றைப் படைக்கின்றன.",
+    quoteEn: "History does not author itself; unyielding principles and sacrifice create history.",
+    descriptionTa: "வரலாறு எனது வழிகாட்டி என்பது தலைவர் மேதகு வே. பிரபாகரன் அவர்கள் வழங்கிய நேர்காணலைத் தொகுத்து உருவாக்கப்பட்ட நூலாகும். நெறியாளருக்கும் தலைவருக்குமான நேரடி உரையாடலாக அமையும் இந்நூல், அவரின் சிந்தனைகள், பார்வைகள் மற்றும் வரலாற்று நிலைப்பாடுகளை மிகத் தெளிவாக வெளிப்படுத்துகிறது. தலைவரின் எண்ணங்களை அவரின் வார்த்தைகளிலேயே நேரடியாக அறிந்துகொள்ள உதவும் முக்கிய ஆவணமாக இந்நூல் திகழ்கிறது.",
+    descriptionEn: "A foundational archival compilation of landmark interviews given by National Leader Hon. V. Prabhakaran, presenting his strategic thoughts, national outlook, and historical positions in his own words.",
   },
   {
     id: "b0000000-0000-0000-0000-000000000012",
@@ -295,10 +296,10 @@ export const allBooks: BookItem[] = [
   },
   {
     id: "b0000000-0000-0000-0000-000000000013",
-    title: "வரலாற்று தலைவனின் வழிகாட்டல்",
-    titleEn: "Guidance of the Historical Leader",
-    author: "சு.ரவி",
-    authorEn: "Su. Ravi",
+    title: "தலைவரின் வழிகாட்டலில்",
+    titleEn: "In the Leader's Guidance — Thalaivarin Vazhikaattalil",
+    author: "சுப்பையா ரவி (எள்ளாளன்)",
+    authorEn: "Subbaiah Ravi (Ellalan)",
     price: 150,
     categoryTa: "ஆவணத் தொகுப்பு",
     categoryEn: "Archival Compilation",
@@ -312,8 +313,8 @@ export const allBooks: BookItem[] = [
     publisherEn: "Methagu Kalanjiyam",
     quoteTa: "தேச விடுதலைக்கான தெளிவான தொலைநோக்குப் பிரகடனங்கள்.",
     quoteEn: "Visionary declarations charting the course of national destiny.",
-    descriptionTa: "மாவீரர் நாள் உரைகள் மற்றும் வரலாற்றுப் பிரகடனங்கள் மூலம் தலைவர் முன்வைத்த அரசியல், சமுதாய மற்றும் பண்பாட்டு வழிகாட்டல்களின் முழுத் தொகுப்பு.",
-    descriptionEn: "A comprehensive anthology of policy speeches, Heroes' Day declarations, and political guidance delivered by the leadership.",
+    descriptionTa: "தலைவர் மேதகு வே. பிரபாகரன் அவர்களின் நேரடிப் பணிப்பில் 'விடுதலைப்புலிகள்' பத்திரிகையின் ஆசிரியராகவும், கொள்கை விளக்கப் பேச்சாளராகவும் பணியாற்றிய சுப்பையா ரவி (எள்ளாளன்) எழுதிய நூல் இது. தலைவரின் வழிகாட்டலில் அமைந்த பயணத்தையும், தன் நேரடி அனுபவங்களையும் இந்நூலில் அவர் பதிவு செய்துள்ளார்.",
+    descriptionEn: "Authored by Subbaiah Ravi (Ellalan), editor of 'Viduthalai Puligal' and ideological spokesperson under the direct guidance of Leader Hon. V. Prabhakaran, chronicling frontline experiences and ideological guidance.",
   },
   {
     id: "b0000000-0000-0000-0000-000000000014",
@@ -363,8 +364,8 @@ export const allBooks: BookItem[] = [
     id: "b0000000-0000-0000-0000-000000000016",
     title: "மக்கள் துணையோடு மரணத்தை வென்றேன்",
     titleEn: "I Conquered Death with People's Support",
-    author: "புலவர் கலியபெருமாள்",
-    authorEn: "Pulavar Kaliyaperumal",
+    author: "புலவர் கு. கலியபெருமாள்",
+    authorEn: "Pulavar K. Kaliyaperumal",
     price: 150,
     categoryTa: "சுயசரிதை",
     categoryEn: "Biography",
@@ -378,8 +379,8 @@ export const allBooks: BookItem[] = [
     publisherEn: "Methagu Kalanjiyam",
     quoteTa: "மரண தண்டனையிலிருந்து மக்களின் ஆதரவோடு மீண்டு வந்த புரட்சியாளரின் வாழ்க்கை.",
     quoteEn: "The memoir of a revolutionary who overcame death row through public solidarity.",
-    descriptionTa: "மரண தண்டனை விதிக்கப்பட்ட சூழலில், மக்கள் போராட்டங்களின் துணையோடு தூக்குக் கயிற்றை வென்று வெளியே வந்த புலவர் கலியபெருமாள் அவர்களின் போராட்ட சுயசரிதை.",
-    descriptionEn: "The gripping autobiography of revolutionary Pulavar Kaliyaperumal and his legal struggle against capital punishment.",
+    descriptionTa: "சாவுக்கஞ்சாது பல சாகசங்கள் புரிந்த மாவீரனின் வரலாறு ஒரு புரட்சிகர நெடும்பயணமாகும். தனது வியத்தகு வாழ்வியல் அனுபவங்களை அவர் இந்த நூலில் பதிவு செய்துள்ளார். அவர்பட்ட பாடுகளை, அனுபவித்த துன்பங்களை வரலாற்றின் இரத்த வரிகளாக நாம் காணும்போது நமது விழிகள் கோபத்தால் சிவக்கின்றன. கண்ணீரால் குளமாகின்றன. சில நேரங்களில் இப்படிப்பட்ட வீர வரலாறுகளைப் படிக்கும்போது நம் நெஞ்சம் உணர்ச்சிப் பெருக்கால் விம்முகிறது.",
+    descriptionEn: "The heroic autobiography of revolutionary Pulavar K. Kaliyaperumal, recording fearless struggles, frontline hardships, and how the solidarity of the people helped him conquer capital punishment.",
   },
   {
     id: "b0000000-0000-0000-0000-000000000017",
@@ -472,7 +473,12 @@ export const allBooks: BookItem[] = [
 ];
 
 export function getBookBySlug(slug: string): BookItem | undefined {
-  return allBooks.find((b) => b.slug === slug);
+  return allBooks.find(
+    (b) =>
+      b.slug === slug ||
+      (slug === "methagu-seyalmozhi" && b.slug === "varalaru-enathu-vazhikaatti") ||
+      (slug === "thalaivarin-vazhikaattalil" && b.slug === "varalatru-thalaivan")
+  );
 }
 
 export function getRelatedBooks(current: BookItem): BookItem[] {

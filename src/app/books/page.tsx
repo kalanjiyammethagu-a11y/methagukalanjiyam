@@ -53,9 +53,50 @@ function BooksCatalogContent() {
     }
   }, [urlCategory]);
 
+  const [liveBooks, setLiveBooks] = React.useState<BookCardData[]>(allBooks);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    async function loadDynamicCatalog() {
+      try {
+        const res = await fetch("/api/books?limit=100");
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && data.books && Array.isArray(data.books) && data.books.length > 0) {
+            const mapped: BookCardData[] = data.books.map((b: any) => ({
+              id: b.id,
+              slug: b.slug,
+              title: b.title,
+              titleEn: b.title_en || b.titleEn || b.title,
+              author: b.author,
+              authorEn: b.author_en || b.authorEn || b.author,
+              price: Number(b.price),
+              discountPrice: b.discount_price ? Number(b.discount_price) : (b.discountPrice ? Number(b.discountPrice) : undefined),
+              image: b.cover_front || b.cover_url || b.image || "/images/books/book-01.webp",
+              categorySlug: b.categories?.slug || b.category_slug || b.categorySlug || "history",
+              categoryTa: b.categories?.name_ta || b.category_ta || b.categoryTa || "வரலாறு",
+              categoryEn: b.categories?.name_en || b.category_en || b.categoryEn || "History",
+              stock: Number(b.stock ?? 10),
+              featured: Boolean(b.is_featured || b.featured),
+              year: b.publication_year || b.year,
+              pages: b.pages,
+            }));
+            setLiveBooks(mapped);
+          }
+        }
+      } catch {
+        // Fallback to static catalog if DB is unreachable
+      }
+    }
+    loadDynamicCatalog();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Filter → Sort → Paginate pipeline
   const processedBooks = React.useMemo(() => {
-    let books = [...allBooks];
+    let books = [...liveBooks];
 
     // Search filter (searches both Tamil and English titles/authors)
     if (search.trim()) {

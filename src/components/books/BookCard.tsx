@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ShoppingBag } from "lucide-react";
-import { BookmarkRibbonIcon } from "@/components/ui/Icons";
 import { cn } from "@/lib/utils";
 import { formatINR } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
@@ -22,9 +21,13 @@ export interface BookCardData {
   discountPrice?: number | null;
   categoryTa: string;
   categoryEn: string;
+  categorySlug?: string;
   image: string;
   stock: number;
   slug: string;
+  featured?: boolean;
+  year?: string | number;
+  pages?: number;
 }
 
 interface BookCardProps {
@@ -43,10 +46,9 @@ export function BookCard({
   className,
 }: BookCardProps) {
   const router = useRouter();
-  const { locale: contextLocale, isInWishlist, toggleWishlist, getFormattedAddress, showToast } = useLanguage();
+  const { locale: contextLocale, getFormattedAddress, showToast } = useLanguage();
   const { addToCart } = useCart();
   const locale = propLocale || contextLocale;
-  const isWishlisted = isInWishlist(book.id);
   const isFeatured = variant === "featured";
   const isCompact = variant === "compact";
   const isHorizontal = variant === "horizontal";
@@ -155,7 +157,7 @@ export function BookCard({
         )}
       >
         <div className="space-y-1.5">
-          {/* Header Row: Category Kicker + Bookmark Ribbon Action */}
+          {/* Header Row: Category Kicker */}
           <div className="flex items-center justify-between gap-2">
             <span
               className={cn(
@@ -165,39 +167,6 @@ export function BookCard({
             >
               {locale === "ta" ? book.categoryTa : book.categoryEn}
             </span>
-
-            {/* Bookmark button with WCAG 44x44px touch area */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                toggleWishlist(book.id, book.title, book.titleEn);
-              }}
-              aria-label={
-                isWishlisted
-                  ? locale === "ta"
-                    ? `${book.title} — விருப்பப் பட்டியலிலிருந்து நீக்குக`
-                    : `Remove ${book.titleEn} from saved library`
-                  : locale === "ta"
-                    ? `${book.title} — விருப்பப் பட்டியலில் சேர்க்க`
-                    : `Save ${book.titleEn} to library`
-              }
-              className={cn(
-                "relative min-h-[44px] min-w-[44px] -mr-2 -my-2 flex items-center justify-center rounded-md transition-colors cursor-pointer",
-                isWishlisted
-                  ? "text-[#0D5C3A]"
-                  : "text-[#665F57] hover:text-[#0D5C3A]"
-              )}
-              title={isWishlisted ? (locale === "ta" ? "சேமிக்கப்பட்டது" : "Saved") : (locale === "ta" ? "சேமிக்க" : "Save")}
-            >
-              <BookmarkRibbonIcon
-                className={cn(
-                  "h-4 w-4 transition-transform",
-                  isWishlisted ? "text-[#0D5C3A] scale-110" : "text-[#665F57]"
-                )}
-              />
-            </button>
           </div>
 
           {/* Book Title */}

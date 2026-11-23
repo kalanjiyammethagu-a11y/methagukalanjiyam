@@ -325,6 +325,64 @@ export async function validateAdminSession(signedSessionToken: string): Promise<
   return { valid: true, userId };
 }
 
+export interface AdminAuthResult {
+  authorized: boolean;
+  status: 401 | 403;
+  error?: string;
+  userId?: string;
+  user?: { id: string; role: string; email?: string };
+}
+
+/**
+ * Strict server-side admin authorization validator.
+ * Enforces session token validity AND queries profiles.role === 'admin'.
+ * Fails closed: no session = 401, wrong role = 403, query error = deny.
+ */
+export async function requireAdmin(cookieOrReq: any): Promise<AdminAuthResult> {
+  let adminCookie: string | undefined;
+
+  if (typeof cookieOrReq === "string") {
+    adminCookie = cookieOrReq;
+  } else if (cookieOrReq && typeof cookieOrReq.cookies?.get === "function") {
+    adminCookie = cookieOrReq.cookies.get("mk_admin_session")?.value;
+  }
+
+  if (!adminCookie) {
+    return { authorized: false, status: 401, error: "Unauthorized: Missing admin session" };
+  }
+
+  const { valid, userId } = await validateAdminSession(adminCookie);
+  if (!valid || !userId) {
+    return { authorized: false, status: 401, error: "Unauthorized: Invalid or expired admin session" };
+  }
+
+  try {
+    const adminSupabase = createAdminClient();
+    const { data: profile, error } = await (adminSupabase.from("profiles") as any)
+      .select("id, role, email")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (error || !profile) {
+      return { authorized: false, status: 403, error: "Forbidden: Profile not found or query error" };
+    }
+
+    if (profile.role !== "admin") {
+      return { authorized: false, status: 403, error: "Forbidden: Admin role required" };
+    }
+
+    return {
+      authorized: true,
+      status: 401,
+      userId: profile.id,
+      user: { id: profile.id, role: profile.role, email: profile.email },
+    };
+  } catch (err: any) {
+    console.error("[requireAdmin] Verification error:", err);
+    return { authorized: false, status: 403, error: "Forbidden: Authorization lookup failure" };
+  }
+}
+
 /**
  * Revokes an admin session.
  */

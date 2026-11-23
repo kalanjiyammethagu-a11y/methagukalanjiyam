@@ -27,10 +27,10 @@ export function Footer() {
               </div>
               <div>
                 <h4 className="text-sm font-bold text-[#111111] font-tamil">
-                  விரைவான தபால் சேவை
+                  விரைவான அஞ்சல் சேவை
                 </h4>
                 <p className="text-xs text-[#444444] mt-0.5 font-medium">
-                  ST Courier & India Post வழியாக பாதுகாப்பான டெலிவரி
+                  ST கூரியர் & இந்திய அஞ்சல் வழியாக பாதுகாப்பான வழங்கல்
                 </p>
               </div>
             </div>
@@ -148,7 +148,7 @@ export function Footer() {
               </li>
               <li>
                 <Link href="/videos" className="hover:text-[#0D5C3A] transition-colors py-1.5 block">
-                  வீடியோ ஆவணங்கள்
+                  காணொளி ஆவணங்கள்
                 </Link>
               </li>
             </ul>

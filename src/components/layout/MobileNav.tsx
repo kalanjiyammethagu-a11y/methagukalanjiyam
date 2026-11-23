@@ -124,7 +124,7 @@ export function MobileNav({
     },
     {
       href: "/videos",
-      labelTa: "வீடியோ ஆவணங்கள்",
+      labelTa: "காணொளி ஆவணங்கள்",
       labelEn: "Video Archives",
       subTa: "வரலாற்று காட்சிப் பதிவுகள்",
       subEn: "Historical Footage",
