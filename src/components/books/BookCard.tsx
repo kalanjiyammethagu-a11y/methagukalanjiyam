@@ -199,8 +199,8 @@ export function BookCard({
         </div>
 
         {/* Pricing & Actions */}
-        <div className="flex items-center justify-between gap-2 pt-3 border-t border-[#E5DFD5]">
-          <div className="flex items-baseline gap-1.5 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 border-t border-[#E5DFD5]">
+          <div className="flex items-baseline gap-1.5 flex-wrap min-w-0">
             <span className="font-bold text-[#191614] text-base sm:text-lg tabular-nums">
               {formatINR(book.discountPrice ?? book.price)}
             </span>
@@ -212,7 +212,7 @@ export function BookCard({
           </div>
 
           {!isSoldOut ? (
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end shrink-0">
               {/* Quick Add to Cart Button (44x44px touch target) */}
               <button
                 type="button"
@@ -223,7 +223,7 @@ export function BookCard({
                     : `Add ${book.titleEn} to cart`
                 }
                 title={locale === "ta" ? "கூடையில் சேர்க்க" : "Add to Cart"}
-                className="min-h-[44px] min-w-[44px] h-11 w-11 rounded-lg border border-[#0D5C3A]/30 text-[#0D5C3A] hover:bg-[#0D5C3A]/10 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs"
+                className="min-h-[44px] min-w-[44px] h-11 w-11 rounded-lg border border-[#0D5C3A]/30 text-[#0D5C3A] hover:bg-[#0D5C3A]/10 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs shrink-0"
               >
                 <ShoppingBag className="h-4.5 w-4.5" />
               </button>
@@ -237,7 +237,7 @@ export function BookCard({
                     ? `${book.title} — இப்போதே வாங்குக`
                     : `Buy ${book.titleEn} now`
                 }
-                className="min-h-[44px] px-3.5 py-2 rounded-lg bg-[#0D5C3A] hover:bg-[#08442A] text-white flex items-center justify-center text-xs font-bold transition-colors font-tamil cursor-pointer active:bg-[#063320] shadow-xs"
+                className="flex-1 sm:flex-none min-h-[44px] px-3.5 py-2 rounded-lg bg-[#0D5C3A] hover:bg-[#08442A] text-white flex items-center justify-center text-xs font-bold transition-colors font-tamil cursor-pointer active:bg-[#063320] shadow-xs"
               >
                 <span>{locale === "ta" ? "வாங்க" : "Buy Now"}</span>
               </button>

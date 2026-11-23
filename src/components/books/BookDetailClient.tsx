@@ -395,10 +395,9 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
               onClick={handleAddToCart}
               aria-label={isTa ? "கூடையில் சேர்க்க" : "Add to Cart"}
               title={isTa ? "கூடையில் சேர்க்க" : "Add to Cart"}
-              className="min-h-[44px] min-w-[44px] px-3 rounded-xl border border-[#0A6847]/30 text-[#0A6847] bg-[#0A6847]/5 hover:bg-[#0A6847]/15 font-bold text-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all font-tamil cursor-pointer"
+              className="min-h-[44px] min-w-[44px] h-11 w-11 rounded-xl border border-[#0A6847]/30 text-[#0A6847] bg-[#0A6847]/5 hover:bg-[#0A6847]/15 font-bold text-xs flex items-center justify-center active:scale-95 transition-all font-tamil cursor-pointer shrink-0"
             >
-              <ShoppingBag className="h-4 w-4 shrink-0" />
-              <span className="hidden xs:inline">{isTa ? "கூடை" : "Cart"}</span>
+              <ShoppingBag className="h-4.5 w-4.5 shrink-0" />
             </button>
 
             {/* Mobile Sticky Buy Now */}
