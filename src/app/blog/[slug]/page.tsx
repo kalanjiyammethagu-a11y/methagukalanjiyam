@@ -2,13 +2,49 @@ import * as React from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArticleDetailClient } from "@/components/blog/ArticleDetailClient";
-import { getArticleBySlug, getAllArticleSlugs } from "@/data/articles";
+import { getArticleBySlug, getAllArticleSlugs, type ArticleDetailData } from "@/data/articles";
 import { safeJsonLdStringify } from "@/lib/sanitize";
+import { createClient } from "@/lib/supabase/server";
 
 export const revalidate = 60;
 
 interface ArticlePageProps {
   params: Promise<{ slug: string }>;
+}
+
+async function resolveArticle(slug: string): Promise<ArticleDetailData | undefined> {
+  const staticArticle = getArticleBySlug(slug);
+  try {
+    const supabase = await createClient();
+    const { data: dbPost } = await (supabase.from("blog_posts") as any)
+      .select("*")
+      .eq("slug", slug)
+      .eq("status", "published")
+      .maybeSingle();
+
+    if (dbPost) {
+      return {
+        slug: dbPost.slug,
+        titleTa: dbPost.title,
+        titleEn: dbPost.seo_title || staticArticle?.titleEn || dbPost.title,
+        subtitleTa: dbPost.excerpt || staticArticle?.subtitleTa || "",
+        subtitleEn: dbPost.seo_description || staticArticle?.subtitleEn || "",
+        coverImage: dbPost.cover_image_url || staticArticle?.coverImage || "/images/blogs/thalapathi-vinayagam-banner.webp",
+        categoryTa: "வரலாற்று ஆவணம்",
+        categoryEn: "Historical Record",
+        publishedAt: dbPost.published_at ? dbPost.published_at.split("T")[0] : "2026-08-01",
+        readingTimeMinutes: dbPost.reading_time_mins || 5,
+        authorTa: dbPost.author || "சாந்தி நேசக்கரம்",
+        authorEn: dbPost.author || "Saanthi Nesakaram",
+        relatedBookSlugs: staticArticle?.relatedBookSlugs || ["dhisai-thavara-kanai", "katunayake-attack-victory"],
+        htmlContentTa: dbPost.body || staticArticle?.htmlContentTa || "",
+        htmlContentEn: dbPost.body || staticArticle?.htmlContentEn || "",
+      };
+    }
+  } catch {
+    // Keep fallback static article
+  }
+  return staticArticle;
 }
 
 export function generateStaticParams() {
@@ -21,7 +57,7 @@ export async function generateMetadata({
   params,
 }: ArticlePageProps): Promise<Metadata> {
   const { slug } = await params;
-  const article = getArticleBySlug(slug);
+  const article = await resolveArticle(slug);
 
   if (!article) {
     return {
@@ -71,7 +107,7 @@ export async function generateMetadata({
 
 export default async function ArticleDetailPage({ params }: ArticlePageProps) {
   const { slug } = await params;
-  const article = getArticleBySlug(slug);
+  const article = await resolveArticle(slug);
 
   if (!article) {
     notFound();

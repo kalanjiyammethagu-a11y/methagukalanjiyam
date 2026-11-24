@@ -115,15 +115,23 @@ const announcements = [
   },
 ];
 
-export function BlogCatalogClient() {
+export function BlogCatalogClient({
+  initialArticles,
+}: {
+  initialArticles?: ArticleCardData[];
+} = {}) {
   const { locale } = useLanguage();
   const isTa = locale === "ta";
+
+  const [articlesList, setArticlesList] = React.useState<ArticleCardData[]>(
+    initialArticles && initialArticles.length > 0 ? initialArticles : blogArticles
+  );
 
   const [search, setSearch] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState("all");
 
   const filteredArticles = React.useMemo(() => {
-    return blogArticles.filter((article) => {
+    return articlesList.filter((article) => {
       const matchesSearch =
         search === "" ||
         article.titleTa.toLowerCase().includes(search.toLowerCase()) ||
@@ -138,7 +146,7 @@ export function BlogCatalogClient() {
 
       return matchesSearch && matchesCategory;
     });
-  }, [search, selectedCategory]);
+  }, [articlesList, search, selectedCategory]);
 
   return (
     <div className="min-h-screen pb-24">

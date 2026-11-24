@@ -2,6 +2,10 @@ import * as React from "react";
 import type { Metadata } from "next";
 import { BlogCatalogClient } from "@/components/blog/BlogCatalogClient";
 import { safeJsonLdStringify } from "@/lib/sanitize";
+import { createClient } from "@/lib/supabase/server";
+import type { ArticleCardData } from "@/components/blog/ArticleCard";
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "செய்திகள் & ஆவணப் பதிவுகள் — Articles, News & Archival Records | மேதகு களஞ்சியம்",
@@ -35,7 +39,34 @@ export const metadata: Metadata = {
   },
 };
 
-export default function BlogPage() {
+export default async function BlogPage() {
+  let initialArticles: ArticleCardData[] | undefined;
+
+  try {
+    const supabase = await createClient();
+    const { data: dbPosts } = await (supabase.from("blog_posts") as any)
+      .select("*")
+      .eq("status", "published")
+      .order("published_at", { ascending: false, nullsFirst: false });
+
+    if (dbPosts && dbPosts.length > 0) {
+      initialArticles = dbPosts.map((p: any) => ({
+        slug: p.slug,
+        titleTa: p.title,
+        titleEn: p.seo_title || p.title,
+        excerptTa: p.excerpt || "",
+        excerptEn: p.seo_description || p.excerpt || "",
+        coverImage: p.cover_image_url || "/images/blogs/thalapathi-vinayagam-banner.webp",
+        categoryTa: "வரலாற்று ஆவணம்",
+        categoryEn: "Historical Record",
+        publishedAt: p.published_at ? p.published_at.split("T")[0] : "2026-08-01",
+        readingTimeMinutes: p.reading_time_mins || 5,
+        featured: p.sort_order <= 1,
+      }));
+    }
+  } catch {
+    // Keep fallback static articles
+  }
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -79,7 +110,7 @@ export default function BlogPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLdStringify(jsonLd) }}
       />
-      <BlogCatalogClient />
+      <BlogCatalogClient initialArticles={initialArticles} />
     </>
   );
 }

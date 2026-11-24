@@ -99,6 +99,8 @@ export default function AdminArticlesPage() {
   const [editingArticle, setEditingArticle] = React.useState<ArticleItem | null>(null);
   const [saving, setSaving] = React.useState(false);
   const [uploadingImage, setUploadingImage] = React.useState(false);
+  const [deleteTarget, setDeleteTarget] = React.useState<ArticleItem | null>(null);
+  const [deleting, setDeleting] = React.useState(false);
 
   // Form State
   const [formData, setFormData] = React.useState({
@@ -111,6 +113,7 @@ export default function AdminArticlesPage() {
     readingTimeMinutes: 5,
     status: "published" as ArticleStatus,
     coverImage: DEFAULT_COVER,
+    cover_image_path: "",
   });
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -137,18 +140,21 @@ export default function AdminArticlesPage() {
 
   // Lock scroll when modal is open
   React.useEffect(() => {
-    if (!isModalOpen) return;
+    if (!isModalOpen && !deleteTarget) return;
     const orig = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setIsModalOpen(false);
+      if (e.key === "Escape") {
+        setIsModalOpen(false);
+        setDeleteTarget(null);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = orig;
       window.removeEventListener("keydown", onKey);
     };
-  }, [isModalOpen]);
+  }, [isModalOpen, deleteTarget]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -167,6 +173,7 @@ export default function AdminArticlesPage() {
       readingTimeMinutes: 5,
       status: "published",
       coverImage: DEFAULT_COVER,
+      cover_image_path: "",
     });
     setIsModalOpen(true);
   };
@@ -183,6 +190,7 @@ export default function AdminArticlesPage() {
       readingTimeMinutes: article.readingTimeMinutes,
       status: article.status,
       coverImage: article.coverImage,
+      cover_image_path: "",
     });
     setIsModalOpen(true);
   };
@@ -191,19 +199,24 @@ export default function AdminArticlesPage() {
     if (!file) return;
     setUploadingImage(true);
 
-    // Immediate local preview
     const localUrl = URL.createObjectURL(file);
     setFormData((prev) => ({ ...prev, coverImage: localUrl }));
 
     try {
       const fd = new FormData();
       fd.append("file", file);
-      fd.append("folder", "blogs");
+      fd.append("folder", "blog");
       const res = await fetch("/api/admin/upload-image", { method: "POST", body: fd });
       if (res.ok) {
         const data = await res.json();
-        setFormData((prev) => ({ ...prev, coverImage: data.path }));
-        showToast("Article cover image uploaded successfully.");
+        const publicUrl = data.url || data.path;
+        const storagePath = data.path;
+        setFormData((prev) => ({
+          ...prev,
+          coverImage: publicUrl,
+          cover_image_path: storagePath,
+        }));
+        showToast("Article cover image uploaded to Supabase Storage.");
       } else {
         const err = await res.json();
         showToast(err.error || "Image upload failed.");
@@ -222,7 +235,6 @@ export default function AdminArticlesPage() {
     const nextStatus: ArticleStatus = article.status === "published" ? "draft" : "published";
     const nextPublished = nextStatus === "published";
 
-    // Optimistic UI update
     setArticles((prev) =>
       prev.map((a) =>
         a.id === article.id
@@ -242,12 +254,12 @@ export default function AdminArticlesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: article.id,
+          status: nextStatus,
           is_published: nextPublished,
         }),
       });
 
       if (!res.ok) {
-        // Rollback
         setArticles((prev) =>
           prev.map((a) => (a.id === article.id ? { ...a, status: article.status } : a))
         );
@@ -262,7 +274,10 @@ export default function AdminArticlesPage() {
 
   const handleSaveArticle = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title.trim()) return;
+    if (!formData.title.trim()) {
+      showToast("Article title is required.");
+      return;
+    }
     setSaving(true);
 
     const generatedSlug =
@@ -270,11 +285,11 @@ export default function AdminArticlesPage() {
       formData.title
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)+/g, "");
+        .replace(/(^-|-$)+/g, "") ||
+      `article-${Date.now()}`;
 
     try {
       if (editingArticle) {
-        // Update existing article
         const res = await fetch("/api/admin/articles", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -283,11 +298,16 @@ export default function AdminArticlesPage() {
             title: formData.title,
             slug: generatedSlug,
             excerpt: formData.excerpt,
+            body: formData.content,
             content: formData.content,
-            cover_image: formData.coverImage,
             category: formData.category,
+            author: formData.author,
             reading_time_mins: Number(formData.readingTimeMinutes),
+            status: formData.status,
             is_published: formData.status === "published",
+            cover_image_url: formData.coverImage,
+            cover_image_path: formData.cover_image_path || undefined,
+            cover_image: formData.coverImage,
           }),
         });
 
@@ -316,7 +336,6 @@ export default function AdminArticlesPage() {
           showToast("Failed to update article in database.");
         }
       } else {
-        // Create new article
         const res = await fetch("/api/admin/articles", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -324,12 +343,15 @@ export default function AdminArticlesPage() {
             title: formData.title,
             slug: generatedSlug,
             excerpt: formData.excerpt,
+            body: formData.content,
             content: formData.content,
+            cover_image_url: formData.coverImage,
+            cover_image_path: formData.cover_image_path || undefined,
             cover_image: formData.coverImage,
             author: formData.author,
             category: formData.category,
             reading_time_mins: Number(formData.readingTimeMinutes),
-            is_published: formData.status === "published",
+            status: formData.status,
           }),
         });
 
@@ -368,22 +390,26 @@ export default function AdminArticlesPage() {
     }
   };
 
-  const handleDeleteArticle = async (articleId: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
+  const confirmDeleteArticle = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
 
     try {
-      const res = await fetch(`/api/admin/articles?id=${articleId}`, {
+      const res = await fetch(`/api/admin/articles?id=${deleteTarget.id}`, {
         method: "DELETE",
       });
 
       if (res.ok) {
-        setArticles((prev) => prev.filter((a) => a.id !== articleId));
-        showToast("Article removed successfully.");
+        setArticles((prev) => prev.filter((a) => a.id !== deleteTarget.id));
+        showToast("Article removed from database and storage.");
+        setDeleteTarget(null);
       } else {
         showToast("Failed to delete article from database.");
       }
     } catch {
       showToast("Network error deleting article.");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -636,11 +662,11 @@ export default function AdminArticlesPage() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleDeleteArticle(article.id, article.title)}
-                          className="h-8 w-8 rounded-lg bg-gray-100 hover:bg-rose-600 hover:text-white text-gray-600 flex items-center justify-center transition-colors cursor-pointer"
+                          onClick={() => setDeleteTarget(article)}
+                          className="h-9 w-9 rounded-xl bg-gray-100 hover:bg-rose-600 hover:text-white text-gray-600 flex items-center justify-center transition-colors cursor-pointer"
                           title="Delete Article"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </td>
@@ -651,6 +677,50 @@ export default function AdminArticlesPage() {
           </table>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-gray-100 p-6 space-y-4">
+            <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
+              <Trash2 className="h-6 w-6" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-gray-900">
+                Delete &ldquo;{deleteTarget.title}&rdquo;?
+              </h3>
+              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                This action is permanent and cannot be undone. The article entry and any uploaded cover image in Supabase Storage will be deleted immediately.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-100 min-h-[44px] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteArticle}
+                disabled={deleting}
+                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold min-h-[44px] shadow-sm flex items-center gap-2 transition-all cursor-pointer"
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Confirm Delete"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Create / Edit Article Modal */}
       {isModalOpen && (
