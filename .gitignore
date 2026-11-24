@@ -50,5 +50,3 @@ Thumbs.db
 
 # ERP local cache files
 .erp-sync-queue.json
-.erp-audit-log.json
-ux-audit-findings.json
