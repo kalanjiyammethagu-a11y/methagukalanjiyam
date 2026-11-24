@@ -552,6 +552,7 @@ export default function AdminBooksPage() {
                         src={imagePreview}
                         alt="Cover preview"
                         fill
+                        sizes="80px"
                         className="object-cover"
                         unoptimized={imagePreview.startsWith("blob:")}
                       />
@@ -603,7 +604,7 @@ export default function AdminBooksPage() {
                         setFormData((prev) => ({ ...prev, image: e.target.value }));
                         setImagePreview(e.target.value);
                       }}
-                      placeholder="/images/books/my-book.webp"
+                      placeholder="/images/books/katunayake.webp"
                       className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs text-gray-700 font-mono focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
                     />
                   </div>

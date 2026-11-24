@@ -459,7 +459,9 @@ function AccountContent() {
                             src={book.image || "/images/books/book-placeholder.webp"}
                             alt={isTa ? book.title : book.titleEn}
                             fill
+                            sizes="80px"
                             className="object-cover"
+                            loading="lazy"
                           />
                         </Link>
                         <div className="flex-1 min-w-0 space-y-1">

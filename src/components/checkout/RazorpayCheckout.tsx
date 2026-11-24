@@ -186,7 +186,7 @@ export function RazorpayCheckout({
       currency: "INR",
       name: "மேதகு களஞ்சியம்",
       description: `புத்தக கட்டணம் (${orderNumber})`,
-      image: "/images/logo.png",
+      image: "/icons/favicon.png",
       order_id: razorpayOrderId,
       handler: (response: RazorpayPaymentSuccessResponse) => {
         handlePaymentSuccess(response);

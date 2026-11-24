@@ -556,6 +556,7 @@ export default function AdminArticlesPage() {
                             src={article.coverImage}
                             alt={article.title}
                             fill
+                            sizes="64px"
                             className="object-cover"
                             unoptimized={article.coverImage.startsWith("blob:")}
                           />
@@ -694,6 +695,7 @@ export default function AdminArticlesPage() {
                         src={formData.coverImage}
                         alt="Cover preview"
                         fill
+                        sizes="144px"
                         className="object-cover"
                         unoptimized={formData.coverImage.startsWith("blob:")}
                       />
@@ -741,7 +743,7 @@ export default function AdminArticlesPage() {
                       type="text"
                       value={formData.coverImage}
                       onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                      placeholder="/images/blogs/banner.webp"
+                      placeholder="/images/blogs/thalapathi-vinayagam-banner.webp"
                       className="w-full px-3 py-1.5 rounded-xl border border-gray-200 text-xs text-gray-700 font-mono focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
                     />
                   </div>
