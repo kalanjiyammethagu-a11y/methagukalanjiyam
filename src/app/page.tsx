@@ -16,7 +16,8 @@ import { GlassPanel } from "@/components/ui/GlassPanel";
 import { HeroSlider } from "@/components/home/HeroSlider";
 import { defaultHeroSlides } from "@/data/hero-slides";
 import { CategoryFilterTabs } from "@/components/home/CategoryFilterTabs";
-import { allBooks } from "@/data/books";
+import { allBooks, type BookItem } from "@/data/books";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "மேதகு களஞ்சியம் — Rare Tamil Literature & National Archives",
@@ -85,11 +86,58 @@ const categories = [
 
 export const revalidate = 60;
 
-export default function HomePage() {
+export default async function HomePage() {
+  let books: BookItem[] = allBooks;
+
+  try {
+    const supabase = await createClient();
+    const { data: dbBooks } = await (supabase.from("books") as any)
+      .select("*, categories(name_ta, name_en, slug)")
+      .eq("status", "published")
+      .order("sort_order", { ascending: true });
+
+    if (dbBooks && dbBooks.length > 0) {
+      books = dbBooks.map((b: any) => ({
+        id: b.id,
+        slug: b.slug,
+        title: b.title,
+        titleEn: b.title_en || b.title,
+        author: b.author,
+        authorEn: b.author_en || b.author,
+        price: Number(b.price),
+        discountPrice: b.discount_price ? Number(b.discount_price) : null,
+        stock: Number(b.stock ?? 10),
+        categorySlug: b.categories?.slug || "history",
+        categoryTa: b.categories?.name_ta || "வரலாறு",
+        categoryEn: b.categories?.name_en || "History",
+        image: b.cover_image_url || b.cover_front || "/images/books/book-placeholder.webp",
+        featured: Boolean(b.is_featured),
+        pages: b.pages,
+        year: String(b.published_year || "2024"),
+        publisher: b.publisher || "மேதகு களஞ்சியம்",
+        descriptionTa: b.description || "",
+        descriptionEn: b.description || "",
+      }));
+    }
+  } catch (err) {
+    console.error("Failed to fetch books on HomePage:", err);
+  }
+
+  const spotlightBook =
+    books.find((b) => b.slug === "katunayake-attack-victory") ||
+    books.find((b) => b.featured) ||
+    books[0];
+
+  const spotlightImage =
+    spotlightBook.image.startsWith("http") || spotlightBook.image.startsWith("/")
+      ? spotlightBook.image
+      : `/${spotlightBook.image}`;
+
   return (
     <div className="space-y-16 sm:space-y-24 pb-24">
       {/* ============================================================
           1. SLIDE-BASED HERO CAROUSEL WITH REAL ARCHIVAL BANNERS
+          (Public / Static Brand Assets as Specified)
           ============================================================ */}
       <HeroSlider slides={defaultHeroSlides} priorityIndex={0} />
 
@@ -127,7 +175,9 @@ export default function HomePage() {
                 <span className="text-xs font-bold tracking-wider text-[#0A6847] uppercase font-tamil">
                   முதன்மை ஆவண நூல் (Primary Spotlight)
                 </span>
-                <span className="text-xs tabular-nums font-semibold text-[#666666]">2001 PUBLICATION</span>
+                <span className="text-xs tabular-nums font-semibold text-[#666666]">
+                  {spotlightBook.year} PUBLICATION
+                </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center pt-2">
@@ -135,8 +185,8 @@ export default function HomePage() {
                   <div className="relative aspect-[3/4] w-44 rounded-xl overflow-hidden bg-[#ECE8DF] border border-black/10 shadow-xl group-hover:scale-103 transition-transform duration-300">
                     <div className="absolute inset-y-0 left-0 w-3 bg-gradient-to-r from-black/25 via-black/5 to-transparent z-10 pointer-events-none" />
                     <Image
-                      src="/images/books/book-20.webp"
-                      alt="கட்டுநாயக்கா தாக்குதல் வெற்றி"
+                      src={spotlightImage}
+                      alt={spotlightBook.title}
                       fill
                       sizes="180px"
                       className="object-cover w-full h-full"
@@ -146,17 +196,18 @@ export default function HomePage() {
 
                 <div className="sm:col-span-7 space-y-2.5 font-tamil">
                   <h3 className="text-xl sm:text-2xl font-bold text-[#111111] leading-snug font-tamil-serif">
-                    கட்டுநாயக்கா தாக்குதல் வெற்றி
+                    {spotlightBook.title}
                   </h3>
                   <p className="text-xs font-bold text-[#0A6847]">
-                    ஆசிரியர்: சாந்தி நேசக்கரம் (Saanthi Nesakaram)
+                    ஆசிரியர்: {spotlightBook.author}
                   </p>
-                  <p className="text-xs text-[#444444] leading-relaxed font-medium">
-                    ஈழ விடுதலைப் போராட்ட வரலாற்றில் சாந்தி நேசக்கரம் ஆவணப்படுத்திய அரிய வரலாற்றுத் தடம். நீண்டகால உழைப்பில் உருவான நேரடி ஆவணம்.
+                  <p className="text-xs text-[#444444] leading-relaxed font-medium line-clamp-3">
+                    {spotlightBook.descriptionTa ||
+                      "ஈழ விடுதலைப் போராட்ட வரலாற்றில் சாந்தி நேசக்கரம் ஆவணப்படுத்திய அரிய வரலாற்றுத் தடம். நீண்டகால உழைப்பில் உருவான நேரடி ஆவணம்."}
                   </p>
                   <div className="pt-2 flex items-center gap-3">
-                    <Button href="/books/katunayake-attack-victory" size="sm" variant="primary">
-                      நூலை ஆர்டர் செய்க (Order Book - ₹100)
+                    <Button href={`/books/${spotlightBook.slug}`} size="sm" variant="primary">
+                      நூலை ஆர்டர் செய்க (Order Book - ₹{spotlightBook.price})
                     </Button>
                   </div>
                 </div>
@@ -165,7 +216,9 @@ export default function HomePage() {
 
             <div className="pt-6 mt-6 border-t border-black/8 flex items-center justify-between text-xs text-[#555555] font-tamil">
               <span>நேரடிப் பதிப்பக அச்சுப் பதிப்பு (Original Press Edition)</span>
-              <span className="font-bold text-[#0A6847]">கையிருப்பில் உள்ளது (In Stock)</span>
+              <span className="font-bold text-[#0A6847]">
+                {spotlightBook.stock > 0 ? "கையிருப்பில் உள்ளது (In Stock)" : "முன்பதிவு (Out of Stock)"}
+              </span>
             </div>
           </GlassPanel>
 
@@ -285,7 +338,7 @@ export default function HomePage() {
           4. INTERACTIVE FILTERABLE BOOK CATALOG (Tactile Physical Books)
           ============================================================ */}
       <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <CategoryFilterTabs books={allBooks} />
+        <CategoryFilterTabs books={books} />
       </section>
 
       {/* ============================================================
@@ -301,37 +354,28 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {categories.map((cat, idx) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {categories.map((cat) => (
             <Link
               key={cat.slug}
               href={`/books?category=${cat.slug}`}
-              className="group block rounded-3xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0A6847]"
+              className="group block p-6 rounded-3xl border border-black/8 bg-white/70 hover:bg-white hover:border-[#0A6847]/40 hover:shadow-lg transition-all duration-300 min-h-[44px]"
             >
-              <div className="h-full p-6 flex flex-col justify-between rounded-3xl bg-white/70 hover:bg-white border border-black/[0.08] hover:border-[#0A6847]/40 shadow-2xs hover:shadow-md transition-all duration-300">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-mono tracking-wider text-zinc-500 font-semibold uppercase">
-                    SERIES 0{idx + 1}
-                  </span>
-                  <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#0A6847] border border-emerald-100/60 font-semibold font-tamil">
-                    {cat.countTa}
-                  </span>
-                </div>
-
-                <div className="space-y-1.5 pt-6 font-tamil">
-                  <h3 className="text-base sm:text-lg font-bold text-[#111111] group-hover:text-[#0A6847] transition-colors leading-snug font-tamil-serif">
-                    {cat.nameTa}
-                  </h3>
-                  <p className="text-xs text-[#555555] line-clamp-2 leading-relaxed font-medium">
-                    {cat.descTa}
-                  </p>
-                </div>
-
-                <div className="pt-4 mt-4 border-t border-black/[0.06] flex items-center justify-between text-xs font-semibold text-[#0A6847] font-tamil">
-                  <span>நூல்களைக் காண்க (View Collection)</span>
-                  <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </div>
+              <div className="flex items-start justify-between">
+                <span className="text-xs font-bold text-[#0A6847] bg-[#0A6847]/10 px-2.5 py-1 rounded-full font-tamil">
+                  {cat.countTa}
+                </span>
+                <ChevronRight className="h-4 w-4 text-zinc-400 group-hover:text-[#0A6847] group-hover:translate-x-1 transition-all" />
               </div>
+              <h3 className="mt-4 text-base font-bold text-[#111111] group-hover:text-[#0A6847] transition-colors font-tamil leading-snug">
+                {cat.nameTa}
+              </h3>
+              <p className="text-xs text-[#666666] font-medium mt-0.5 line-clamp-1">
+                {cat.nameEn}
+              </p>
+              <p className="mt-2.5 text-xs text-[#555555] font-tamil leading-relaxed line-clamp-2">
+                {cat.descTa}
+              </p>
             </Link>
           ))}
         </div>

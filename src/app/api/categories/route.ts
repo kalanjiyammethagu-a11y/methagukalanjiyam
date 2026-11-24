@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -14,8 +14,8 @@ const defaultCategories = [
 export async function GET(req: NextRequest) {
   try {
     try {
-      const adminSupabase = createAdminClient();
-      const { data: categories, error } = await (adminSupabase.from("categories") as any)
+      const supabase = await createClient();
+      const { data: categories, error } = await (supabase.from("categories") as any)
         .select("id, name_ta, name_en, slug, sort_order")
         .eq("is_active", true)
         .order("sort_order", { ascending: true });
