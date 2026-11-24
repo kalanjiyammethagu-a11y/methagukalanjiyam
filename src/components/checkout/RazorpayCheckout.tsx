@@ -8,6 +8,7 @@ import {
   RazorpayInstance,
 } from "@/types/razorpay";
 import { ShieldCheck, AlertCircle, RefreshCw, CheckCircle2, ArrowRight } from "lucide-react";
+import { formatINR } from "@/lib/utils";
 
 export interface RazorpayCheckoutProps {
   orderId: string; // Supabase order UUID
@@ -283,7 +284,7 @@ export function RazorpayCheckout({
     onFailure,
   ]);
 
-  const displayRupees = (amount / 100).toFixed(2);
+  const formattedPrice = formatINR(amount / 100);
   const isLoading = status === "loading_script" || status === "processing" || status === "verifying";
 
   return (
@@ -297,7 +298,7 @@ export function RazorpayCheckout({
           aria-busy={isLoading}
           className={
             buttonClassName ||
-            `w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl text-white font-medium text-base shadow-md transition-all duration-200 active:scale-[0.99] focus:outline-none focus:ring-4 focus:ring-red-900/20 ${
+            `w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl text-white font-medium text-base shadow-md transition-all duration-200 active:scale-[0.99] focus:outline-none focus:ring-4 focus:ring-red-900/20 touch-manipulation min-h-[48px] ${
               disabled || isLoading
                 ? "bg-stone-400 cursor-not-allowed opacity-80"
                 : "bg-[#8B1E0F] hover:bg-[#72180C] hover:shadow-lg"
@@ -317,7 +318,7 @@ export function RazorpayCheckout({
             <>
               <ShieldCheck className="w-5 h-5 text-amber-300" />
               <span>
-                {buttonText || `பாதுகாப்பாக பணம் செலுத்த ₹${displayRupees} (Pay Now)`}
+                {buttonText || `பாதுகாப்பாக பணம் செலுத்த ${formattedPrice} (Pay Now)`}
               </span>
               <ArrowRight className="w-4 h-4 ml-1 opacity-80" />
             </>
@@ -368,7 +369,7 @@ export function RazorpayCheckout({
               type="button"
               onClick={openRazorpayModal}
               disabled={isLoading}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-800 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
+              className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] bg-red-700 hover:bg-red-800 text-white rounded-xl text-sm font-medium transition-colors shadow-sm touch-manipulation cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />
               <span>மீண்டும் முயற்சிக்கவும் (Try Again)</span>
@@ -379,7 +380,7 @@ export function RazorpayCheckout({
               )}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-stone-300 hover:bg-stone-50 text-stone-800 rounded-lg text-sm font-medium transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] bg-white border border-stone-300 hover:bg-stone-50 text-stone-800 rounded-xl text-sm font-medium transition-colors touch-manipulation cursor-pointer"
             >
               <span>வாட்ஸ்அப் உதவி (WhatsApp Help)</span>
             </a>

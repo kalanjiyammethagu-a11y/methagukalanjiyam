@@ -23,6 +23,7 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { QuantitySelector } from "@/components/ui/QuantitySelector";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { GlassPanel } from "@/components/ui/GlassPanel";
+import { Price } from "@/components/ui/Price";
 import { BookCard } from "@/components/books/BookCard";
 import { RazorpayCheckout } from "@/components/checkout/RazorpayCheckout";
 import { useLanguage, type ShippingRegion, type UserDeliveryAddress } from "@/context/LanguageContext";
@@ -55,7 +56,7 @@ function ProgressSteps({ current, locale }: { current: number; locale: "ta" | "e
                   ? "bg-[#0A6847] text-white"
                   : i === current
                     ? "bg-[#0A6847] text-white ring-4 ring-[#0A6847]/15"
-                    : "bg-black/8 text-[#999999]"
+                    : "bg-black/8 text-[#555555]"
               )}
             >
               {i < current ? "✓" : i + 1}
@@ -63,7 +64,7 @@ function ProgressSteps({ current, locale }: { current: number; locale: "ta" | "e
             <span
               className={cn(
                 "text-xs font-semibold font-tamil hidden sm:inline",
-                i <= current ? "text-[#111111]" : "text-[#999999]"
+                i <= current ? "text-[#111111]" : "text-[#555555]"
               )}
             >
               {locale === "ta" ? step.labelTa : step.labelEn}
@@ -338,7 +339,7 @@ export default function CartPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] pb-24">
+    <div className="min-h-[100dvh] pb-36 sm:pb-32 lg:pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumbs */}
         <Breadcrumbs
@@ -447,11 +448,11 @@ export default function CartPage() {
                 </h2>
 
                 {items.map((item) => (
-                  <GlassPanel key={item.id} className="p-4 sm:p-5 rounded-2xl">
-                    <div className="flex gap-4">
+                  <GlassPanel key={item.id} className="p-3.5 sm:p-5 rounded-2xl">
+                    <div className="flex flex-col min-[380px]:flex-row gap-3 sm:gap-4">
                       {/* Book Cover */}
-                      <Link href={`/books/${item.slug}`} className="shrink-0">
-                        <div className="relative w-20 sm:w-24 aspect-[3/4] rounded-lg overflow-hidden bg-[#F5F3EF] border border-black/8 shadow-md hover:scale-[1.02] transition-transform">
+                      <Link href={`/books/${item.slug}`} className="shrink-0 self-start">
+                        <div className="relative w-16 min-[380px]:w-20 sm:w-24 aspect-[3/4] rounded-lg overflow-hidden bg-[#F5F3EF] border border-black/8 shadow-md hover:scale-[1.02] transition-transform">
                           <div className="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-black/20 to-transparent z-10 pointer-events-none" />
                           <Image
                             src={item.image}
@@ -479,7 +480,7 @@ export default function CartPage() {
                           </p>
                         </div>
 
-                        <div className="flex items-center justify-between gap-3 mt-3">
+                        <div className="flex flex-wrap items-center justify-between gap-3 mt-3 pt-2.5 border-t border-black/5 min-[380px]:border-t-0 min-[380px]:pt-0">
                           {/* Quantity Selector */}
                           <QuantitySelector
                             value={item.quantity}
@@ -492,9 +493,11 @@ export default function CartPage() {
 
                           {/* Price + Remove Button */}
                           <div className="flex items-center gap-3">
-                            <span className="text-base sm:text-lg font-bold text-[#111111] tabular-nums font-mono">
-                              {formatINR(item.price * item.quantity)}
-                            </span>
+                            <Price
+                              amount={item.price * item.quantity}
+                              size="md"
+                              className="sm:text-lg"
+                            />
                             <button
                               type="button"
                               onClick={() => handleRemoveWithUndo(item)}
@@ -504,7 +507,7 @@ export default function CartPage() {
                                   : `Remove ${item.titleEn} from cart`
                               }
                               title={isTa ? "கூடையிலிருந்து நீக்கு" : "Remove item"}
-                              className="min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] h-9 w-9 rounded-xl flex items-center justify-center text-[#999999] hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+                              className="min-h-[44px] min-w-[44px] h-11 w-11 rounded-xl flex items-center justify-center text-[#666666] hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 active:scale-95 transition-all cursor-pointer touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -570,7 +573,7 @@ export default function CartPage() {
               )}
 
               {/* Inline Delivery Address Form */}
-              <GlassPanel className="p-5 sm:p-6 rounded-2xl space-y-5">
+              <GlassPanel id="delivery-address-section" className="p-5 sm:p-6 rounded-2xl space-y-5 scroll-mt-24">
                 <div className="flex items-center justify-between border-b border-black/8 pb-3">
                   <div className="flex items-center gap-2.5">
                     <div className="h-9 w-9 rounded-xl bg-[#0A6847]/10 flex items-center justify-center text-[#0A6847]">
@@ -754,7 +757,7 @@ export default function CartPage() {
             </div>
 
             {/* Right Column: Order Summary, Shipping Region Selection & Payment Actions */}
-            <div className="lg:col-span-4">
+            <div id="order-summary-section" className="lg:col-span-4 scroll-mt-24">
               <div className="sticky top-24 space-y-4">
                 <GlassPanel className="p-5 sm:p-6 rounded-2xl space-y-5">
                   <h2 className="text-lg font-bold text-[#111111] font-tamil">
@@ -799,9 +802,9 @@ export default function CartPage() {
                             aria-checked={isSelected}
                             onClick={() => setShippingRegion(reg.id)}
                             className={cn(
-                              "p-2.5 rounded-xl border text-left text-xs transition-all flex items-center justify-between cursor-pointer font-tamil",
+                              "p-2.5 rounded-xl border text-left text-xs transition-all flex items-center justify-between cursor-pointer font-tamil min-h-[44px] touch-manipulation",
                               isSelected
-                                ? "border-[#0A6847] bg-[#0A6847]/8 shadow-2xs"
+                                ? "border-[#0A6847] bg-[#0A6847]/8 shadow-2xs ring-1 ring-[#0A6847]/20"
                                 : "border-black/10 bg-white/70 hover:bg-white"
                             )}
                           >
@@ -809,7 +812,7 @@ export default function CartPage() {
                               <div className="font-bold text-[#111111]">
                                 {isTa ? reg.titleTa : reg.titleEn}
                               </div>
-                              <div className="text-[10px] text-[#666666]">{reg.courier}</div>
+                              <div className="text-[10px] text-[#555555]">{reg.courier}</div>
                             </div>
                             <div className="font-mono font-bold text-[#0A6847]">
                               {reg.feeText}
@@ -826,25 +829,42 @@ export default function CartPage() {
                       <span className="font-tamil">
                         {isTa ? "உட்கூட்டு" : "Subtotal"}
                       </span>
-                      <span className="tabular-nums font-mono">{formatINR(subtotal)}</span>
+                      <Price amount={subtotal} />
                     </div>
 
                     <div className="flex justify-between text-[#333333] font-medium">
                       <span className="font-tamil">
                         {isTa ? "தபால் கட்டணம்" : "Shipping"}
                       </span>
-                      <span className="tabular-nums font-mono">
-                        {isDiaspora ? (isTa ? "எடைக்கேற்ப" : "By Weight") : formatINR(shipping)}
-                      </span>
+                      {isDiaspora ? (
+                        <span className="font-mono text-xs font-semibold text-[#0A6847]">
+                          {isTa ? "எடைக்கேற்ப" : "By Weight"}
+                        </span>
+                      ) : shipping === 0 ? (
+                        <Price amount={0} showFree />
+                      ) : (
+                        <Price amount={shipping} />
+                      )}
                     </div>
 
-                    <div className="pt-3 border-t border-black/8 flex justify-between text-[#111111] font-bold text-base">
+                    <div
+                      className="pt-3 border-t border-black/8 flex justify-between items-baseline text-[#111111] font-bold text-base"
+                      aria-live="polite"
+                      aria-atomic="true"
+                    >
                       <span className="font-tamil">
                         {isTa ? "மொத்தம்" : "Total"}
                       </span>
-                      <span className="tabular-nums text-lg font-mono text-[#0A6847]">
-                        {isDiaspora ? `${formatINR(subtotal)} + அஞ்சல்` : formatINR(total)}
-                      </span>
+                      {isDiaspora ? (
+                        <span className="text-lg font-mono text-[#0A6847]">
+                          <Price amount={subtotal} size="lg" className="text-[#0A6847]" />{" "}
+                          <span className="text-xs font-normal text-[#555555]">
+                            {isTa ? "+ அஞ்சல்" : "+ Shipping"}
+                          </span>
+                        </span>
+                      ) : (
+                        <Price amount={total} size="xl" className="text-[#0A6847]" />
+                      )}
                     </div>
                   </div>
 
@@ -1005,6 +1025,109 @@ export default function CartPage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Mobile & Tablet Sticky Checkout Bar (Always thumb-reachable, hidden on desktop) */}
+        {!isEmpty && !paymentSuccess && (
+          <aside
+            aria-label={isTa ? "விரைவு கட்டணப் பலகை" : "Sticky Checkout Bar"}
+            className={cn(
+              "lg:hidden fixed left-0 right-0 z-30 bg-white/95 dark:bg-[#121110]/95 backdrop-blur-xl border-t border-black/10 dark:border-white/10 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition-all duration-300",
+              "bottom-[calc(3.75rem+env(safe-area-inset-bottom,0px))] md:bottom-0 md:pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]",
+              "px-4 py-2.5 max-[500px]:py-1.5"
+            )}
+          >
+            <div className="max-w-md mx-auto flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[11px] font-semibold text-[#555555] font-tamil leading-tight">
+                  {isTa ? `மொத்தம் (${totalItems} நூல்கள்)` : `Total (${totalItems} items)`}
+                </div>
+                <div className="text-base sm:text-lg font-bold text-[#0A6847] font-mono leading-none mt-0.5 tabular-nums">
+                  {isDiaspora ? (
+                    <span>
+                      {formatINR(subtotal)}{" "}
+                      <span className="text-[10px] font-normal text-[#555555]">
+                        {isTa ? "+ அஞ்சல்" : "+ Shipping"}
+                      </span>
+                    </span>
+                  ) : (
+                    formatINR(total)
+                  )}
+                </div>
+              </div>
+
+              <div className="shrink-0 flex items-center gap-2">
+                {isDiaspora ? (
+                  <a
+                    href={getOverseasWhatsAppUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-h-[44px] px-4 py-2 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-md active:scale-95 transition-all font-tamil touch-manipulation cursor-pointer"
+                  >
+                    <MessageCircle className="h-4 w-4 shrink-0" />
+                    <span>{isTa ? "WhatsApp ஆர்டர்" : "WhatsApp"}</span>
+                  </a>
+                ) : createdOrder ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById("order-summary-section");
+                      el?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="min-h-[44px] px-4 py-2 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-md active:scale-95 transition-all font-tamil touch-manipulation cursor-pointer"
+                  >
+                    <CreditCard className="h-4 w-4 shrink-0" />
+                    <span>{isTa ? "பணம் செலுத்துக" : "Complete Pay"}</span>
+                  </button>
+                ) : !isCheckingAuth && !userSession?.authenticated ? (
+                  <Link
+                    href="/login?redirect=/cart"
+                    className="min-h-[44px] px-4 py-2 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-md active:scale-95 transition-all font-tamil touch-manipulation cursor-pointer"
+                  >
+                    <CreditCard className="h-4 w-4 shrink-0" />
+                    <span>{isTa ? "உள்நுழைக" : "Sign In to Pay"}</span>
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isAddressFilled) {
+                        const addressSection = document.getElementById("delivery-address-section");
+                        addressSection?.scrollIntoView({ behavior: "smooth" });
+                        const firstInput = addressSection?.querySelector("input");
+                        firstInput?.focus();
+                      } else {
+                        handleInitiateOnlinePayment();
+                      }
+                    }}
+                    disabled={isCreatingOrder || isCheckingAuth}
+                    className="min-h-[44px] px-4 sm:px-5 py-2 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-md active:scale-95 transition-all font-tamil touch-manipulation cursor-pointer disabled:opacity-60"
+                  >
+                    {isCreatingOrder ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                        <span>தயாராகிறது...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="h-4 w-4 shrink-0" />
+                        <span>
+                          {isAddressFilled
+                            ? isTa
+                              ? "ஆர்டர் செய்க"
+                              : "Place Order"
+                            : isTa
+                              ? "முகவரி உள்ளிடுக"
+                              : "Enter Address"}
+                        </span>
+                        <ArrowRight className="h-3.5 w-3.5 opacity-80" />
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+          </aside>
         )}
       </div>
     </div>

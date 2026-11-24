@@ -44,6 +44,51 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Load from localStorage on client mount (clean start if empty)
   React.useEffect(() => {
     try {
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("preview") === "cart") {
+          setItems([
+            {
+              id: "b0000000-0000-0000-0000-000000000001",
+              title: "களத்தில் கேட்டவை",
+              titleEn: "Heard on the Battlefield",
+              author: "சு. ரவி (எள்ளாளன்)",
+              authorEn: "S. Ravi (Ellalan)",
+              price: 180,
+              image: "/images/books/kalam.webp",
+              slug: "katunayake-attack-victory",
+              quantity: 2,
+              maxStock: 50,
+            },
+            {
+              id: "b0000000-0000-0000-0000-000000000002",
+              title: "நெஞ்சூரம்",
+              titleEn: "Courage of Heart",
+              author: "மு. வே. யோகநாதன்",
+              authorEn: "M. V. Yoganathan",
+              price: 250,
+              image: "/images/books/nenjuram.webp",
+              slug: "nenjuram",
+              quantity: 1,
+              maxStock: 25,
+            },
+            {
+              id: "b0000000-0000-0000-0000-000000000003",
+              title: "திசை தவறா கணை — தளபதி விநாயகத்தின் வாழ்க்கை வரலாற்றுப் புத்தகம்",
+              titleEn: "Dhisai Thavara Kanai - Biography of Commander Vinayagam",
+              author: "சேரன்",
+              authorEn: "Cheran",
+              price: 350,
+              image: "/images/books/placeholder.webp",
+              slug: "dhisai-thavara-kanai",
+              quantity: 1,
+              maxStock: 10,
+            },
+          ]);
+          setIsLoaded(true);
+          return;
+        }
+      }
       const savedCart = localStorage.getItem("mk_cart_items");
       if (savedCart) {
         const parsed = JSON.parse(savedCart);
