@@ -140,7 +140,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
 
             {/* Center: Editorial Navigation Links */}
             <nav
-              className="hidden xl:flex items-center gap-1 xl:gap-2"
+              className="hidden xl:flex items-center gap-0.5 2xl:gap-1.5 shrink-0"
               aria-label={isTa ? "முதன்மை வழிசெலுத்தல்" : "Main Navigation"}
             >
               {navLinks.map((link) => {
@@ -153,7 +153,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
                     key={link.href}
                     href={link.href}
                     aria-current={isActive ? "page" : undefined}
-                    className={`px-3 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all min-h-[38px] flex items-center whitespace-nowrap ${
+                    className={`px-2 2xl:px-3 py-1.5 rounded-lg text-xs 2xl:text-sm font-medium transition-all min-h-[38px] flex items-center whitespace-nowrap ${
                       isTa ? "font-tamil" : "font-sans"
                     } ${
                       isActive
@@ -168,17 +168,17 @@ export function Header({ onOpenSearch }: HeaderProps) {
             </nav>
 
             {/* Right: Streamlined Action Toolbar (Apple / Stripe Design Hierarchy) */}
-            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-1.5 2xl:gap-2 shrink-0">
               {/* 1. Sleek Search Command Trigger */}
               <button
                 type="button"
                 onClick={handleOpenSearch}
                 aria-label={isTa ? "நூல்களைத் தேடுக — ⌘K" : "Search archives — ⌘K"}
-                className="min-h-[44px] min-w-[44px] h-10 px-2.5 xl:px-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] border border-black/[0.08] dark:border-white/[0.1] hover:border-black/[0.16] text-[var(--color-ink-secondary)] hover:text-[var(--color-ink-primary)] flex items-center justify-center gap-2 text-xs font-medium transition-all active:scale-95 motion-reduce:active:scale-100 cursor-pointer shadow-2xs"
+                className="min-h-[44px] min-w-[44px] h-10 px-2.5 2xl:px-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] border border-black/[0.08] dark:border-white/[0.1] hover:border-black/[0.16] text-[var(--color-ink-secondary)] hover:text-[var(--color-ink-primary)] flex items-center justify-center gap-2 text-xs font-medium transition-all active:scale-95 motion-reduce:active:scale-100 cursor-pointer shadow-2xs"
                 title={isTa ? "தேடல் (⌘K)" : "Search (⌘K)"}
               >
                 <Search className="h-4 w-4 text-[var(--color-accent)] shrink-0" />
-                <span className={`hidden xl:inline-block ${isTa ? "font-tamil" : "font-sans"}`}>
+                <span className={`hidden 2xl:inline-block ${isTa ? "font-tamil" : "font-sans"}`}>
                   {isTa ? "தேடுக..." : "Search..."}
                 </span>
                 <kbd className="hidden 2xl:inline-flex items-center text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 text-[var(--color-ink-muted)] border border-black/5">
