@@ -1,55 +1,57 @@
 import type { MetadataRoute } from "next";
 import { allBooks } from "@/data/books";
+import { detailedArticles, getAllArticleSlugs } from "@/data/articles";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://methagukalanjiyam.in";
+  const buildDate = new Date("2026-11-24");
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
-      lastModified: new Date(),
+      lastModified: buildDate,
       changeFrequency: "daily",
       priority: 1.0,
     },
     {
       url: `${baseUrl}/books`,
-      lastModified: new Date(),
+      lastModified: buildDate,
       changeFrequency: "daily",
       priority: 0.9,
     },
     {
       url: `${baseUrl}/blog`,
-      lastModified: new Date(),
+      lastModified: buildDate,
       changeFrequency: "weekly",
       priority: 0.8,
     },
     {
       url: `${baseUrl}/videos`,
-      lastModified: new Date(),
+      lastModified: buildDate,
       changeFrequency: "weekly",
       priority: 0.7,
     },
     {
       url: `${baseUrl}/supporters`,
-      lastModified: new Date(),
+      lastModified: buildDate,
       changeFrequency: "monthly",
       priority: 0.6,
     },
     {
       url: `${baseUrl}/certificate`,
-      lastModified: new Date(),
+      lastModified: buildDate,
       changeFrequency: "monthly",
       priority: 0.6,
     },
     {
       url: `${baseUrl}/terms`,
-      lastModified: new Date(),
+      lastModified: buildDate,
       changeFrequency: "monthly",
       priority: 0.4,
     },
     {
       url: `${baseUrl}/privacy`,
-      lastModified: new Date(),
+      lastModified: buildDate,
       changeFrequency: "monthly",
       priority: 0.4,
     },
@@ -57,26 +59,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const bookRoutes: MetadataRoute.Sitemap = allBooks.map((book) => ({
     url: `${baseUrl}/books/${book.slug}`,
-    lastModified: new Date(),
+    lastModified: buildDate,
     changeFrequency: "weekly",
     priority: 0.85,
   }));
 
-  const blogSlugs = [
-    "eelam-liberation",
-    "movement-structure",
-    "remembrance-memory",
-    "biography-workshop",
-    "cultural-heritage",
-    "diaspora-voice",
-  ];
-
-  const blogRoutes: MetadataRoute.Sitemap = blogSlugs.map((slug) => ({
-    url: `${baseUrl}/blog/${slug}`,
-    lastModified: new Date(),
-    changeFrequency: "monthly",
-    priority: 0.75,
-  }));
+  const blogRoutes: MetadataRoute.Sitemap = getAllArticleSlugs().map((slug) => {
+    const article = detailedArticles[slug];
+    const pubDate = article?.publishedAt ? new Date(article.publishedAt) : buildDate;
+    return {
+      url: `${baseUrl}/blog/${slug}`,
+      lastModified: pubDate,
+      changeFrequency: "monthly",
+      priority: 0.75,
+    };
+  });
 
   return [...staticRoutes, ...bookRoutes, ...blogRoutes];
 }

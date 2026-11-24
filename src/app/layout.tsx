@@ -79,6 +79,12 @@ export const metadata: Metadata = {
     description: "அரிய தமிழ் வரலாற்று நூல்கள் & தேசிய ஆவணப் பெட்டகம்",
     images: ["/images/brand/banner-1200.webp"],
   },
+  manifest: "/site.webmanifest",
+  icons: {
+    icon: "/icons/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/icons/favicon.png",
+  },
   robots: {
     index: true,
     follow: true,
@@ -91,7 +97,6 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://methagukalanjiyam.in",
     languages: {
       "ta-IN": "https://methagukalanjiyam.in",
     },

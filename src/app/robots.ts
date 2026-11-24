@@ -6,7 +6,17 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/account", "/login", "/admin", "/admin/*"],
+        disallow: [
+          "/account",
+          "/login",
+          "/signup",
+          "/admin",
+          "/admin/*",
+          "/cart",
+          "/orders/*",
+          "/api/*",
+          "/verify-email",
+        ],
       },
     ],
     sitemap: "https://methagukalanjiyam.in/sitemap.xml",
