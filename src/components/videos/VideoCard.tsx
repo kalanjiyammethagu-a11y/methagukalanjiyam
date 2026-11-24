@@ -13,6 +13,7 @@ export interface VideoData {
   descriptionTa: string;
   descriptionEn: string;
   embedUrl: string;
+  videoUrl?: string;
   posterImage: string;
   categoryTa: string;
   categoryEn: string;
@@ -88,17 +89,32 @@ export function VideoCard({
       )}
       data-video-id={video.id}
     >
-      {/* Video Media Container: In-feed Iframe when playing, Poster thumbnail when paused */}
+      {/* Video Media Container: In-feed Iframe/Video when playing, Poster thumbnail when paused */}
       <div className="relative aspect-video w-full overflow-hidden bg-black/90">
         {isPlaying ? (
           <div className="relative w-full h-full">
-            <iframe
-              src={autoplaySrc}
-              title={title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              className="absolute inset-0 w-full h-full border-0 z-10"
-            />
+            {video.videoUrl ? (
+              <video
+                src={video.videoUrl}
+                controls
+                autoPlay
+                playsInline
+                poster={
+                  video.posterImage.startsWith("http") || video.posterImage.startsWith("/")
+                    ? video.posterImage
+                    : `/${video.posterImage}`
+                }
+                className="absolute inset-0 w-full h-full object-contain bg-black z-10"
+              />
+            ) : (
+              <iframe
+                src={autoplaySrc}
+                title={title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                className="absolute inset-0 w-full h-full border-0 z-10"
+              />
+            )}
             {/* Top-Right Control Overlays */}
             <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1.5 pointer-events-auto">
               {onExpand && (
@@ -146,7 +162,11 @@ export function VideoCard({
             aria-label={`${isTa ? "காணொளியை இயக்குக" : "Play video in feed"}: ${title}`}
           >
             <Image
-              src={video.posterImage.startsWith("/") ? video.posterImage : `/${video.posterImage}`}
+              src={
+                video.posterImage.startsWith("http") || video.posterImage.startsWith("/")
+                  ? video.posterImage
+                  : `/${video.posterImage}`
+              }
               alt={title}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

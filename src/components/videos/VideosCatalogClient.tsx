@@ -31,11 +31,17 @@ function getAutoplayUrl(url: string): string {
   }
 }
 
-export function VideosCatalogClient() {
+interface VideosCatalogClientProps {
+  initialVideos?: VideoData[];
+}
+
+export function VideosCatalogClient({ initialVideos }: VideosCatalogClientProps = {}) {
   const { locale } = useLanguage();
   const isTa = locale === "ta";
   const [search, setSearch] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState("all");
+
+  const baseVideos = initialVideos && initialVideos.length > 0 ? initialVideos : allVideos;
 
   // In-feed playback state: ID of the currently playing card in the feed
   const [playingVideoId, setPlayingVideoId] = React.useState<string | null>(null);
@@ -45,7 +51,7 @@ export function VideosCatalogClient() {
 
   // Filter pipeline
   const filteredVideos = React.useMemo(() => {
-    let list = [...allVideos];
+    let list = [...baseVideos];
 
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -253,15 +259,25 @@ export function VideosCatalogClient() {
               </button>
             </div>
 
-            {/* Video Player Iframe */}
+            {/* Video Player (Native HTML5 Video or Embed Iframe) */}
             <div className="relative aspect-video w-full bg-black">
-              <iframe
-                src={getAutoplayUrl(modalVideo.embedUrl)}
-                title={isTa ? modalVideo.titleTa : modalVideo.titleEn}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                className="absolute inset-0 w-full h-full border-0"
-              />
+              {modalVideo.videoUrl ? (
+                <video
+                  src={modalVideo.videoUrl}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-contain"
+                />
+              ) : (
+                <iframe
+                  src={getAutoplayUrl(modalVideo.embedUrl)}
+                  title={isTa ? modalVideo.titleTa : modalVideo.titleEn}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full border-0"
+                />
+              )}
             </div>
 
             {/* Modal Footer Description */}

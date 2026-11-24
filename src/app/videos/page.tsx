@@ -1,8 +1,12 @@
 import * as React from "react";
 import type { Metadata } from "next";
 import { VideosCatalogClient } from "@/components/videos/VideosCatalogClient";
+import type { VideoData } from "@/components/videos/VideoCard";
 import { allVideos } from "@/data/videos";
 import { safeJsonLdStringify } from "@/lib/sanitize";
+import { createClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "காணொளி ஆவணங்கள் — Historical Video Documentaries & Archives | மேதகு களஞ்சியம்",
@@ -36,7 +40,40 @@ export const metadata: Metadata = {
   },
 };
 
-export default function VideosPage() {
+export default async function VideosPage() {
+  let videosList: VideoData[] = allVideos;
+
+  try {
+    const supabase = await createClient();
+    const { data, error } = await (supabase.from("videos") as any)
+      .select("*")
+      .eq("status", "published")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+
+    if (!error && data && data.length > 0) {
+      videosList = data.map((row: any) => ({
+        id: row.id,
+        titleTa: row.title,
+        titleEn: row.title,
+        descriptionTa: row.description || "",
+        descriptionEn: row.description || "",
+        embedUrl: row.embed_url || row.video_url || "",
+        videoUrl: row.video_url || undefined,
+        posterImage: row.poster_url || "/images/video-posters/1.webp",
+        categoryTa: "வரலாற்று ஆவணம்",
+        categoryEn: "History",
+        duration: row.duration_seconds
+          ? `${Math.floor(row.duration_seconds / 60)}:${(row.duration_seconds % 60).toString().padStart(2, "0")}`
+          : undefined,
+        publishedDate: row.created_at ? row.created_at.split("T")[0] : "2026",
+      }));
+    }
+  } catch (err) {
+    console.error("Failed to load videos from Supabase:", err);
+  }
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -74,13 +111,15 @@ export default function VideosPage() {
       {
         "@type": "ItemList",
         name: "Historical Video Documentaries",
-        itemListElement: allVideos.slice(0, 10).map((v, i) => ({
+        itemListElement: videosList.slice(0, 10).map((v, i) => ({
           "@type": "VideoObject",
           position: i + 1,
           name: v.titleTa,
           description: v.descriptionTa,
-          thumbnailUrl: `https://methagukalanjiyam.in${v.posterImage}`,
-          uploadDate: "2026-01-01",
+          thumbnailUrl: v.posterImage.startsWith("http")
+            ? v.posterImage
+            : `https://methagukalanjiyam.in${v.posterImage.startsWith("/") ? v.posterImage : `/${v.posterImage}`}`,
+          uploadDate: v.publishedDate || "2026-01-01",
           embedUrl: v.embedUrl,
         })),
       },
@@ -93,7 +132,7 @@ export default function VideosPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLdStringify(jsonLd) }}
       />
-      <VideosCatalogClient />
+      <VideosCatalogClient initialVideos={videosList} />
     </>
   );
 }
