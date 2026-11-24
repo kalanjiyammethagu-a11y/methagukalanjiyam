@@ -10,7 +10,6 @@ import {
   Clock,
   Sliders,
   CheckCircle2,
-  Trash2,
   ExternalLink,
   Phone,
   MessageCircle,
@@ -19,7 +18,6 @@ import {
   Globe,
   Type,
   Sun,
-  MessageSquare,
   Save,
   ShieldCheck,
   LogOut,
@@ -30,18 +28,16 @@ import {
   Loader2,
 } from "lucide-react";
 import {
-  BookmarkRibbonIcon,
   PostalSealIcon,
   ArchivalWaxSealIcon,
-  ArchivalFolioIcon,
 } from "@/components/ui/Icons";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { GlassPanel } from "@/components/ui/GlassPanel";
-import { useLanguage, type FontSize, type ReadingTheme, type ShippingRegion } from "@/context/LanguageContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
-import { allBooks, type BookItem } from "@/data/books";
+import { allBooks } from "@/data/books";
 import { formatINR } from "@/lib/utils";
 import { getGeneralWhatsAppUrl } from "@/lib/whatsapp";
 
@@ -62,7 +58,6 @@ function AccountContent() {
   const {
     locale,
     setLocale,
-    toggleLocale,
     t,
     fontSize,
     setFontSize,
@@ -72,7 +67,6 @@ function AccountContent() {
     setShippingRegion,
     deliveryAddress,
     setDeliveryAddress,
-    getFormattedAddress,
     clearSensitiveStorage,
     wishlist,
     toggleWishlist,
@@ -101,7 +95,7 @@ function AccountContent() {
   const [addressForm, setAddressForm] = React.useState(deliveryAddress);
   const [isSavedToast, setIsSavedToast] = React.useState(false);
   const [loggingOut, setLoggingOut] = React.useState(false);
-  
+
   // Real Auth Session State
   const [session, setSession] = React.useState<AuthSession | null>(null);
   const [authLoading, setAuthLoading] = React.useState(true);
@@ -241,8 +235,8 @@ function AccountContent() {
                   {user
                     ? user.fullName || (isTa ? "வாசகர் ஆவணக் களஞ்சியம்" : "Reader Library & Account")
                     : isTa
-                    ? "வாசகர் ஆவணக் களஞ்சியம்"
-                    : "Reader Library & Account"}
+                      ? "வாசகர் ஆவணக் களஞ்சியம்"
+                      : "Reader Library & Account"}
                 </h1>
 
                 <p className="text-xs sm:text-sm text-emerald-100/85 font-tamil max-w-xl leading-relaxed">
@@ -250,11 +244,11 @@ function AccountContent() {
                     ? user.email
                       ? `${user.email} — ${isTa ? "உங்கள் விருப்பப் பட்டியல், அஞ்சல் முகவரி, மற்றும் கிளவுட் ஆர்டர்கள் இணைக்கப்பட்டுள்ளன." : "Your saved books, postal address, and cloud orders are synchronized."}`
                       : isTa
-                      ? "உங்கள் விருப்பப் பட்டியல், அஞ்சல் முகவரி, மற்றும் ஆர்டர்களை ஒரே இடத்தில் நிர்வகியுங்கள்."
-                      : "Manage your saved books, postal delivery address, and cloud orders in one place."
+                        ? "உங்கள் விருப்பப் பட்டியல், அஞ்சல் முகவரி, மற்றும் ஆர்டர்களை ஒரே இடத்தில் நிர்வகியுங்கள்."
+                        : "Manage your saved books, postal delivery address, and cloud orders in one place."
                     : isTa
-                    ? "உங்கள் விருப்பப் பட்டியல் மற்றும் அஞ்சல் முகவரி உங்கள் சாதனத்தில் பாதுகாப்பாக உள்ளன. கிளவுட் ஆர்டர்களைக் காண எப்போது வேண்டுமானாலும் உள்நுழையலாம்."
-                    : "Your saved books and postal delivery address are stored locally on this device. Sign in anytime to sync your cloud orders."}
+                      ? "உங்கள் விருப்பப் பட்டியல் மற்றும் அஞ்சல் முகவரி உங்கள் சாதனத்தில் பாதுகாப்பாக உள்ளன. கிளவுட் ஆர்டர்களைக் காண எப்போது வேண்டுமானாலும் உள்நுழையலாம்."
+                      : "Your saved books and postal delivery address are stored locally on this device. Sign in anytime to sync your cloud orders."}
                 </p>
               </div>
             </div>
@@ -355,29 +349,26 @@ function AccountContent() {
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => handleTabChange(tab.id)}
-                className={`min-h-[44px] px-4 py-2 rounded-xl font-tamil text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all shrink-0 cursor-pointer active:scale-[0.98] ${
-                  isActive
-                    ? "bg-[#0A6847] dark:bg-emerald-600 text-white shadow-xs font-bold"
-                    : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
-                }`}
+                className={`min-h-[44px] px-4 py-2 rounded-xl font-tamil text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all shrink-0 cursor-pointer active:scale-[0.98] ${isActive
+                  ? "bg-[#0A6847] dark:bg-emerald-600 text-white shadow-xs font-bold"
+                  : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
+                  }`}
               >
                 <Icon
-                  className={`h-4 w-4 ${
-                    isActive
-                      ? "text-white"
-                      : tab.id === "wishlist" && wishlist.length > 0
+                  className={`h-4 w-4 ${isActive
+                    ? "text-white"
+                    : tab.id === "wishlist" && wishlist.length > 0
                       ? "text-rose-600 fill-rose-600"
                       : "text-[#0A6847] dark:text-emerald-400"
-                  }`}
+                    }`}
                 />
                 <span>{tab.label}</span>
                 {typeof tab.count === "number" && (
                   <span
-                    className={`px-2 py-0.5 rounded-full text-[11px] font-mono ${
-                      isActive
-                        ? "bg-white/20 text-white"
-                        : "bg-black/8 dark:bg-white/10 text-[#555555] dark:text-zinc-300"
-                    }`}
+                    className={`px-2 py-0.5 rounded-full text-[11px] font-mono ${isActive
+                      ? "bg-white/20 text-white"
+                      : "bg-black/8 dark:bg-white/10 text-[#555555] dark:text-zinc-300"
+                      }`}
                   >
                     {tab.count}
                   </span>
@@ -711,13 +702,10 @@ function AccountContent() {
                     : "How this appears on your delivery parcel:"}
                 </h3>
                 <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 border border-black/10 dark:border-white/10 text-xs font-mono text-[#222222] dark:text-zinc-200 whitespace-pre-wrap leading-relaxed shadow-inner">
-                  {`பெறுநர் (To):\n${
-                    addressForm.fullName || "பெயர் குறிப்பிடப்படவில்லை"
-                  }\n${addressForm.phone ? `அலைபேசி: ${addressForm.phone}\n` : ""}${
-                    addressForm.doorStreet || "கதவு எண் / தெரு முகவரி"
-                  }\n${addressForm.cityArea || "நகரம் / ஊர்"} - ${
-                    addressForm.districtState || "மாவட்டம் / மாநிலம்"
-                  }\nஅஞ்சல் குறியீடு: ${addressForm.pincode || "Pincode"}\nநாடு: இந்தியா (India)`}
+                  {`பெறுநர் (To):\n${addressForm.fullName || "பெயர் குறிப்பிடப்படவில்லை"
+                    }\n${addressForm.phone ? `அலைபேசி: ${addressForm.phone}\n` : ""}${addressForm.doorStreet || "கதவு எண் / தெரு முகவரி"
+                    }\n${addressForm.cityArea || "நகரம் / ஊர்"} - ${addressForm.districtState || "மாவட்டம் / மாநிலம்"
+                    }\nஅஞ்சல் குறியீடு: ${addressForm.pincode || "Pincode"}\nநாடு: இந்தியா (India)`}
                 </div>
                 <p className="text-[11px] text-[#555555] dark:text-zinc-400 font-tamil">
                   {isTa
@@ -1088,11 +1076,10 @@ function AccountContent() {
                       key={item.code}
                       type="button"
                       onClick={() => setLocale(item.code)}
-                      className={`min-h-[52px] p-3 rounded-2xl border text-left transition-all cursor-pointer ${
-                        locale === item.code
-                          ? "border-[#0A6847] dark:border-emerald-500 bg-[#0A6847]/10 dark:bg-emerald-500/20 ring-2 ring-[#0A6847]/30 text-[#0A6847] dark:text-emerald-300 font-bold"
-                          : "border-black/10 dark:border-white/10 bg-white/70 dark:bg-zinc-800/80 hover:bg-black/5 dark:hover:bg-white/10 text-[#333333] dark:text-zinc-200"
-                      }`}
+                      className={`min-h-[52px] p-3 rounded-2xl border text-left transition-all cursor-pointer ${locale === item.code
+                        ? "border-[#0A6847] dark:border-emerald-500 bg-[#0A6847]/10 dark:bg-emerald-500/20 ring-2 ring-[#0A6847]/30 text-[#0A6847] dark:text-emerald-300 font-bold"
+                        : "border-black/10 dark:border-white/10 bg-white/70 dark:bg-zinc-800/80 hover:bg-black/5 dark:hover:bg-white/10 text-[#333333] dark:text-zinc-200"
+                        }`}
                     >
                       <div className="font-bold text-xs sm:text-sm font-tamil">{item.label}</div>
                       <div className="text-[11px] opacity-70 font-tamil">{item.sub}</div>
@@ -1117,11 +1104,10 @@ function AccountContent() {
                       key={item.id}
                       type="button"
                       onClick={() => setFontSize(item.id)}
-                      className={`min-h-[48px] p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
-                        fontSize === item.id
-                          ? "border-[#0A6847] dark:border-emerald-500 bg-[#0A6847]/10 dark:bg-emerald-500/20 ring-2 ring-[#0A6847]/30 text-[#0A6847] dark:text-emerald-300 font-bold"
-                          : "border-black/10 dark:border-white/10 bg-white/70 dark:bg-zinc-800/80 hover:bg-black/5 dark:hover:bg-white/10 text-[#444444] dark:text-zinc-300"
-                      }`}
+                      className={`min-h-[48px] p-2.5 rounded-xl border text-center transition-all cursor-pointer ${fontSize === item.id
+                        ? "border-[#0A6847] dark:border-emerald-500 bg-[#0A6847]/10 dark:bg-emerald-500/20 ring-2 ring-[#0A6847]/30 text-[#0A6847] dark:text-emerald-300 font-bold"
+                        : "border-black/10 dark:border-white/10 bg-white/70 dark:bg-zinc-800/80 hover:bg-black/5 dark:hover:bg-white/10 text-[#444444] dark:text-zinc-300"
+                        }`}
                     >
                       <div className="text-xs font-tamil">{item.label}</div>
                       <div className="text-[10px] text-[#666666] dark:text-zinc-400">{item.size}</div>
@@ -1146,11 +1132,10 @@ function AccountContent() {
                       key={th.id}
                       type="button"
                       onClick={() => setReadingTheme(th.id)}
-                      className={`min-h-[50px] p-2.5 rounded-xl border text-center transition-all cursor-pointer ${th.bg} ${
-                        readingTheme === th.id
-                          ? "ring-2 ring-[#0A6847] dark:ring-emerald-400 shadow-sm font-bold scale-[1.02]"
-                          : "opacity-80 hover:opacity-100"
-                      }`}
+                      className={`min-h-[50px] p-2.5 rounded-xl border text-center transition-all cursor-pointer ${th.bg} ${readingTheme === th.id
+                        ? "ring-2 ring-[#0A6847] dark:ring-emerald-400 shadow-sm font-bold scale-[1.02]"
+                        : "opacity-80 hover:opacity-100"
+                        }`}
                     >
                       <div className="text-xs font-tamil">{th.label}</div>
                     </button>
@@ -1174,11 +1159,10 @@ function AccountContent() {
                       key={rg.id}
                       type="button"
                       onClick={() => setShippingRegion(rg.id)}
-                      className={`min-h-[48px] p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
-                        shippingRegion === rg.id
-                          ? "border-[#0A6847] dark:border-emerald-500 bg-[#0A6847]/10 dark:bg-emerald-500/20 ring-2 ring-[#0A6847]/30 text-[#0A6847] dark:text-emerald-300 font-bold"
-                          : "border-black/10 dark:border-white/10 bg-white/70 dark:bg-zinc-800/80 hover:bg-black/5 dark:hover:bg-white/10 text-[#444444] dark:text-zinc-300"
-                      }`}
+                      className={`min-h-[48px] p-2.5 rounded-xl border text-center transition-all cursor-pointer ${shippingRegion === rg.id
+                        ? "border-[#0A6847] dark:border-emerald-500 bg-[#0A6847]/10 dark:bg-emerald-500/20 ring-2 ring-[#0A6847]/30 text-[#0A6847] dark:text-emerald-300 font-bold"
+                        : "border-black/10 dark:border-white/10 bg-white/70 dark:bg-zinc-800/80 hover:bg-black/5 dark:hover:bg-white/10 text-[#444444] dark:text-zinc-300"
+                        }`}
                     >
                       <div className="text-xs font-tamil">{rg.label}</div>
                     </button>

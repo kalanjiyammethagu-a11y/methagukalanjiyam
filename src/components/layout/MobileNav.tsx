@@ -11,7 +11,6 @@ import {
   Newspaper,
   Award,
   Sliders,
-  ShieldCheck,
   MessageCircle,
   ChevronRight,
   ShoppingBag,

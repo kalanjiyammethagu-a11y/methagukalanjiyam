@@ -133,10 +133,8 @@ export async function PATCH(req: NextRequest) {
     }
     const { id, ...updates } = parseResult.data;
 
-    let found = false;
     inMemorySupporters = inMemorySupporters.map((s) => {
       if (s.id === id) {
-        found = true;
         return {
           ...s,
           ...updates,

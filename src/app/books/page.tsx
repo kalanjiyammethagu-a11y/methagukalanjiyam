@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Search, SlidersHorizontal, ArrowUpDown, Grid3X3, LayoutList, BookOpen } from "lucide-react";
+import { Search, ArrowUpDown, Grid3X3, LayoutList, BookOpen } from "lucide-react";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { CategoryPills, type CategoryOption } from "@/components/ui/CategoryPills";
 import { Pagination } from "@/components/ui/Pagination";

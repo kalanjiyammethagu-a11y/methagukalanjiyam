@@ -14,7 +14,6 @@ import {
 
 export default function AdminSettingsPage() {
   const [toastMessage, setToastMessage] = React.useState<string | null>(null);
-  const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
 
   // Form states
@@ -39,7 +38,6 @@ export default function AdminSettingsPage() {
   // Fetch live settings on mount
   React.useEffect(() => {
     async function loadSettings() {
-      setLoading(true);
       try {
         const res = await fetch("/api/admin/settings");
         if (res.ok) {
@@ -61,8 +59,6 @@ export default function AdminSettingsPage() {
         }
       } catch (err) {
         console.warn("Could not load live settings, using defaults:", err);
-      } finally {
-        setLoading(false);
       }
     }
     loadSettings();

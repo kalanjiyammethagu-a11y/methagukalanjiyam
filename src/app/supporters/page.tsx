@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { MessageCircle, ArrowRight } from "lucide-react";
 import { ArchivalWaxSealIcon, ArchivalFolioIcon, PostalSealIcon } from "@/components/ui/Icons";

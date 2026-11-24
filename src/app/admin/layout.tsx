@@ -18,7 +18,6 @@ import {
   ShieldCheck,
   Plus,
   LogOut,
-  ChevronRight,
   Server,
 } from "lucide-react";
 

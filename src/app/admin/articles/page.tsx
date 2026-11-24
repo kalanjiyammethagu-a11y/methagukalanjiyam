@@ -11,16 +11,12 @@ import {
   Clock,
   CheckCircle2,
   Trash2,
-  Calendar,
   X,
   ExternalLink,
   Edit,
   Upload,
   ImageIcon,
   Loader2,
-  Sparkles,
-  BookOpen,
-  Filter,
 } from "lucide-react";
 import { mockArticles } from "@/data/admin-mock";
 import type { AdminArticle, ArticleStatus } from "@/types/admin";
@@ -130,7 +126,7 @@ export default function AdminArticlesPage() {
           return;
         }
       }
-    } catch {}
+    } catch { }
     setArticles(mockArticles.map(mapMockArticle));
     setLoading(false);
   }, []);
@@ -231,11 +227,11 @@ export default function AdminArticlesPage() {
       prev.map((a) =>
         a.id === article.id
           ? {
-              ...a,
-              status: nextStatus,
-              publishedAt: nextPublished ? new Date().toISOString().split("T")[0] : "",
-              updatedAt: new Date().toISOString(),
-            }
+            ...a,
+            status: nextStatus,
+            publishedAt: nextPublished ? new Date().toISOString().split("T")[0] : "",
+            updatedAt: new Date().toISOString(),
+          }
           : a
       )
     );
@@ -300,18 +296,18 @@ export default function AdminArticlesPage() {
             prev.map((a) =>
               a.id === editingArticle.id
                 ? {
-                    ...a,
-                    title: formData.title,
-                    slug: generatedSlug,
-                    excerpt: formData.excerpt,
-                    content: formData.content,
-                    category: formData.category,
-                    author: formData.author,
-                    readingTimeMinutes: Number(formData.readingTimeMinutes),
-                    status: formData.status,
-                    coverImage: formData.coverImage,
-                    updatedAt: new Date().toISOString(),
-                  }
+                  ...a,
+                  title: formData.title,
+                  slug: generatedSlug,
+                  excerpt: formData.excerpt,
+                  content: formData.content,
+                  category: formData.category,
+                  author: formData.author,
+                  readingTimeMinutes: Number(formData.readingTimeMinutes),
+                  status: formData.status,
+                  coverImage: formData.coverImage,
+                  updatedAt: new Date().toISOString(),
+                }
                 : a
             )
           );
@@ -342,21 +338,21 @@ export default function AdminArticlesPage() {
           const newArt: ArticleItem = data.article
             ? mapSupabaseBlog(data.article)
             : {
-                id: `art-${Date.now()}`,
-                title: formData.title,
-                slug: generatedSlug,
-                excerpt: formData.excerpt,
-                content: formData.content,
-                category: formData.category,
-                author: formData.author,
-                status: formData.status,
-                readingTimeMinutes: Number(formData.readingTimeMinutes),
-                publishedAt: formData.status === "published" ? new Date().toISOString().split("T")[0] : "",
-                viewCount: 0,
-                coverImage: formData.coverImage,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-              };
+              id: `art-${Date.now()}`,
+              title: formData.title,
+              slug: generatedSlug,
+              excerpt: formData.excerpt,
+              content: formData.content,
+              category: formData.category,
+              author: formData.author,
+              status: formData.status,
+              readingTimeMinutes: Number(formData.readingTimeMinutes),
+              publishedAt: formData.status === "published" ? new Date().toISOString().split("T")[0] : "",
+              viewCount: 0,
+              coverImage: formData.coverImage,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
 
           setArticles((prev) => [newArt, ...prev]);
           showToast("New article created and published.");
@@ -604,17 +600,15 @@ export default function AdminArticlesPage() {
                       <button
                         type="button"
                         onClick={() => handleToggleStatus(article)}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
-                          article.status === "published"
-                            ? "bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100"
-                            : "bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100"
-                        }`}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all cursor-pointer ${article.status === "published"
+                          ? "bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100"
+                          : "bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100"
+                          }`}
                         title="Click to toggle Published / Draft"
                       >
                         <span
-                          className={`h-1.5 w-1.5 rounded-full ${
-                            article.status === "published" ? "bg-emerald-600" : "bg-amber-600"
-                          }`}
+                          className={`h-1.5 w-1.5 rounded-full ${article.status === "published" ? "bg-emerald-600" : "bg-amber-600"
+                            }`}
                         />
                         <span className="capitalize">{article.status}</span>
                       </button>

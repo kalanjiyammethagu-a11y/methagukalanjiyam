@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { Search, Film, X, Play, Maximize2 } from "lucide-react";
+import { Search, Film, X, Play } from "lucide-react";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { CategoryPills, type CategoryOption } from "@/components/ui/CategoryPills";
 import { VideoCard, type VideoData } from "@/components/videos/VideoCard";

@@ -14,11 +14,9 @@ import {
   Trash2,
   X,
   UploadCloud,
-  Check,
   AlertTriangle,
   UserCheck,
   UserX,
-  ExternalLink,
 } from "lucide-react";
 import { mockSupporters } from "@/data/admin-mock";
 import type { AdminSupporter } from "@/types/admin";

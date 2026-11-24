@@ -107,16 +107,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Save to localStorage when items change
-  const saveItems = React.useCallback((newItems: CartItem[]) => {
-    setItems(newItems);
-    try {
-      localStorage.setItem("mk_cart_items", JSON.stringify(newItems));
-    } catch (e) {
-      console.error("Failed to save cart to localStorage:", e);
-    }
-  }, []);
-
   const addToCart = React.useCallback(
     (item: CartItem) => {
       setItems((prev) => {

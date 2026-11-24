@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ShieldCheck, Phone, Mail, ArrowRight, Lock, Eye, FileText } from "lucide-react";
+import { ShieldCheck, Phone, Mail, ArrowRight, Lock, FileText } from "lucide-react";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { useLanguage } from "@/context/LanguageContext";
 

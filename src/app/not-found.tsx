@@ -1,7 +1,7 @@
 import * as React from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpen, Home, ArrowLeft } from "lucide-react";
+import { BookOpen, Home } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { BookCard } from "@/components/books/BookCard";

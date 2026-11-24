@@ -8,19 +8,12 @@ import {
   AlertTriangle,
   Clock,
   Layers,
-  ArrowUpRight,
   ShieldCheck,
-  Send,
   Zap,
-  Info,
   Database,
-  ExternalLink,
-  Code2,
   Terminal,
   Activity,
-  Check,
   X,
-  FileText,
 } from "lucide-react";
 import { ERPHealthStatus, ERPSyncQueueItem, ERPAuditLogEntry } from "@/types/erp";
 
@@ -31,7 +24,6 @@ export default function AdminERPPage() {
   const [auditLogs, setAuditLogs] = React.useState<ERPAuditLogEntry[]>([]);
   const [stats, setStats] = React.useState<any>(null);
 
-  const [loading, setLoading] = React.useState(true);
   const [testingConnection, setTestingConnection] = React.useState(false);
   const [flushingQueue, setFlushingQueue] = React.useState(false);
   const [syncingBooks, setSyncingBooks] = React.useState(false);
@@ -71,9 +63,7 @@ export default function AdminERPPage() {
 
   React.useEffect(() => {
     async function init() {
-      setLoading(true);
       await Promise.all([fetchStatus(), fetchQueue()]);
-      setLoading(false);
     }
     init();
   }, [fetchStatus, fetchQueue]);

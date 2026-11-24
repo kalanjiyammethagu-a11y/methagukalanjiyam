@@ -4,7 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import { X, CheckCircle2, ArrowRight, AlertCircle, ShoppingBag } from "lucide-react";
 import { BookmarkRibbonIcon } from "@/components/ui/Icons";
-import { cn } from "@/lib/utils";
 
 export interface ToastData {
   id: string;

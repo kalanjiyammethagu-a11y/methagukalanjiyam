@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { Search, Bell, Newspaper } from "lucide-react";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { CategoryPills, type CategoryOption } from "@/components/ui/CategoryPills";

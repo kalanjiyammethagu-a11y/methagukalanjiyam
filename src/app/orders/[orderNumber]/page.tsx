@@ -1,24 +1,20 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
   CheckCircle2,
-  Clock,
   Truck,
   Printer,
   MessageCircle,
   ArrowRight,
-  PackageCheck,
   MapPin,
   ExternalLink,
-  ShieldCheck,
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import { ArchivalWaxSealIcon, PostalSealIcon } from "@/components/ui/Icons";
+import { ArchivalWaxSealIcon } from "@/components/ui/Icons";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { formatINR } from "@/lib/utils";
@@ -130,10 +126,6 @@ export default function OrderConfirmationPage() {
       </div>
     );
   }
-
-  const isConfirmed = order.status === "confirmed" || order.payment_status === "paid";
-  const isShipped = order.status === "shipped";
-  const isDelivered = order.status === "delivered";
 
   return (
     <div className="min-h-screen pb-20 pt-4">

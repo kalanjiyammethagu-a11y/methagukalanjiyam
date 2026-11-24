@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, X, CornerDownLeft, ArrowRight } from "lucide-react";
-import { allBooks, type BookItem } from "@/data/books";
+import { allBooks } from "@/data/books";
 import { formatINR } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
 

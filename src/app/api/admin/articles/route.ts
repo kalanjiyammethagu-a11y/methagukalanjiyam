@@ -42,7 +42,6 @@ export async function POST(req: NextRequest) {
       excerpt,
       content,
       cover_image,
-      author,
       category,
       reading_time_mins,
       is_published,

@@ -11,7 +11,6 @@ import {
   CreditCard,
   ShoppingBag,
   Truck,
-  AlertTriangle,
   ShieldCheck,
 } from "lucide-react";
 import {
@@ -113,13 +112,12 @@ export function BookCoverActions({ book }: { book: BookItem }) {
  */
 export function BookDetailClient({ book }: BookDetailClientProps) {
   const router = useRouter();
-  const { locale, getFormattedAddress, shippingRegion, showToast, wishlist, toggleWishlist } = useLanguage();
+  const { locale, shippingRegion, showToast, wishlist, toggleWishlist } = useLanguage();
   const { addToCart } = useCart();
   const [quantity, setQuantity] = React.useState(1);
   const [activeTab, setActiveTab] = React.useState<"description" | "details">("description");
 
   const isSoldOut = book.stock <= 0;
-  const isLowStock = book.stock > 0 && book.stock <= 5;
   const isTa = locale === "ta";
   const isSaved = wishlist.includes(book.id);
 

@@ -16,7 +16,6 @@ import {
   AlertCircle,
   Loader2,
   RefreshCw,
-  ShieldCheck,
   ShoppingBag,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";

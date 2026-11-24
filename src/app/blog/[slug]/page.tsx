@@ -3,20 +3,18 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import {
   ArrowLeft,
   Calendar,
   Clock,
   Share2,
-  Bookmark,
   Check,
   BookOpen,
   ArrowRight,
 } from "lucide-react";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
 import { useLanguage } from "@/context/LanguageContext";
 import { getBookBySlug } from "@/data/books";
 import { formatINR } from "@/lib/utils";
@@ -231,7 +229,6 @@ const detailedArticles: Record<string, ArticleDetailData> = {
 
 export default function ArticleDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const slug = params?.slug as string;
   const { locale } = useLanguage();
   const isTa = locale === "ta";

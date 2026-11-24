@@ -46,7 +46,7 @@ export function BookCard({
   className,
 }: BookCardProps) {
   const router = useRouter();
-  const { locale: contextLocale, getFormattedAddress, showToast, wishlist, toggleWishlist } = useLanguage();
+  const { locale: contextLocale, showToast, wishlist, toggleWishlist } = useLanguage();
   const { addToCart } = useCart();
   const locale = propLocale || contextLocale;
   const isFeatured = variant === "featured";

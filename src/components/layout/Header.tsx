@@ -11,7 +11,6 @@ import {
   ShoppingBag,
   Heart,
 } from "lucide-react";
-import { BookmarkRibbonIcon } from "@/components/ui/Icons";
 import { MobileNav } from "./MobileNav";
 import { SearchBar } from "./SearchBar";
 import { useLanguage } from "@/context/LanguageContext";

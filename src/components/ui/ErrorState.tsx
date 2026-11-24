@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AlertCircle, RefreshCw, Home, ArrowLeft } from "lucide-react";
+import { AlertCircle, RefreshCw, Home } from "lucide-react";
 import { Button } from "./Button";
 import { cn } from "@/lib/utils";
 

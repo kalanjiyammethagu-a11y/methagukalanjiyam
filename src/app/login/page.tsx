@@ -5,8 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Mail,
-  Lock,
   ArrowRight,
   CheckCircle2,
   Loader2,

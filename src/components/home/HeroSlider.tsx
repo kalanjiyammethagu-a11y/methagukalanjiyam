@@ -9,7 +9,7 @@ import Fade from "embla-carousel-fade";
 import { ArrowRight, ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { defaultHeroSlides } from "@/data/hero-slides";
-import { HeroSlideData, HeroSliderProps } from "@/types/hero-slider";
+import { HeroSliderProps } from "@/types/hero-slider";
 import { cn } from "@/lib/utils";
 
 export function HeroSlider({

@@ -9,7 +9,6 @@ import {
   Trash2,
   ArrowRight,
   MapPin,
-  Truck,
   CreditCard,
   CheckCircle2,
   Loader2,

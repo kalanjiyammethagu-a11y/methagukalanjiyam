@@ -184,6 +184,10 @@ export async function DELETE(req: NextRequest) {
       .select("id", { count: "exact", head: true })
       .eq("category_id", id);
 
+    if (countError) {
+      return NextResponse.json({ error: countError.message }, { status: 500 });
+    }
+
     if (count && count > 0) {
       return NextResponse.json(
         { error: `Cannot permanently delete: ${count} book(s) belong to this category. Deactivate it instead.` },

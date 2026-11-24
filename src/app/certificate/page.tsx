@@ -12,7 +12,6 @@ import {
   Mail,
   FileText,
   ArrowRight,
-  ShieldCheck,
   Building,
   Download,
 } from "lucide-react";

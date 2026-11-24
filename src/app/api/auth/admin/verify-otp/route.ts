@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
     }
 
     // OTP Verified! Create full admin session
-    const { sessionToken, expiresAt } = await createAdminSession(
+    const { sessionToken } = await createAdminSession(
       verification.userId!,
       clientIp,
       userAgent
