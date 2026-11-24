@@ -235,9 +235,15 @@ export default function AdminERPPage() {
             onClick={handleFlushQueue}
             disabled={flushingQueue}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer min-h-[44px]"
+            title="Sync all pending and offline-queued orders into ERPNext"
           >
             <RefreshCw className={`h-4 w-4 ${flushingQueue ? "animate-spin" : ""}`} />
-            <span>{flushingQueue ? "Processing..." : "Flush Outbox Queue"}</span>
+            <span>{flushingQueue ? "சிங்க் ஆகிறது..." : "Sync Pending Orders (சிங்க் செய்க)"}</span>
+            {stats && (stats.pending + stats.queuedOffline) > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-[10px] font-mono font-bold">
+                {stats.pending + stats.queuedOffline}
+              </span>
+            )}
           </button>
         </div>
       </div>

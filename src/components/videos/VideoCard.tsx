@@ -57,6 +57,15 @@ export function VideoCard({
   const description = isTa ? video.descriptionTa : video.descriptionEn;
   const category = isTa ? video.categoryTa : video.categoryEn;
 
+  const cardRef = React.useRef<HTMLElement>(null);
+
+  React.useEffect(() => {
+    if (isPlaying && cardRef.current) {
+      // Smoothly scroll the video card into center view when playback starts
+      cardRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [isPlaying]);
+
   const handlePlay = () => {
     if (onPlay) {
       onPlay(video);
@@ -69,6 +78,7 @@ export function VideoCard({
 
   return (
     <article
+      ref={cardRef}
       className={cn(
         "group relative glass-panel rounded-2xl overflow-hidden border transition-all duration-300 flex flex-col h-full bg-white/80",
         isPlaying

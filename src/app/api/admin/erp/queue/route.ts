@@ -11,9 +11,19 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    const auth = await requireAdmin(req);
-    if (!auth.authorized) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    const syncToken = req.headers.get("x-erp-sync-token") || req.headers.get("authorization");
+    const secret = process.env.AUTH_SECRET;
+    const isTokenAuthorized = !!(
+      secret &&
+      syncToken &&
+      (syncToken === secret || syncToken === `Bearer ${secret}` || syncToken === `token ${secret}`)
+    );
+
+    if (!isTokenAuthorized) {
+      const auth = await requireAdmin(req);
+      if (!auth.authorized) {
+        return NextResponse.json({ error: auth.error }, { status: auth.status });
+      }
     }
 
     const items = getERPQueueItems();
@@ -29,9 +39,19 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const auth = await requireAdmin(req);
-    if (!auth.authorized) {
-      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    const syncToken = req.headers.get("x-erp-sync-token") || req.headers.get("authorization");
+    const secret = process.env.AUTH_SECRET;
+    const isTokenAuthorized = !!(
+      secret &&
+      syncToken &&
+      (syncToken === secret || syncToken === `Bearer ${secret}` || syncToken === `token ${secret}`)
+    );
+
+    if (!isTokenAuthorized) {
+      const auth = await requireAdmin(req);
+      if (!auth.authorized) {
+        return NextResponse.json({ error: auth.error }, { status: auth.status });
+      }
     }
 
     const result = await flushERPQueue();
