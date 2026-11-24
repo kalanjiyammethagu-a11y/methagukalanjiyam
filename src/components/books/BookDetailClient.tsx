@@ -319,8 +319,8 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
             </span>
             <span className="text-neutral-500">
               {isTa
-                ? "(வெளிநாட்டு வாசகர்கள் கூடையின் வழியே வாட்ஸ்அப்பில் தொடர்பு கொள்ளலாம்)."
-                : "(Overseas orders are coordinated via WhatsApp from the cart)."}
+                ? "(உதவி தேவையா? நேரடி உதவி மற்றும் வெளிநாட்டு ஆர்டர்களுக்கு வாட்ஸ்அப் வழியாகவும் தொடர்பு கொள்ளலாம்)."
+                : "(Need help? Domestic and overseas readers can also connect with us via WhatsApp)."}
             </span>
           </div>
         </div>

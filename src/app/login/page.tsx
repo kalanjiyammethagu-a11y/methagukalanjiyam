@@ -24,6 +24,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const rawRedirect = searchParams.get("redirectTo") || searchParams.get("redirect") || "/account";
   const redirectTo = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/account";
+  const isFromCart = redirectTo === "/cart" || redirectTo.includes("cart");
   const { locale } = useLanguage();
   const isTa = locale === "ta";
 
@@ -251,6 +252,25 @@ function LoginForm() {
           {/* Form Card (Order 1 on mobile to render above the fold) */}
           <div className="order-1 lg:order-2 lg:col-span-7 glass-panel rounded-3xl p-6 sm:p-10 border border-black/10 dark:border-white/10 bg-white/95 dark:bg-[#18181B]/95 shadow-xl flex flex-col justify-between">
             <div>
+              {/* Cart Return Reassurance Banner (Eliminates login anxiety) */}
+              {isFromCart && (
+                <div className="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 flex items-start gap-3 shadow-xs animate-in fade-in duration-300">
+                  <CheckCircle2 className="h-5 w-5 text-[#0A6847] dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <div className="text-xs sm:text-sm font-tamil text-emerald-950 dark:text-emerald-200">
+                    <p className="font-bold">
+                      {isTa
+                        ? "உங்கள் கூடைப் புத்தகங்கள் மற்றும் முகவரி பத்திரமாக சேமிக்கப்பட்டுள்ளன!"
+                        : "Your cart items and delivery address are safely saved!"}
+                    </p>
+                    <p className="mt-0.5 text-emerald-800/90 dark:text-emerald-300/90 text-xs">
+                      {isTa
+                        ? "ஆர்டரை உடனடியாக நிறைவு செய்ய உள்நுழையவும் அல்லது புதிய கணக்கைத் தொடங்கவும்."
+                        : "Please sign in or create an account to proceed to payment."}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Tab Selector: Login vs Register */}
               <div className="flex items-center p-1 bg-black/[0.04] dark:bg-white/[0.06] rounded-2xl mb-6 border border-black/5 dark:border-white/10">
                 <button

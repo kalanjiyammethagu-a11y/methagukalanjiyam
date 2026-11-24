@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ShoppingBag, Heart } from "lucide-react";
+import { ShoppingBag, Heart, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatINR } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
@@ -54,6 +54,7 @@ export function BookCard({
   const isHorizontal = variant === "horizontal";
   const isSoldOut = book.stock <= 0;
   const isSaved = wishlist.includes(book.id);
+  const [justAdded, setJustAdded] = React.useState(false);
 
   // Robust image fallback state
   const [imgSrc, setImgSrc] = React.useState<string>(book.image || "/images/books/book-placeholder.webp");
@@ -71,6 +72,8 @@ export function BookCard({
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 1800);
     if (onAddToCart) {
       onAddToCart(book);
     } else {
@@ -265,19 +268,28 @@ export function BookCard({
 
           {!isSoldOut ? (
             <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end shrink-0">
-              {/* Quick Add to Cart Button (44x44px touch target) */}
+              {/* Quick Add to Cart Button (44x44px touch target) with instant micro-feedback */}
               <button
                 type="button"
                 onClick={handleAddToCart}
                 aria-label={
-                  locale === "ta"
-                    ? `${book.title} — கூடையில் சேர்க்க`
-                    : `Add ${book.titleEn} to cart`
+                  justAdded
+                    ? (locale === "ta" ? `${book.title} கூடையில் சேர்க்கப்பட்டது` : `Added ${book.titleEn} to cart`)
+                    : (locale === "ta" ? `${book.title} — கூடையில் சேர்க்க` : `Add ${book.titleEn} to cart`)
                 }
-                title={locale === "ta" ? "கூடையில் சேர்க்க" : "Add to Cart"}
-                className="min-h-[44px] min-w-[44px] h-11 w-11 rounded-lg border border-[#0D5C3A]/30 dark:border-emerald-500/40 text-[#0D5C3A] dark:text-emerald-400 hover:bg-[#0D5C3A]/10 dark:hover:bg-emerald-500/20 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs shrink-0"
+                title={justAdded ? (locale === "ta" ? "சேர்க்கப்பட்டது!" : "Added!") : (locale === "ta" ? "கூடையில் சேர்க்க" : "Add to Cart")}
+                className={cn(
+                  "min-h-[44px] min-w-[44px] h-11 w-11 rounded-lg border transition-all flex items-center justify-center cursor-pointer shadow-2xs shrink-0",
+                  justAdded
+                    ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 scale-105"
+                    : "border-[#0D5C3A]/30 dark:border-emerald-500/40 text-[#0D5C3A] dark:text-emerald-400 hover:bg-[#0D5C3A]/10 dark:hover:bg-emerald-500/20 active:scale-95"
+                )}
               >
-                <ShoppingBag className="h-4.5 w-4.5" />
+                {justAdded ? (
+                  <Check className="h-4.5 w-4.5 animate-in zoom-in-75 duration-150 text-emerald-600 dark:text-emerald-400" />
+                ) : (
+                  <ShoppingBag className="h-4.5 w-4.5" />
+                )}
               </button>
 
               {/* Direct On-Site Buy Button (Navigates to Cart / Checkout) */}

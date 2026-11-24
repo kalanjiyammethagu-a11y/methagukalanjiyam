@@ -6,8 +6,11 @@
   "exclude": [
     "/_next/static/*",
     "/images/*",
+    "/icons/*",
+    "/favicon.png",
     "/favicon.ico",
     "/robots.txt",
-    "/sitemap.xml"
+    "/sitemap.xml",
+    "/site.webmanifest"
   ]
 }

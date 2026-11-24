@@ -187,7 +187,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
                 </kbd>
               </button>
 
-              {/* 2. Micro-Segmented Language Switcher */}
+              {/* 2. Micro-Segmented Language Switcher (Desktop / Tablet) */}
               <div
                 role="group"
                 aria-label={isTa ? "மொழித் தேர்வு" : "Language Selector"}
@@ -221,6 +221,17 @@ export function Header({ onOpenSearch }: HeaderProps) {
                   <span>EN</span>
                 </button>
               </div>
+
+              {/* 2b. Mobile Instant Language Toggle (Visible on Mobile < 640px) */}
+              <button
+                type="button"
+                onClick={() => setLocale(isTa ? "en" : "ta")}
+                aria-label={isTa ? "Switch language to English" : "தமிழுக்கு மாற்றுக"}
+                className="sm:hidden min-h-[44px] min-w-[44px] h-10 px-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.08] dark:border-white/[0.1] text-xs font-bold text-[var(--color-ink-primary)] flex items-center justify-center gap-1 active:scale-95 transition-all shadow-2xs font-tamil cursor-pointer"
+              >
+                <span className="text-[var(--color-accent)] font-extrabold">{isTa ? "EN" : "அ"}</span>
+                <span className="text-[11px] font-semibold">{isTa ? "English" : "தமிழ்"}</span>
+              </button>
 
               {/* 3. Ghost Settings Icon Button (Available in Mobile Drawer on mobile viewports) */}
               <button

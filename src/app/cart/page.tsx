@@ -775,21 +775,21 @@ export default function CartPage() {
                           titleTa: "தமிழ்நாடு (Tamil Nadu)",
                           titleEn: "Tamil Nadu",
                           feeText: "₹60",
-                          courier: "ST Courier / Speed Post",
+                          courier: isTa ? "ST Courier / Speed Post (2-4 வேலை நாட்கள்)" : "ST Courier / Speed Post (2-4 Working Days)",
                         },
                         {
                           id: "other-india" as ShippingRegion,
                           titleTa: "பிற இந்திய மாநிலங்கள் (Other States)",
                           titleEn: "Other States",
                           feeText: "₹100",
-                          courier: "Speed Post",
+                          courier: isTa ? "Speed Post விரைவு அஞ்சல் (4-7 வேலை நாட்கள்)" : "Speed Post (4-7 Working Days)",
                         },
                         {
                           id: "diaspora" as ShippingRegion,
                           titleTa: "வெளிநாடு (Diaspora / International)",
                           titleEn: "International Diaspora",
                           feeText: isTa ? "WhatsApp" : "WhatsApp",
-                          courier: "DHL / India Post (Overseas)",
+                          courier: isTa ? "DHL / India Post சர்வதேச அஞ்சல்" : "DHL / India Post (Overseas)",
                         },
                       ].map((reg) => {
                         const isSelected = shippingRegion === reg.id;
@@ -937,8 +937,8 @@ export default function CartPage() {
                             }}
                             buttonText={
                               isTa
-                                ? `ஆன்லைனில் பணம் செலுத்துக (${formatINR(total)})`
-                                : `Pay Online (${formatINR(total)})`
+                                ? `GPay / PhonePe / கார்டு மூலம் செலுத்துக (${formatINR(total)})`
+                                : `Pay with UPI / GPay / Card (${formatINR(total)})`
                             }
                             buttonClassName="w-full min-h-[48px] bg-[#0A6847] hover:bg-[#085036] text-white font-bold rounded-2xl"
                             onSuccess={() => {
@@ -962,7 +962,7 @@ export default function CartPage() {
                             <CreditCard className="h-5 w-5" />
                             <span>
                               {isTa
-                                ? "உள்நுழைந்து பணம் செலுத்துக"
+                                ? `உள்நுழைந்து பணம் செலுத்துக (${formatINR(total)})`
                                 : `Sign In to Pay (${formatINR(total)})`}
                             </span>
                           </Link>
@@ -983,13 +983,35 @@ export default function CartPage() {
                                 <CreditCard className="h-5 w-5" />
                                 <span>
                                   {isTa
-                                    ? `ஆன்லைனில் செலுத்துக (UPI / Card - ${formatINR(total)})`
-                                    : `Pay via UPI / Card (${formatINR(total)})`}
+                                    ? `GPay / PhonePe / கார்டு மூலம் செலுத்துக (${formatINR(total)})`
+                                    : `Pay with UPI / GPay / Card (${formatINR(total)})`}
                                 </span>
                               </>
                             )}
                           </button>
                         )}
+
+                        {/* Supported Payment Channels (Dumb user clarity) */}
+                        <div className="pt-2 flex flex-wrap items-center justify-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-zinc-600 dark:text-zinc-400">
+                          <span className="px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/10 font-mono font-bold text-[#0A6847]">UPI</span>
+                          <span className="px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/10 font-medium">Google Pay</span>
+                          <span className="px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/10 font-medium">PhonePe</span>
+                          <span className="px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/10 font-medium">Paytm</span>
+                          <span className="px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/10 font-medium">Cards / NetBanking</span>
+                        </div>
+
+                        {/* Secondary WhatsApp Help Link */}
+                        <div className="pt-2.5 text-center border-t border-black/5 dark:border-white/10">
+                          <a
+                            href="https://wa.me/916384654946?text=%E0%AE%B5%E0%AE%A3%E0%AE%95%E0%AF%8D%E0%AE%95%E0%AE%AE%E0%AF%8D%2C%20%E0%AE%AA%E0%AF%81%E0%AE%A4%E0%AF%8D%E0%AE%A4%E0%AE%95%E0%AE%99%E0%AF%8D%E0%AE%95%E0%AE%B3%E0%AF%8D%20%E0%AE%86%E0%AE%B0%E0%AF%8D%E0%AE%9F%E0%AE%B0%E0%AF%8D%20%E0%AE%9A%E0%AF%86%E0%AE%AF%E0%AF%8D%E0%AE%B5%E0%AE%A4%E0%AE%BF%E0%AE%B2%E0%AF%8D%20%E0%AE%89%E0%AE%A4%E0%AE%B5%E0%AE%BF%20%E0%AE%A4%E0%AF%87%E0%AE%B5%E0%AF%88%E0%AE%AA%E0%AF%8D%E0%AE%AA%E0%AE%9F%E0%AF%81%E0%AE%95%E0%AE%BF%E0%AE%B1%E0%AE%A4%E0%AF%81."
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-xs text-emerald-800 dark:text-emerald-300 font-bold font-tamil hover:underline"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
+                            <span>{isTa ? "ஆர்டர் செய்வதில் உதவி தேவையா? WhatsApp-ல் கேளுங்கள்" : "Need help ordering? Chat on WhatsApp"}</span>
+                          </a>
+                        </div>
                       </>
                     )}
                   </div>

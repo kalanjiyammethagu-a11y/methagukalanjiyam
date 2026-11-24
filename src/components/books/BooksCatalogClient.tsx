@@ -11,6 +11,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
 import { allBooks } from "@/data/books";
 import { useSearchParams } from "next/navigation";
+import { matchesSearchQuery } from "@/lib/search";
 
 const categoryOptions: CategoryOption[] = [
   { slug: "history", labelTa: "வரலாறு", labelEn: "History" },
@@ -101,15 +102,17 @@ export function BooksCatalogClient({
   const processedBooks = React.useMemo(() => {
     let books = [...liveBooks];
 
-    // Search filter (searches both Tamil and English titles/authors)
+    // Search filter (searches both Tamil and English titles/authors + phonetic Tanglish matching)
     if (search.trim()) {
-      const q = search.toLowerCase();
-      books = books.filter(
-        (b) =>
-          b.title.toLowerCase().includes(q) ||
-          b.titleEn.toLowerCase().includes(q) ||
-          b.author.toLowerCase().includes(q) ||
-          b.authorEn.toLowerCase().includes(q)
+      books = books.filter((b) =>
+        matchesSearchQuery(search, [
+          b.title,
+          b.titleEn,
+          b.author,
+          b.authorEn,
+          b.categoryTa,
+          b.categoryEn,
+        ])
       );
     }
 

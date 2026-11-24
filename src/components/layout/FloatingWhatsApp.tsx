@@ -14,9 +14,10 @@ export function FloatingWhatsApp() {
   const isTa = locale === "ta";
 
   const isBookDetail = Boolean(pathname?.startsWith("/books/") && pathname !== "/books");
+  const isCart = pathname === "/cart";
 
-  // Hide on admin, cart, and book detail pages to keep purchasing focused on website checkout
-  if (pathname?.startsWith("/admin") || pathname === "/cart" || isBookDetail) {
+  // Hide on admin console routes only
+  if (pathname?.startsWith("/admin")) {
     return null;
   }
 
@@ -26,11 +27,11 @@ export function FloatingWhatsApp() {
 
   return (
     <aside
-      aria-label={isTa ? "வெளிநாட்டு ஆர்டர் & உதவி மையம்" : "Overseas Orders & Customer Support"}
+      aria-label={isTa ? "வெளிநாட்டு ஆர்டர் & உதவி மையம்" : "Customer Support & Overseas Orders"}
       className={cn(
         "fixed right-4 sm:right-5 z-40 flex items-center gap-2 group transition-all duration-200",
-        isBookDetail
-          ? "bottom-36 sm:bottom-6"
+        isBookDetail || isCart
+          ? "bottom-24 sm:bottom-6"
           : "bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] sm:bottom-6"
       )}
     >

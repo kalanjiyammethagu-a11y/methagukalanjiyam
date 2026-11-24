@@ -33,6 +33,17 @@
 /favicon.ico
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
 
+/favicon.png
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+/icons/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
+  CDN-Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
+  Cloudflare-CDN-Cache-Control: public, max-age=604800, stale-while-revalidate=2592000
+
+/site.webmanifest
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
 /robots.txt
   Cache-Control: public, max-age=86400
 

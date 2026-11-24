@@ -8,6 +8,7 @@ import { Search, X, CornerDownLeft, ArrowRight } from "lucide-react";
 import { allBooks } from "@/data/books";
 import { formatINR } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
+import { matchesSearchQuery } from "@/lib/search";
 
 interface SearchBarProps {
   isOpen: boolean;
@@ -25,14 +26,18 @@ export function SearchBar({ isOpen, onClose }: SearchBarProps) {
 
   const matchingBooks = React.useMemo(() => {
     if (!query.trim()) return [];
-    const q = query.toLowerCase();
     return allBooks
-      .filter(
-        (b) =>
-          b.title.toLowerCase().includes(q) ||
-          b.titleEn.toLowerCase().includes(q) ||
-          b.author.toLowerCase().includes(q) ||
-          b.authorEn.toLowerCase().includes(q)
+      .filter((b) =>
+        matchesSearchQuery(query, [
+          b.title,
+          b.titleEn,
+          b.author,
+          b.authorEn,
+          b.categoryTa,
+          b.categoryEn,
+          b.descriptionTa,
+          b.descriptionEn,
+        ])
       )
       .slice(0, 4);
   }, [query]);
