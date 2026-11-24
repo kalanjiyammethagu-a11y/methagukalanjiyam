@@ -50,6 +50,10 @@ export interface AdminBook {
   descriptionTa: string;
   descriptionEn: string;
   status: BookStatus;
+  cmsStatus?: "draft" | "published";
+  coverImagePath?: string | null;
+  coverImageUrl?: string | null;
+  whatsappLink?: string | null;
   salesCount: number;
   createdAt: string;
   updatedAt: string;

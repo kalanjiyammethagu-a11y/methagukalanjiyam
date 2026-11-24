@@ -10,7 +10,7 @@ import { BookCard } from "@/components/books/BookCard";
 import { BookDetailClient, BookCoverActions } from "@/components/books/BookDetailClient";
 import { allBooks, getBookBySlug, getRelatedBooks, type BookItem } from "@/data/books";
 import { safeJsonLdStringify } from "@/lib/sanitize";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
 export const revalidate = 60;
 
@@ -21,10 +21,11 @@ interface BookPageProps {
 async function resolveBook(slug: string): Promise<BookItem | undefined> {
   const staticBook = getBookBySlug(slug);
   try {
-    const adminSupabase = createAdminClient();
-    const { data: dbBook } = await (adminSupabase.from("books") as any)
+    const supabase = await createClient();
+    const { data: dbBook } = await (supabase.from("books") as any)
       .select("*, categories(name_ta, name_en, slug)")
       .eq("slug", slug)
+      .eq("status", "published")
       .maybeSingle();
 
     if (dbBook) {

@@ -24,7 +24,11 @@ type SortOption = "relevance" | "price-low" | "price-high" | "name";
 
 const BOOKS_PER_PAGE = 9;
 
-export function BooksCatalogClient() {
+export function BooksCatalogClient({
+  initialBooks,
+}: {
+  initialBooks?: BookCardData[];
+} = {}) {
   const { locale } = useLanguage();
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get("q") || "";
@@ -50,7 +54,9 @@ export function BooksCatalogClient() {
     }
   }, [urlCategory]);
 
-  const [liveBooks, setLiveBooks] = React.useState<BookCardData[]>(allBooks);
+  const [liveBooks, setLiveBooks] = React.useState<BookCardData[]>(
+    initialBooks && initialBooks.length > 0 ? initialBooks : allBooks
+  );
 
   React.useEffect(() => {
     let isMounted = true;

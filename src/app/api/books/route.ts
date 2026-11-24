@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { allBooks } from "@/data/books";
 
 export const dynamic = "force-dynamic";
@@ -14,10 +14,10 @@ export async function GET(req: NextRequest) {
     const offset = Math.max(Number(searchParams.get("offset") || 0), 0);
 
     try {
-      const adminSupabase = createAdminClient();
-      let query = (adminSupabase.from("books") as any)
+      const supabase = await createClient();
+      let query = (supabase.from("books") as any)
         .select("*, categories(name_ta, name_en, slug)")
-        .eq("is_active", true);
+        .eq("status", "published");
 
       if (category && category !== "all") {
         query = query.eq("categories.slug", category);
@@ -45,18 +45,44 @@ export async function GET(req: NextRequest) {
       const { data: dbBooks, error } = await query;
 
       if (!error && dbBooks && dbBooks.length > 0) {
-        return NextResponse.json({
-          books: dbBooks,
-          total: dbBooks.length,
-          source: "database",
-        }, {
-          headers: {
-            "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+        const mappedBooks = dbBooks.map((b: any) => ({
+          id: b.id,
+          slug: b.slug,
+          title: b.title,
+          titleEn: b.title_en || b.title,
+          author: b.author,
+          authorEn: b.author_en || b.author,
+          price: Number(b.price),
+          discountPrice: b.discount_price ? Number(b.discount_price) : null,
+          stock: Number(b.stock ?? 10),
+          categorySlug: b.categories?.slug || "history",
+          categoryTa: b.categories?.name_ta || "வரலாறு",
+          categoryEn: b.categories?.name_en || "History",
+          image: b.cover_image_url || b.cover_front || "/images/books/book-placeholder.webp",
+          featured: Boolean(b.is_featured),
+          pages: b.pages,
+          year: String(b.published_year || "2024"),
+          publisher: b.publisher || "மேதகு களஞ்சியம்",
+          descriptionTa: b.description || "",
+          descriptionEn: b.description || "",
+          whatsappLink: b.whatsapp_link || null,
+        }));
+
+        return NextResponse.json(
+          {
+            books: mappedBooks,
+            total: mappedBooks.length,
+            source: "database",
           },
-        });
+          {
+            headers: {
+              "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+            },
+          }
+        );
       }
     } catch {
-      // Fallback to static catalog if DB is offline
+      // Fallback to static catalog if DB query encounters an issue
     }
 
     // Static fallback
@@ -82,15 +108,18 @@ export async function GET(req: NextRequest) {
 
     const paginated = filtered.slice(offset, offset + limit);
 
-    return NextResponse.json({
-      books: paginated,
-      total: filtered.length,
-      source: "fallback",
-    }, {
-      headers: {
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+    return NextResponse.json(
+      {
+        books: paginated,
+        total: filtered.length,
+        source: "fallback",
       },
-    });
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+        },
+      }
+    );
   } catch (err: any) {
     console.error("GET /api/books error:", err);
     return NextResponse.json({ error: "Failed to fetch catalog" }, { status: 500 });

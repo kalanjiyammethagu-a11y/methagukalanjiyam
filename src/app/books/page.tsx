@@ -2,6 +2,11 @@ import * as React from "react";
 import type { Metadata } from "next";
 import { BooksCatalogClient } from "@/components/books/BooksCatalogClient";
 import { safeJsonLdStringify } from "@/lib/sanitize";
+import { createClient } from "@/lib/supabase/server";
+import { allBooks } from "@/data/books";
+import type { BookCardData } from "@/components/books/BookCard";
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "நூல்கள் களஞ்சியம் — Rare Tamil Literature & Historical Catalog | மேதகு களஞ்சியம்",
@@ -35,7 +40,42 @@ export const metadata: Metadata = {
   },
 };
 
-export default function BooksPage() {
+export default async function BooksPage() {
+  let initialBooks: BookCardData[] = allBooks;
+
+  try {
+    const supabase = await createClient();
+    const { data: dbBooks } = await (supabase.from("books") as any)
+      .select("*, categories(name_ta, name_en, slug)")
+      .eq("status", "published")
+      .order("sort_order", { ascending: true });
+
+    if (dbBooks && dbBooks.length > 0) {
+      initialBooks = dbBooks.map((b: any) => ({
+        id: b.id,
+        slug: b.slug,
+        title: b.title,
+        titleEn: b.title_en || b.title,
+        author: b.author,
+        authorEn: b.author_en || b.author,
+        price: Number(b.price),
+        discountPrice: b.discount_price ? Number(b.discount_price) : null,
+        stock: Number(b.stock ?? 10),
+        categorySlug: b.categories?.slug || "history",
+        categoryTa: b.categories?.name_ta || "வரலாறு",
+        categoryEn: b.categories?.name_en || "History",
+        image: b.cover_image_url || b.cover_front || "/images/books/book-placeholder.webp",
+        featured: Boolean(b.is_featured),
+        pages: b.pages,
+        year: String(b.published_year || "2024"),
+        publisher: b.publisher || "மேதகு களஞ்சியம்",
+        descriptionTa: b.description || "",
+        descriptionEn: b.description || "",
+      }));
+    }
+  } catch {
+    // Keep fallback static catalog
+  }
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -94,7 +134,7 @@ export default function BooksPage() {
           </div>
         }
       >
-        <BooksCatalogClient />
+        <BooksCatalogClient initialBooks={initialBooks} />
       </React.Suspense>
     </>
   );
