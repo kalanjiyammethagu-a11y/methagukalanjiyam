@@ -224,13 +224,16 @@ async function runMigration() {
         const finalUrl = publicUrlData.publicUrl;
 
         // Update corresponding DB row
+        const baseNameNoExt = path.parse(filename).name;
         const { error: dbErr } = await supabase
           .from(target.table)
           .update({
             [target.pathColumn]: storagePath,
             [target.urlColumn]: finalUrl,
           } as any)
-          .ilike(target.matchField, `%${filename}%`);
+          .or(
+            `${target.pathColumn}.eq.${storagePath},${target.matchField}.ilike.%${filename}%,${target.matchField}.ilike.%${baseNameNoExt}%`
+          );
 
         if (dbErr) {
           console.warn(`  [Notice] DB update notice for ${filename} on ${target.table}: ${dbErr.message}`);
