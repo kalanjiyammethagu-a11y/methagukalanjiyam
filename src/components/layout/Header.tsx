@@ -92,18 +92,16 @@ export function Header({ onOpenSearch }: HeaderProps) {
     <>
       <header
         suppressHydrationWarning
-        className={`sticky top-0 z-[var(--z-sticky)] w-full transition-all duration-300 ${
-          isScrolled ? "py-1.5 sm:py-2" : "py-2.5 sm:py-3.5"
-        }`}
+        className={`sticky top-0 z-[var(--z-sticky)] w-full transition-all duration-300 ${isScrolled ? "py-1.5 sm:py-2" : "py-2.5 sm:py-3.5"
+          }`}
       >
         <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
           <div
             suppressHydrationWarning
-            className={`rounded-2xl px-2.5 sm:px-5 lg:px-6 flex items-center justify-between gap-1.5 sm:gap-4 lg:gap-6 border transition-all duration-300 ${
-              isScrolled
-                ? "py-2 bg-[var(--color-surface-card)]/98 backdrop-blur-2xl border-[var(--color-border-subtle)] shadow-md shadow-black/5"
-                : "py-2.5 bg-[var(--color-surface-card)]/92 backdrop-blur-xl border-[var(--color-border-subtle)]/80 shadow-xs"
-            }`}
+            className={`rounded-2xl px-2.5 sm:px-5 lg:px-6 flex items-center justify-between gap-1.5 sm:gap-4 lg:gap-6 border transition-all duration-300 ${isScrolled
+              ? "py-2 bg-[var(--color-surface-card)]/98 backdrop-blur-2xl border-[var(--color-border-subtle)] shadow-md shadow-black/5"
+              : "py-2.5 bg-[var(--color-surface-card)]/92 backdrop-blur-xl border-[var(--color-border-subtle)]/80 shadow-xs"
+              }`}
           >
             {/* Left: Brand Logo & Editorial Wordmark */}
             <Link
@@ -123,16 +121,14 @@ export function Header({ onOpenSearch }: HeaderProps) {
               </div>
               <div className="flex flex-col text-left">
                 <span
-                  className={`font-bold text-xs xs:text-sm sm:text-base lg:text-lg tracking-tight text-[var(--color-ink-primary)] leading-tight transition-colors group-hover:text-[var(--color-accent)] whitespace-nowrap ${
-                    isTa ? "font-tamil font-bold" : "font-sans font-extrabold"
-                  }`}
+                  className={`font-bold text-xs xs:text-sm sm:text-base lg:text-lg tracking-tight text-[var(--color-ink-primary)] leading-tight transition-colors group-hover:text-[var(--color-accent)] whitespace-nowrap ${isTa ? "font-tamil font-bold" : "font-sans font-extrabold"
+                    }`}
                 >
                   {isTa ? "மேதகு களஞ்சியம்" : "Methagu Kalanjiyam"}
                 </span>
                 <span
-                  className={`hidden 2xl:block text-[9px] sm:text-[10px] tracking-wider uppercase text-[var(--color-accent)] font-semibold leading-none mt-0.5 whitespace-nowrap ${
-                    isTa ? "font-tamil" : "font-sans"
-                  }`}
+                  className={`hidden 2xl:block text-[9px] sm:text-[10px] tracking-wider uppercase text-[var(--color-accent)] font-semibold leading-none mt-0.5 whitespace-nowrap ${isTa ? "font-tamil" : "font-sans"
+                    }`}
                 >
                   {isTa ? "அரிய தமிழ் ஆவணக் காப்பகம்" : "Rare Tamil Literature & Archives"}
                 </span>
@@ -154,13 +150,11 @@ export function Header({ onOpenSearch }: HeaderProps) {
                     key={link.href}
                     href={link.href}
                     aria-current={isActive ? "page" : undefined}
-                    className={`px-2 2xl:px-3 py-1.5 rounded-lg text-xs 2xl:text-sm font-medium transition-all min-h-[38px] flex items-center whitespace-nowrap ${
-                      isTa ? "font-tamil" : "font-sans"
-                    } ${
-                      isActive
+                    className={`px-2 2xl:px-3 py-1.5 rounded-lg text-xs 2xl:text-sm font-medium transition-all min-h-[38px] flex items-center whitespace-nowrap ${isTa ? "font-tamil" : "font-sans"
+                      } ${isActive
                         ? "bg-[var(--color-accent-light)] text-[var(--color-accent)] font-bold shadow-2xs"
                         : "text-[var(--color-ink-secondary)] hover:text-[var(--color-ink-primary)] hover:bg-black/[0.04] dark:hover:bg-white/[0.05]"
-                    }`}
+                      }`}
                   >
                     <span>{isTa ? link.labelTa : link.labelEn}</span>
                   </Link>
@@ -198,11 +192,10 @@ export function Header({ onOpenSearch }: HeaderProps) {
                   onClick={() => setLocale("ta")}
                   aria-pressed={isTa}
                   aria-label="தமிழுக்கு மாற்றுக"
-                  className={`min-h-[34px] h-[34px] px-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center font-tamil cursor-pointer ${
-                    isTa
-                      ? "bg-[var(--color-surface-card)] text-[var(--color-accent)] shadow-2xs ring-1 ring-black/5"
-                      : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink-primary)]"
-                  }`}
+                  className={`min-h-[34px] h-[34px] px-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center font-tamil cursor-pointer ${isTa
+                    ? "bg-[var(--color-surface-card)] text-[var(--color-accent)] shadow-2xs ring-1 ring-black/5"
+                    : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink-primary)]"
+                    }`}
                 >
                   <span className="text-[var(--color-accent)] mr-1">அ</span>
                   <span>தமிழ்</span>
@@ -212,11 +205,10 @@ export function Header({ onOpenSearch }: HeaderProps) {
                   onClick={() => setLocale("en")}
                   aria-pressed={!isTa}
                   aria-label="Switch to English"
-                  className={`min-h-[34px] h-[34px] px-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center font-sans cursor-pointer ${
-                    !isTa
-                      ? "bg-[var(--color-surface-card)] text-[var(--color-accent)] shadow-2xs ring-1 ring-black/5"
-                      : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink-primary)]"
-                  }`}
+                  className={`min-h-[34px] h-[34px] px-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center font-sans cursor-pointer ${!isTa
+                    ? "bg-[var(--color-surface-card)] text-[var(--color-accent)] shadow-2xs ring-1 ring-black/5"
+                    : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink-primary)]"
+                    }`}
                 >
                   <span>EN</span>
                 </button>
