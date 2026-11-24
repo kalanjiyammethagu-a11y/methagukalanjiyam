@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatINR } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
@@ -46,13 +46,27 @@ export function BookCard({
   className,
 }: BookCardProps) {
   const router = useRouter();
-  const { locale: contextLocale, getFormattedAddress, showToast } = useLanguage();
+  const { locale: contextLocale, getFormattedAddress, showToast, wishlist, toggleWishlist } = useLanguage();
   const { addToCart } = useCart();
   const locale = propLocale || contextLocale;
   const isFeatured = variant === "featured";
   const isCompact = variant === "compact";
   const isHorizontal = variant === "horizontal";
   const isSoldOut = book.stock <= 0;
+  const isSaved = wishlist.includes(book.id);
+
+  // Robust image fallback state
+  const [imgSrc, setImgSrc] = React.useState<string>(book.image || "/images/books/book-placeholder.webp");
+
+  React.useEffect(() => {
+    setImgSrc(book.image || "/images/books/book-placeholder.webp");
+  }, [book.image]);
+
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWishlist(book.id, book.title, book.titleEn);
+  };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -67,7 +81,7 @@ export function BookCard({
         author: book.author,
         authorEn: book.authorEn,
         price: book.discountPrice ?? book.price,
-        image: book.image,
+        image: imgSrc,
         slug: book.slug,
         quantity: 1,
         maxStock: book.stock || 10,
@@ -95,9 +109,9 @@ export function BookCard({
   return (
     <article
       className={cn(
-        "group relative flex flex-col bg-white border border-[#E5DFD5] rounded-lg overflow-hidden transition-all duration-200 hover:border-[#CFC6B8] hover:shadow-md",
+        "group relative flex flex-col bg-white dark:bg-[#18181B] border border-[#E5DFD5] dark:border-white/10 rounded-lg overflow-hidden transition-all duration-200 hover:border-[#CFC6B8] dark:hover:border-white/20 hover:shadow-md",
         isHorizontal && "sm:flex-row items-stretch",
-        isFeatured && "ring-1 ring-[#0D5C3A]/20",
+        isFeatured && "ring-1 ring-[#0D5C3A]/20 dark:ring-emerald-500/20",
         className
       )}
     >
@@ -110,12 +124,49 @@ export function BookCard({
         </div>
       )}
 
+      {/* Floating Wishlist Heart Button (>= 44x44px touch target) */}
+      <button
+        type="button"
+        onClick={handleToggleWishlist}
+        aria-label={
+          isSaved
+            ? locale === "ta"
+              ? `${book.title} — விருப்பப்பட்டியலிலிருந்து நீக்குக`
+              : `Remove ${book.titleEn} from wishlist`
+            : locale === "ta"
+              ? `${book.title} — விருப்பப்பட்டியலில் சேர்க்க`
+              : `Add ${book.titleEn} to wishlist`
+        }
+        title={
+          isSaved
+            ? locale === "ta"
+              ? "விருப்பப்பட்டியலிலிருந்து நீக்குக"
+              : "Remove from Wishlist"
+            : locale === "ta"
+              ? "விருப்பப்பட்டியலில் சேர்க்க"
+              : "Add to Wishlist"
+        }
+        className={cn(
+          "absolute top-2 right-2 z-20 min-h-[44px] min-w-[44px] h-11 w-11 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-90 shadow-sm",
+          isSaved
+            ? "bg-rose-50 dark:bg-rose-950/80 text-rose-600 border border-rose-200 dark:border-rose-800"
+            : "bg-white/90 dark:bg-[#18181B]/90 backdrop-blur-md text-stone-600 dark:text-stone-300 hover:text-rose-600 hover:bg-white dark:hover:bg-[#18181B] border border-black/10 dark:border-white/10"
+        )}
+      >
+        <Heart
+          className={cn(
+            "h-5 w-5 transition-transform",
+            isSaved && "fill-rose-600 text-rose-600 scale-110"
+          )}
+        />
+      </button>
+
       {/* Unobstructed Book Cover with authentic paper spine shadow */}
       <Link
         href={`/books/${book.slug}`}
         className={cn(
-          "relative block overflow-hidden bg-[#F7F5EF] border-b border-[#E5DFD5]",
-          isHorizontal ? "w-full sm:w-44 shrink-0 sm:border-b-0 sm:border-r border-[#E5DFD5]" : ""
+          "relative block overflow-hidden bg-[#F7F5EF] dark:bg-[#202024] border-b border-[#E5DFD5] dark:border-white/10",
+          isHorizontal ? "w-full sm:w-44 shrink-0 sm:border-b-0 sm:border-r border-[#E5DFD5] dark:border-white/10" : ""
         )}
         aria-label={locale === "ta" ? book.title : book.titleEn}
       >
@@ -138,12 +189,13 @@ export function BookCard({
             <div className="absolute inset-y-0 right-0 w-1 bg-gradient-to-l from-black/15 to-transparent z-10 pointer-events-none" />
 
             <Image
-              src={book.image}
+              src={imgSrc}
               alt={locale === "ta" ? `${book.title} - அட்டைப்படம்` : `${book.titleEn} cover artwork`}
               fill
               sizes={isCompact ? "96px" : isFeatured ? "176px" : "160px"}
               className="object-cover"
               loading="lazy"
+              onError={() => setImgSrc("/images/books/book-placeholder.webp")}
             />
           </div>
         </div>
@@ -161,7 +213,7 @@ export function BookCard({
           <div className="flex items-center justify-between gap-2">
             <span
               className={cn(
-                "text-[11px] font-bold text-[#0D5C3A]",
+                "text-[11px] font-bold text-[#0D5C3A] dark:text-emerald-400",
                 locale === "ta" ? "font-tamil tracking-normal" : "uppercase tracking-wider font-sans"
               )}
             >
@@ -173,7 +225,7 @@ export function BookCard({
           <Link href={`/books/${book.slug}`} className="group/title block">
             <h3
               className={cn(
-                "font-bold text-[#191614] group-hover/title:text-[#0D5C3A] transition-colors leading-snug line-clamp-2",
+                "font-bold text-[#191614] dark:text-zinc-100 group-hover/title:text-[#0D5C3A] dark:group-hover/title:text-emerald-400 transition-colors leading-snug line-clamp-2",
                 isCompact
                   ? "text-xs font-tamil"
                   : isHorizontal
@@ -186,26 +238,26 @@ export function BookCard({
 
             {/* Subtitle: Only show secondary language when in horizontal layout and distinctly different */}
             {isHorizontal && book.titleEn && book.title !== book.titleEn && (
-              <p className="text-xs text-[#665F57] truncate mt-0.5" lang={locale === "ta" ? "en" : "ta"}>
+              <p className="text-xs text-[#665F57] dark:text-zinc-400 truncate mt-0.5" lang={locale === "ta" ? "en" : "ta"}>
                 {locale === "ta" ? book.titleEn : book.title}
               </p>
             )}
           </Link>
 
           {/* Author */}
-          <p className="text-xs text-[#4A443E] font-medium font-tamil line-clamp-1">
+          <p className="text-xs text-[#4A443E] dark:text-zinc-400 font-medium font-tamil line-clamp-1">
             {locale === "ta" ? `ஆசிரியர்: ${book.author}` : `Author: ${book.authorEn}`}
           </p>
         </div>
 
         {/* Pricing & Actions */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 border-t border-[#E5DFD5]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 border-t border-[#E5DFD5] dark:border-white/10">
           <div className="flex items-baseline gap-1.5 flex-wrap min-w-0">
-            <span className="font-bold text-[#191614] text-base sm:text-lg tabular-nums">
+            <span className="font-bold text-[#191614] dark:text-zinc-100 text-base sm:text-lg tabular-nums">
               {formatINR(book.discountPrice ?? book.price)}
             </span>
             {book.discountPrice && (
-              <span className="text-xs text-[#665F57] line-through tabular-nums">
+              <span className="text-xs text-[#665F57] dark:text-zinc-500 line-through tabular-nums">
                 {formatINR(book.price)}
               </span>
             )}
@@ -223,7 +275,7 @@ export function BookCard({
                     : `Add ${book.titleEn} to cart`
                 }
                 title={locale === "ta" ? "கூடையில் சேர்க்க" : "Add to Cart"}
-                className="min-h-[44px] min-w-[44px] h-11 w-11 rounded-lg border border-[#0D5C3A]/30 text-[#0D5C3A] hover:bg-[#0D5C3A]/10 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs shrink-0"
+                className="min-h-[44px] min-w-[44px] h-11 w-11 rounded-lg border border-[#0D5C3A]/30 dark:border-emerald-500/40 text-[#0D5C3A] dark:text-emerald-400 hover:bg-[#0D5C3A]/10 dark:hover:bg-emerald-500/20 active:scale-95 transition-all flex items-center justify-center cursor-pointer shadow-2xs shrink-0"
               >
                 <ShoppingBag className="h-4.5 w-4.5" />
               </button>
@@ -237,13 +289,13 @@ export function BookCard({
                     ? `${book.title} — இப்போதே வாங்குக`
                     : `Buy ${book.titleEn} now`
                 }
-                className="flex-1 sm:flex-none min-h-[44px] px-3.5 py-2 rounded-lg bg-[#0D5C3A] hover:bg-[#08442A] text-white flex items-center justify-center text-xs font-bold transition-colors font-tamil cursor-pointer active:bg-[#063320] shadow-xs"
+                className="flex-1 sm:flex-none min-h-[44px] px-3.5 py-2 rounded-lg bg-[#0D5C3A] hover:bg-[#08442A] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white flex items-center justify-center text-xs font-bold transition-colors font-tamil cursor-pointer active:bg-[#063320] shadow-xs"
               >
                 <span>{locale === "ta" ? "வாங்க" : "Buy Now"}</span>
               </button>
             </div>
           ) : (
-            <span className="text-xs text-[#665F57] font-semibold">
+            <span className="text-xs text-[#665F57] dark:text-zinc-500 font-semibold">
               {locale === "ta" ? "கையிருப்பில் இல்லை" : "Out of Stock"}
             </span>
           )}

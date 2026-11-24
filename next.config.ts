@@ -21,6 +21,10 @@ const nextConfig: NextConfig = {
         hostname: "images.methagukalanjiyam.in",
       },
       {
+        protocol: "https",
+        hostname: "*.supabase.co",
+      },
+      {
         protocol: "http",
         hostname: "localhost",
       },
@@ -41,8 +45,8 @@ const nextConfig: NextConfig = {
       // Fonts: self + Google Fonts static CDN + data URIs
       "font-src 'self' https://fonts.gstatic.com data:",
 
-      // Images: self + Unsplash + Cloudflare R2 + data URIs + blob URIs
-      "img-src 'self' https://images.unsplash.com https://*.r2.cloudflarestorage.com https://images.methagukalanjiyam.in data: blob:",
+      // Images: self + Unsplash + Cloudflare R2 + Supabase + data URIs + blob URIs
+      "img-src 'self' https://images.unsplash.com https://*.r2.cloudflarestorage.com https://images.methagukalanjiyam.in https://*.supabase.co data: blob:",
 
       // Connect: self + Supabase (HTTPS & Realtime WSS) + Razorpay API & analytics + Cloudflare Turnstile + dev websockets
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.razorpay.com https://lumberjack.razorpay.com https://challenges.cloudflare.com ws: wss:",

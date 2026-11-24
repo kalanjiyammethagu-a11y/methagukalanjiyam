@@ -9,12 +9,14 @@ import {
   Menu,
   Sliders,
   ShoppingBag,
+  Heart,
 } from "lucide-react";
 import { BookmarkRibbonIcon } from "@/components/ui/Icons";
 import { MobileNav } from "./MobileNav";
 import { SearchBar } from "./SearchBar";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
+import { cn } from "@/lib/utils";
 
 interface HeaderProps {
   onOpenSearch?: () => void;
@@ -232,16 +234,27 @@ export function Header({ onOpenSearch }: HeaderProps) {
                 <Sliders className="h-4 w-4" />
               </button>
 
-              {/* 4. Ghost Reader Library / Wishlist Icon Button */}
+              {/* 4. Ghost Reader Library / Wishlist Heart Icon Button */}
               <Link
                 href="/account"
-                aria-label={isTa ? "வாசகர் அரங்கம் & சேமிக்கப்பட்ட நூல்கள்" : "Reader Library & Saved Items"}
-                className="relative hidden sm:flex min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl text-[var(--color-ink-secondary)] hover:text-[var(--color-accent)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] items-center justify-center transition-colors cursor-pointer shrink-0"
-                title={isTa ? "சேமிக்கப்பட்டவை" : "Saved Items"}
+                aria-label={
+                  isTa
+                    ? `விருப்பப்பட்டியல் (${wishlistCount} நூல்கள்)`
+                    : `Wishlist (${wishlistCount} items)`
+                }
+                className={cn(
+                  "relative hidden sm:flex min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl items-center justify-center transition-colors cursor-pointer shrink-0",
+                  wishlistCount > 0
+                    ? "text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                    : "text-[var(--color-ink-secondary)] hover:text-[var(--color-accent)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                )}
+                title={isTa ? "விருப்பப்பட்டியல்" : "Wishlist"}
               >
-                <BookmarkRibbonIcon className="h-4 w-4" />
+                <Heart className={cn("h-4.5 w-4.5", wishlistCount > 0 && "fill-rose-600 text-rose-600")} />
                 {wishlistCount > 0 && (
-                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-[var(--color-accent)] ring-2 ring-[var(--color-surface-card)]" />
+                  <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-mono font-bold flex items-center justify-center shadow-xs">
+                    {wishlistCount}
+                  </span>
                 )}
               </Link>
 

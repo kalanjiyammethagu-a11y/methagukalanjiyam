@@ -452,10 +452,10 @@ export default function CartPage() {
                     <div className="flex flex-col min-[380px]:flex-row gap-3 sm:gap-4">
                       {/* Book Cover */}
                       <Link href={`/books/${item.slug}`} className="shrink-0 self-start">
-                        <div className="relative w-16 min-[380px]:w-20 sm:w-24 aspect-[3/4] rounded-lg overflow-hidden bg-[#F5F3EF] border border-black/8 shadow-md hover:scale-[1.02] transition-transform">
+                        <div className="relative w-16 min-[380px]:w-20 sm:w-24 aspect-[3/4] rounded-lg overflow-hidden bg-[#F5F3EF] dark:bg-zinc-800 border border-black/8 dark:border-white/10 shadow-md hover:scale-[1.02] transition-transform">
                           <div className="absolute inset-y-0 left-0 w-2 bg-gradient-to-r from-black/20 to-transparent z-10 pointer-events-none" />
                           <Image
-                            src={item.image}
+                            src={item.image || "/images/books/book-placeholder.webp"}
                             alt={isTa ? item.title : item.titleEn}
                             fill
                             sizes="96px"
@@ -469,13 +469,13 @@ export default function CartPage() {
                         <div className="space-y-1">
                           <Link
                             href={`/books/${item.slug}`}
-                            className="hover:text-[#0A6847] transition-colors"
+                            className="hover:text-[#0A6847] dark:hover:text-emerald-400 transition-colors"
                           >
-                            <h3 className="text-sm sm:text-base font-bold text-[#111111] font-tamil line-clamp-2">
+                            <h3 className="text-sm sm:text-base font-bold text-[#111111] dark:text-zinc-100 font-tamil line-clamp-2">
                               {isTa ? item.title : item.titleEn}
                             </h3>
                           </Link>
-                          <p className="text-xs text-[#555555] font-medium font-tamil line-clamp-1">
+                          <p className="text-xs text-[#555555] dark:text-zinc-400 font-medium font-tamil line-clamp-1">
                             {isTa ? item.author : item.authorEn}
                           </p>
                         </div>
@@ -1039,14 +1039,14 @@ export default function CartPage() {
           >
             <div className="max-w-md mx-auto flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <div className="text-[11px] font-semibold text-[#555555] font-tamil leading-tight">
+                <div className="text-[11px] font-semibold text-[#555555] dark:text-zinc-400 font-tamil leading-tight">
                   {isTa ? `மொத்தம் (${totalItems} நூல்கள்)` : `Total (${totalItems} items)`}
                 </div>
-                <div className="text-base sm:text-lg font-bold text-[#0A6847] font-mono leading-none mt-0.5 tabular-nums">
+                <div className="text-base sm:text-lg font-bold text-[#0A6847] dark:text-emerald-400 font-mono leading-none mt-0.5 tabular-nums">
                   {isDiaspora ? (
                     <span>
                       {formatINR(subtotal)}{" "}
-                      <span className="text-[10px] font-normal text-[#555555]">
+                      <span className="text-[10px] font-normal text-[#555555] dark:text-zinc-400">
                         {isTa ? "+ அஞ்சல்" : "+ Shipping"}
                       </span>
                     </span>
@@ -1062,7 +1062,7 @@ export default function CartPage() {
                     href={getOverseasWhatsAppUrl()}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="min-h-[44px] px-4 py-2 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-md active:scale-95 transition-all font-tamil touch-manipulation cursor-pointer"
+                    className="min-h-[44px] px-4 py-2 rounded-xl bg-[#0A6847] hover:bg-[#085036] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-md active:scale-95 transition-all font-tamil touch-manipulation cursor-pointer"
                   >
                     <MessageCircle className="h-4 w-4 shrink-0" />
                     <span>{isTa ? "WhatsApp ஆர்டர்" : "WhatsApp"}</span>

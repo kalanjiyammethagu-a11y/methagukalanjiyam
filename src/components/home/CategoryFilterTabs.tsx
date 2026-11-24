@@ -42,7 +42,7 @@ export function CategoryFilterTabs({ books }: CategoryFilterTabsProps) {
 
         {/* Category Filter — Apple HIG Segmented Bar */}
         <div
-          className="p-1 rounded-2xl bg-black/[0.04] backdrop-blur-md border border-black/[0.08] flex items-center gap-1 overflow-x-auto scrollbar-none shadow-2xs"
+          className="p-1 rounded-2xl bg-black/[0.04] dark:bg-white/[0.06] backdrop-blur-md border border-black/[0.08] dark:border-white/[0.1] flex items-center gap-1 overflow-x-auto scrollbar-none shadow-2xs"
           role="tablist"
           aria-label={locale === "ta" ? "நூல் வகை வடிப்பான்கள்" : "Catalog category filters"}
         >
@@ -55,10 +55,11 @@ export function CategoryFilterTabs({ books }: CategoryFilterTabsProps) {
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => setSelectedCategory(tab.id)}
-                className={`min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all shrink-0 cursor-pointer font-tamil active:scale-[0.98] ${isActive
-                  ? "bg-[#0A6847] text-white shadow-xs font-bold"
-                  : "text-zinc-600 hover:text-zinc-950 hover:bg-black/[0.03]"
-                  }`}
+                className={`min-h-[40px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all shrink-0 cursor-pointer font-tamil active:scale-[0.98] ${
+                  isActive
+                    ? "bg-[#0A6847] dark:bg-emerald-600 text-white shadow-xs font-bold"
+                    : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
+                }`}
               >
                 {locale === "ta" ? tab.labelTa : tab.labelEn}
               </button>

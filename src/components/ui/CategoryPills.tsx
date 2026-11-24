@@ -51,7 +51,7 @@ export function CategoryPills({
       {/* Left Scroll Affordance Gradient */}
       {canScrollLeft && (
         <div
-          className="pointer-events-none absolute left-0 inset-y-0 w-7 bg-gradient-to-r from-white/90 to-transparent z-10 sm:hidden transition-opacity duration-200"
+          className="pointer-events-none absolute left-0 inset-y-0 w-7 bg-gradient-to-r from-white/90 dark:from-[#121212]/90 to-transparent z-10 sm:hidden transition-opacity duration-200"
           aria-hidden="true"
         />
       )}
@@ -60,7 +60,7 @@ export function CategoryPills({
       <div
         ref={scrollRef}
         onScroll={checkScroll}
-        className="p-1 rounded-2xl bg-black/[0.04] backdrop-blur-md border border-black/[0.08] flex items-center gap-1 overflow-x-auto scrollbar-none shadow-2xs scroll-smooth"
+        className="p-1 rounded-2xl bg-black/[0.04] dark:bg-white/[0.06] backdrop-blur-md border border-black/[0.08] dark:border-white/[0.1] flex items-center gap-1 overflow-x-auto scrollbar-none shadow-2xs scroll-smooth"
         role="tablist"
         aria-label={locale === "ta" ? "பிரிவு வடிப்பான்கள்" : "Category filters"}
       >
@@ -73,8 +73,8 @@ export function CategoryPills({
           className={cn(
             "min-h-[44px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all shrink-0 cursor-pointer font-tamil active:scale-[0.98]",
             selected === "all"
-              ? "bg-[#0A6847] text-white shadow-xs font-bold"
-              : "text-zinc-600 hover:text-zinc-950 hover:bg-black/[0.03]"
+              ? "bg-[#0A6847] dark:bg-emerald-600 text-white shadow-xs font-bold"
+              : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
           )}
         >
           {locale === "ta" ? allLabelTa : allLabelEn}
@@ -90,8 +90,8 @@ export function CategoryPills({
             className={cn(
               "min-h-[44px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all shrink-0 cursor-pointer font-tamil active:scale-[0.98]",
               selected === cat.slug
-                ? "bg-[#0A6847] text-white shadow-xs font-bold"
-                : "text-zinc-600 hover:text-zinc-950 hover:bg-black/[0.03]"
+                ? "bg-[#0A6847] dark:bg-emerald-600 text-white shadow-xs font-bold"
+                : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
             )}
           >
             {locale === "ta" ? cat.labelTa : cat.labelEn}
@@ -99,7 +99,9 @@ export function CategoryPills({
               <span
                 className={cn(
                   "ml-1.5 text-[11px] px-1.5 py-0.5 rounded-full font-mono",
-                  selected === cat.slug ? "bg-white/20 text-white" : "bg-black/8 text-zinc-500"
+                  selected === cat.slug
+                    ? "bg-white/20 text-white"
+                    : "bg-black/8 dark:bg-white/10 text-zinc-500 dark:text-zinc-300"
                 )}
               >
                 {cat.count}
@@ -112,7 +114,7 @@ export function CategoryPills({
       {/* Right Scroll Affordance Gradient */}
       {canScrollRight && (
         <div
-          className="pointer-events-none absolute right-0 inset-y-0 w-8 bg-gradient-to-l from-white/90 via-white/50 to-transparent z-10 sm:hidden transition-opacity duration-200"
+          className="pointer-events-none absolute right-0 inset-y-0 w-8 bg-gradient-to-l from-white/90 dark:from-[#121212]/90 via-white/50 dark:via-[#121212]/50 to-transparent z-10 sm:hidden transition-opacity duration-200"
           aria-hidden="true"
         />
       )}

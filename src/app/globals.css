@@ -17,6 +17,7 @@
   --color-accent: var(--color-accent);
   --color-accent-hover: var(--color-accent-hover);
   --color-accent-light: var(--color-accent-light);
+  --color-accent-fg: var(--color-accent-fg);
 
   --color-border-hairline: var(--color-border-hairline);
   --color-border-strong: var(--color-border-strong);
@@ -60,6 +61,7 @@
   --color-accent: #0D5C3A;        /* Deep Tamil Forest Emerald - AA contrast */
   --color-accent-hover: #08442A;
   --color-accent-light: #EBF5EF;
+  --color-accent-fg: #FFFFFF;
 
   --color-border-hairline: #E5DFD5;
   --color-border-subtle: #E5DFD5;
@@ -104,6 +106,7 @@ html[data-theme="white"] {
   --color-accent: #0D5C3A;        /* Deep Tamil Forest Emerald - 8.21:1 on white canvas (exceeds WCAG 3:1 for focus rings) */
   --color-accent-hover: #08442A;
   --color-accent-light: #EBF5EF;
+  --color-accent-fg: #FFFFFF;
 
   --color-border-hairline: #E9ECEF;
   --color-border-subtle: #DEE2E6;
@@ -135,6 +138,7 @@ html.dark {
   --color-accent: #22C55E;        /* Vibrant emerald for dark mode visibility */
   --color-accent-hover: #16A34A;
   --color-accent-light: rgba(34, 197, 94, 0.15);
+  --color-accent-fg: #052814;     /* AAA contrast obsidian emerald against neon green (12.5:1) */
 
   --color-border-hairline: rgba(255, 255, 255, 0.08);
   --color-border-subtle: rgba(255, 255, 255, 0.12);

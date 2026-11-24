@@ -233,7 +233,7 @@ function BooksCatalogContent() {
 
               {/* View toggle — Apple HIG Segmented Control */}
               <div
-                className="p-1 rounded-2xl bg-black/[0.04] backdrop-blur-md border border-black/[0.08] flex items-center gap-1 shadow-2xs"
+                className="p-1 rounded-2xl bg-black/[0.04] dark:bg-white/[0.06] backdrop-blur-md border border-black/[0.08] dark:border-white/[0.1] flex items-center gap-1 shadow-2xs"
                 role="radiogroup"
                 aria-label={locale === "ta" ? "காட்சி முறை" : "View mode"}
               >
@@ -246,8 +246,8 @@ function BooksCatalogContent() {
                   className={cn(
                     "min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] h-10 w-10 sm:h-9 sm:w-9 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-[0.98]",
                     viewMode === "grid"
-                      ? "bg-[#0A6847] text-white shadow-xs font-bold"
-                      : "text-zinc-600 hover:text-zinc-950 hover:bg-black/[0.03]"
+                      ? "bg-[#0A6847] dark:bg-emerald-600 text-white shadow-xs font-bold"
+                      : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
                   )}
                   title={locale === "ta" ? "கட்டகம்" : "Grid"}
                 >
@@ -262,8 +262,8 @@ function BooksCatalogContent() {
                   className={cn(
                     "min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] h-10 w-10 sm:h-9 sm:w-9 rounded-xl flex items-center justify-center transition-all cursor-pointer active:scale-[0.98]",
                     viewMode === "list"
-                      ? "bg-[#0A6847] text-white shadow-xs font-bold"
-                      : "text-zinc-600 hover:text-zinc-950 hover:bg-black/[0.03]"
+                      ? "bg-[#0A6847] dark:bg-emerald-600 text-white shadow-xs font-bold"
+                      : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
                   )}
                   title={locale === "ta" ? "பட்டியல்" : "List"}
                 >

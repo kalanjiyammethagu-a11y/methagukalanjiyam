@@ -251,10 +251,10 @@ function LoginForm() {
           </div>
 
           {/* Form Card (Order 1 on mobile to render above the fold) */}
-          <div className="order-1 lg:order-2 lg:col-span-7 glass-panel rounded-3xl p-6 sm:p-10 border border-black/10 bg-white/95 shadow-xl flex flex-col justify-between">
+          <div className="order-1 lg:order-2 lg:col-span-7 glass-panel rounded-3xl p-6 sm:p-10 border border-black/10 dark:border-white/10 bg-white/95 dark:bg-[#18181B]/95 shadow-xl flex flex-col justify-between">
             <div>
               {/* Tab Selector: Login vs Register */}
-              <div className="flex items-center p-1 bg-black/[0.04] rounded-2xl mb-6 border border-black/5">
+              <div className="flex items-center p-1 bg-black/[0.04] dark:bg-white/[0.06] rounded-2xl mb-6 border border-black/5 dark:border-white/10">
                 <button
                   type="button"
                   onClick={() => {
@@ -264,8 +264,8 @@ function LoginForm() {
                   }}
                   className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold font-tamil transition-all cursor-pointer min-h-[44px] ${
                     tab === "login"
-                      ? "bg-white text-[#0A6847] shadow-sm"
-                      : "text-zinc-600 hover:text-zinc-950"
+                      ? "bg-white dark:bg-zinc-800 text-[#0A6847] dark:text-emerald-400 shadow-sm"
+                      : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white"
                   }`}
                 >
                   {isTa ? "உள்நுழைவு (Sign In)" : "Sign In"}
@@ -279,8 +279,8 @@ function LoginForm() {
                   }}
                   className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold font-tamil transition-all cursor-pointer min-h-[44px] ${
                     tab === "register"
-                      ? "bg-white text-[#0A6847] shadow-sm"
-                      : "text-zinc-600 hover:text-zinc-950"
+                      ? "bg-white dark:bg-zinc-800 text-[#0A6847] dark:text-emerald-400 shadow-sm"
+                      : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white"
                   }`}
                 >
                   {isTa ? "புதிய பதிவு (Register)" : "Create Account"}
@@ -289,7 +289,7 @@ function LoginForm() {
 
               {/* Title & Context */}
               <div className="mb-6">
-                <h1 className="text-xl sm:text-2xl font-bold font-tamil text-[#111111] tracking-tight">
+                <h1 className="text-xl sm:text-2xl font-bold font-tamil text-[#111111] dark:text-zinc-100 tracking-tight">
                   {tab === "login"
                     ? isTa
                       ? "வாசகர் உள்நுழைவு"

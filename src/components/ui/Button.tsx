@@ -34,7 +34,7 @@ export function getButtonClassName(
 
   const variants: Record<ButtonVariant, string> = {
     primary:
-      "bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white shadow-sm focus-visible:ring-[var(--color-accent)]",
+      "bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[var(--color-accent-fg,#ffffff)] font-bold shadow-sm focus-visible:ring-[var(--color-accent)]",
     secondary:
       "bg-[var(--color-surface-subtle)] hover:bg-[var(--color-border-hairline)] text-[var(--color-ink-primary)] border border-[var(--color-border-hairline)] focus-visible:ring-[var(--color-ink-muted)]",
     outline:

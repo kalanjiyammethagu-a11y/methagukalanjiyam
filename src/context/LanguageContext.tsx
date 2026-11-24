@@ -145,6 +145,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       root.lang = locale === "ta" ? "ta" : "en";
       root.setAttribute("data-font-size", fontSize);
       root.setAttribute("data-theme", readingTheme);
+      root.classList.toggle("dark", readingTheme === "night");
     } catch {
       // Ignore
     }

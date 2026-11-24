@@ -24,6 +24,7 @@ import {
   LogOut,
   Truck,
   ShoppingBag,
+  Heart,
 } from "lucide-react";
 import {
   BookmarkRibbonIcon,
@@ -215,7 +216,7 @@ export default function AccountPage() {
 
         {/* Apple HIG Segmented Tab Navigation */}
         <div
-          className="p-1 rounded-2xl bg-black/[0.04] backdrop-blur-md border border-black/[0.08] flex items-center gap-1 mb-8 overflow-x-auto scrollbar-none shadow-2xs"
+          className="p-1 rounded-2xl bg-black/[0.04] dark:bg-white/[0.06] backdrop-blur-md border border-black/[0.08] dark:border-white/[0.1] flex items-center gap-1 mb-8 overflow-x-auto scrollbar-none shadow-2xs"
           role="tablist"
         >
           {[
@@ -223,7 +224,7 @@ export default function AccountPage() {
               id: "wishlist" as const,
               label: isTa ? "விருப்பப் பட்டியல்" : "Saved Books",
               count: wishlist.length,
-              icon: BookmarkRibbonIcon,
+              icon: Heart,
             },
             {
               id: "address" as const,
@@ -252,23 +253,33 @@ export default function AccountPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`min-h-[44px] px-4 py-2 rounded-xl font-tamil text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all shrink-0 cursor-pointer active:scale-[0.98] ${
                   isActive
-                    ? "bg-[#0A6847] text-white shadow-xs font-bold"
-                    : "text-zinc-600 hover:text-zinc-950 hover:bg-black/[0.03]"
+                    ? "bg-[#0A6847] dark:bg-emerald-600 text-white shadow-xs font-bold"
+                    : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
                 }`}
               >
-                <Icon className={`h-4 w-4 ${isActive ? "text-white" : "text-[#0A6847]"}`} />
+                <Icon
+                  className={`h-4 w-4 ${
+                    isActive
+                      ? "text-white"
+                      : tab.id === "wishlist" && wishlist.length > 0
+                      ? "text-rose-600 fill-rose-600"
+                      : "text-[#0A6847] dark:text-emerald-400"
+                  }`}
+                />
                 <span>{tab.label}</span>
                 {typeof tab.count === "number" && (
                   <span
                     className={`px-2 py-0.5 rounded-full text-[11px] font-mono ${
-                      isActive ? "bg-white/20 text-white" : "bg-black/8 text-[#555555]"
+                      isActive
+                        ? "bg-white/20 text-white"
+                        : "bg-black/8 dark:bg-white/10 text-[#555555] dark:text-zinc-400"
                     }`}
                   >
                     {tab.count}
                   </span>
                 )}
                 {tab.badge && (
-                  <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-100 text-emerald-800 font-normal">
+                  <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-400 font-normal">
                     {tab.badge}
                   </span>
                 )}
@@ -306,18 +317,18 @@ export default function AccountPage() {
             </div>
 
             {savedBooks.length === 0 ? (
-              <GlassPanel className="p-12 text-center rounded-3xl border border-dashed border-black/15 space-y-4">
-                <div className="h-16 w-16 mx-auto rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[#0A6847]">
-                  <BookmarkRibbonIcon className="h-8 w-8 text-[#0A6847]" />
+              <GlassPanel className="p-12 text-center rounded-3xl border border-dashed border-black/15 dark:border-white/15 space-y-4">
+                <div className="h-16 w-16 mx-auto rounded-full bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-center justify-center text-rose-600">
+                  <Heart className="h-8 w-8 text-rose-600 fill-rose-600" />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-base sm:text-lg font-bold font-tamil text-[#111111]">
+                  <h3 className="text-base sm:text-lg font-bold font-tamil text-[#111111] dark:text-zinc-100">
                     {isTa ? "உங்கள் விருப்பப் பட்டியல் காலியாக உள்ளது" : "Your Wishlist is Empty"}
                   </h3>
-                  <p className="text-xs sm:text-sm text-[#666666] font-tamil max-w-md mx-auto">
+                  <p className="text-xs sm:text-sm text-[#666666] dark:text-zinc-400 font-tamil max-w-md mx-auto">
                     {isTa
-                      ? "நூல்கள் பக்கத்தில் எந்த நூலின் அருகிலும் உள்ள வாசிப்புப் பட்டையை (Bookmark) அழுத்தி உங்கள் நூலகத்தில் சேமிக்கலாம்."
-                      : "Click the bookmark ribbon on any book across the catalog to save it to your library for instant on-site ordering."}
+                      ? "நூல்கள் பக்கத்தில் எந்த நூலின் மீதும் உள்ள இதயக் குறியை (Heart) அழுத்தி உங்கள் விருப்பப் பட்டியலில் சேமிக்கலாம்."
+                      : "Click the heart icon on any book across the catalog to save it to your wishlist for instant on-site ordering."}
                   </p>
                 </div>
                 <div className="pt-2">
@@ -333,15 +344,15 @@ export default function AccountPage() {
                   return (
                     <article
                       key={book.id}
-                      className="glass-panel rounded-2xl p-4 border border-black/10 flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md transition-shadow"
+                      className="glass-panel rounded-2xl p-4 border border-black/10 dark:border-white/10 flex flex-col justify-between space-y-4 shadow-sm hover:shadow-md transition-shadow"
                     >
                       <div className="flex gap-4">
                         <Link
                           href={`/books/${book.slug}`}
-                          className="relative w-20 aspect-[3/4] rounded-lg overflow-hidden shrink-0 shadow-md bg-stone-100"
+                          className="relative w-20 aspect-[3/4] rounded-lg overflow-hidden shrink-0 shadow-md bg-stone-100 dark:bg-zinc-800"
                         >
                           <Image
-                            src={book.image}
+                            src={book.image || "/images/books/book-placeholder.webp"}
                             alt={isTa ? book.title : book.titleEn}
                             fill
                             className="object-cover"
@@ -352,19 +363,19 @@ export default function AccountPage() {
                             {isTa ? book.categoryTa : book.categoryEn}
                           </Badge>
                           <Link href={`/books/${book.slug}`}>
-                            <h3 className="text-sm font-bold font-tamil text-[#111111] hover:text-[#0A6847] line-clamp-2 transition-colors">
+                            <h3 className="text-sm font-bold font-tamil text-[#111111] dark:text-zinc-100 hover:text-[#0A6847] dark:hover:text-emerald-400 line-clamp-2 transition-colors">
                               {isTa ? book.title : book.titleEn}
                             </h3>
                           </Link>
-                          <p className="text-xs text-[#666666] font-tamil truncate">
+                          <p className="text-xs text-[#666666] dark:text-zinc-400 font-tamil truncate">
                             {isTa ? book.author : book.authorEn}
                           </p>
                           <div className="flex items-baseline gap-2 pt-1">
-                            <span className="text-sm sm:text-base font-bold text-[#111111]">
+                            <span className="text-sm sm:text-base font-bold text-[#111111] dark:text-zinc-100">
                               {formatINR(book.discountPrice ?? book.price)}
                             </span>
                             {book.discountPrice && (
-                              <span className="text-xs text-stone-400 line-through">
+                              <span className="text-xs text-stone-400 dark:text-zinc-500 line-through">
                                 {formatINR(book.price)}
                               </span>
                             )}
@@ -372,7 +383,7 @@ export default function AccountPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 pt-3 border-t border-black/8">
+                      <div className="flex items-center gap-2 pt-3 border-t border-black/8 dark:border-white/10">
                         <button
                           type="button"
                           onClick={() => {
@@ -399,7 +410,7 @@ export default function AccountPage() {
                               actionHref: "/cart",
                             });
                           }}
-                          className="flex-1 min-h-[44px] px-3.5 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs font-tamil active:scale-95 cursor-pointer"
+                          className="flex-1 min-h-[44px] px-3.5 rounded-xl bg-[#0A6847] hover:bg-[#085036] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs font-tamil active:scale-95 cursor-pointer"
                         >
                           <ShoppingBag className="h-4 w-4" />
                           <span>{isTa ? "கூடையில் சேர்" : "Add to Cart"}</span>
@@ -408,11 +419,11 @@ export default function AccountPage() {
                         <button
                           type="button"
                           onClick={() => toggleWishlist(book.id)}
-                          aria-label={isTa ? "பட்டியலிலிருந்து நீக்கு" : "Remove from wishlist"}
-                          className="min-h-[44px] min-w-[44px] rounded-xl border border-black/10 hover:border-red-300 hover:bg-red-50 text-[#666666] hover:text-red-600 flex items-center justify-center transition-colors cursor-pointer"
-                          title={isTa ? "நீக்குக" : "Remove"}
+                          aria-label={isTa ? "விருப்பப்பட்டியலிலிருந்து நீக்கு" : "Remove from wishlist"}
+                          className="min-h-[44px] min-w-[44px] rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50/60 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 flex items-center justify-center transition-all cursor-pointer"
+                          title={isTa ? "விருப்பப்பட்டியலிலிருந்து நீக்கு" : "Remove from Wishlist"}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Heart className="h-4 w-4 fill-rose-600 text-rose-600" />
                         </button>
                       </div>
                     </article>

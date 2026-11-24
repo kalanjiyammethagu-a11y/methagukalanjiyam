@@ -211,20 +211,20 @@ export default async function BookDetailPage({ params }: BookPageProps) {
           <div className="lg:col-span-7 space-y-6">
             {/* Title & Author Hierarchy */}
             <div className="space-y-2.5">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#111111] font-tamil-serif leading-[1.3] text-balance">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#111111] dark:text-zinc-100 font-tamil-serif leading-[1.3] text-balance">
                 {book.title}
               </h1>
-              <p className="text-xs sm:text-sm text-[#666666] font-medium tracking-wide" lang="en">
+              <p className="text-xs sm:text-sm text-[#666666] dark:text-zinc-400 font-medium tracking-wide" lang="en">
                 {book.titleEn}
               </p>
               <div className="flex flex-wrap items-center gap-3 pt-1">
                 <Badge variant="category" className="text-xs">
                   {book.categoryTa}
                 </Badge>
-                <span className="text-xs text-black/20" aria-hidden="true">
+                <span className="text-xs text-black/20 dark:text-white/20" aria-hidden="true">
                   •
                 </span>
-                <p className="text-sm sm:text-base text-[#0A6847] font-bold font-tamil">
+                <p className="text-sm sm:text-base text-[#0A6847] dark:text-emerald-400 font-bold font-tamil">
                   ஆசிரியர்: {book.author}
                 </p>
               </div>
@@ -237,14 +237,14 @@ export default async function BookDetailPage({ params }: BookPageProps) {
 
         {/* Related Books */}
         {relatedBooks.length > 0 && (
-          <section className="py-12 sm:py-16 border-t border-black/8">
+          <section className="py-12 sm:py-16 border-t border-black/8 dark:border-white/10">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-[#111111] font-tamil">
+              <h2 className="text-xl sm:text-2xl font-bold text-[#111111] dark:text-zinc-100 font-tamil">
                 தொடர்புடைய வரலாற்று நூல்கள் (Related Historical Titles)
               </h2>
               <Link
                 href="/books"
-                className="text-xs sm:text-sm font-bold text-[#0A6847] hover:underline font-tamil min-h-[44px] flex items-center"
+                className="text-xs sm:text-sm font-bold text-[#0A6847] dark:text-emerald-400 hover:underline font-tamil min-h-[44px] flex items-center"
               >
                 அனைத்தையும் காண்க (View All)
               </Link>

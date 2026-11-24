@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import {
   Check,
   Share2,
+  Heart,
   CreditCard,
   ShoppingBag,
   Truck,
@@ -30,12 +31,13 @@ export interface BookDetailClientProps {
 }
 
 /**
- * Action button below book cover (Share)
+ * Action buttons below book cover (Wishlist & Share)
  */
 export function BookCoverActions({ book }: { book: BookItem }) {
-  const { locale } = useLanguage();
+  const { locale, wishlist, toggleWishlist } = useLanguage();
   const [copiedToast, setCopiedToast] = React.useState(false);
   const isTa = locale === "ta";
+  const isSaved = wishlist.includes(book.id);
 
   const handleShare = () => {
     if (typeof navigator !== "undefined" && navigator.share) {
@@ -52,6 +54,10 @@ export function BookCoverActions({ book }: { book: BookItem }) {
     }
   };
 
+  const handleToggleWishlist = () => {
+    toggleWishlist(book.id, book.title, book.titleEn);
+  };
+
   return (
     <>
       {copiedToast && (
@@ -63,11 +69,33 @@ export function BookCoverActions({ book }: { book: BookItem }) {
         </div>
       )}
 
-      <div className="flex items-center justify-center mt-6">
+      <div className="flex flex-wrap items-center justify-center gap-2.5 mt-6">
+        {/* Wishlist Heart Button */}
+        <button
+          type="button"
+          onClick={handleToggleWishlist}
+          className={cn(
+            "min-h-[44px] px-4 py-2.5 rounded-xl border flex items-center justify-center gap-2 transition-all cursor-pointer text-xs sm:text-sm font-medium font-tamil active:scale-95 shadow-2xs",
+            isSaved
+              ? "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border-rose-300 dark:border-rose-800 font-bold"
+              : "border-black/10 dark:border-white/10 text-zinc-600 dark:text-zinc-300 hover:text-rose-600 hover:border-rose-300 dark:hover:border-rose-700 hover:bg-rose-50/50 dark:hover:bg-rose-950/30"
+          )}
+          aria-label={
+            isSaved
+              ? isTa ? `${book.title} — விருப்பப்பட்டியலிலிருந்து நீக்குக` : `Remove ${book.titleEn} from wishlist`
+              : isTa ? `${book.title} — விருப்பப்பட்டியலில் சேர்க்க` : `Add ${book.titleEn} to wishlist`
+          }
+          title={isSaved ? (isTa ? "விருப்பத்தில் உள்ளது" : "In Wishlist") : (isTa ? "விருப்பப்பட்டியல்" : "Add to Wishlist")}
+        >
+          <Heart className={cn("h-4 w-4", isSaved && "fill-rose-600 text-rose-600")} />
+          <span>{isSaved ? (isTa ? "விருப்பத்தில் உள்ளது" : "In Wishlist") : (isTa ? "விருப்பப்பட்டியல்" : "Wishlist")}</span>
+        </button>
+
+        {/* Share Button */}
         <button
           type="button"
           onClick={handleShare}
-          className="min-h-[44px] px-5 py-2.5 rounded-xl border border-black/10 flex items-center justify-center gap-2 text-zinc-600 hover:text-[#0A6847] hover:border-[#0A6847]/30 hover:bg-[#0A6847]/5 transition-colors cursor-pointer text-xs sm:text-sm font-medium font-tamil"
+          className="min-h-[44px] px-4 py-2.5 rounded-xl border border-black/10 dark:border-white/10 flex items-center justify-center gap-2 text-zinc-600 dark:text-zinc-300 hover:text-[#0A6847] dark:hover:text-emerald-400 hover:border-[#0A6847]/30 dark:hover:border-emerald-400/30 hover:bg-[#0A6847]/5 dark:hover:bg-emerald-400/10 transition-colors cursor-pointer text-xs sm:text-sm font-medium font-tamil active:scale-95"
           aria-label={isTa ? "நூலைப் பகிர்க" : "Share this book"}
           title={isTa ? "நூலைப் பகிர்க" : "Share this book"}
         >
@@ -85,7 +113,7 @@ export function BookCoverActions({ book }: { book: BookItem }) {
  */
 export function BookDetailClient({ book }: BookDetailClientProps) {
   const router = useRouter();
-  const { locale, getFormattedAddress, shippingRegion, showToast } = useLanguage();
+  const { locale, getFormattedAddress, shippingRegion, showToast, wishlist, toggleWishlist } = useLanguage();
   const { addToCart } = useCart();
   const [quantity, setQuantity] = React.useState(1);
   const [activeTab, setActiveTab] = React.useState<"description" | "details">("description");
@@ -93,6 +121,18 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
   const isSoldOut = book.stock <= 0;
   const isLowStock = book.stock > 0 && book.stock <= 5;
   const isTa = locale === "ta";
+  const isSaved = wishlist.includes(book.id);
+
+  // Robust image fallback state
+  const [imgSrc, setImgSrc] = React.useState<string>(book.image || "/images/books/book-placeholder.webp");
+
+  React.useEffect(() => {
+    setImgSrc(book.image || "/images/books/book-placeholder.webp");
+  }, [book.image]);
+
+  const handleToggleWishlist = () => {
+    toggleWishlist(book.id, book.title, book.titleEn);
+  };
 
   const handleAddToCart = () => {
     addToCart({
@@ -102,7 +142,7 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
       author: book.author,
       authorEn: book.authorEn,
       price: book.discountPrice ?? book.price,
-      image: book.image,
+      image: imgSrc,
       slug: book.slug,
       quantity,
       maxStock: book.stock || 10,
@@ -127,7 +167,7 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
       author: book.author,
       authorEn: book.authorEn,
       price: book.discountPrice ?? book.price,
-      image: book.image,
+      image: imgSrc,
       slug: book.slug,
       quantity,
       maxStock: book.stock || 10,
@@ -141,11 +181,11 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
       <GlassPanel className="p-5 sm:p-6 rounded-2xl space-y-5">
         <div className="flex items-baseline justify-between gap-3">
           <div className="flex items-baseline gap-3">
-            <span className="text-3xl sm:text-4xl font-bold text-[#111111] font-mono">
+            <span className="text-3xl sm:text-4xl font-bold text-[#111111] dark:text-zinc-100 font-mono">
               {formatINR(book.discountPrice ?? book.price)}
             </span>
             {book.discountPrice && (
-              <span className="text-lg text-[#999999] line-through font-mono">
+              <span className="text-lg text-[#999999] dark:text-zinc-500 line-through font-mono">
                 {formatINR(book.price)}
               </span>
             )}
@@ -177,10 +217,31 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
                 onChange={setQuantity}
                 locale={locale}
               />
+
+              {/* Wishlist Heart Toggle Button (min 48x48px touch target) */}
+              <button
+                type="button"
+                onClick={handleToggleWishlist}
+                className={cn(
+                  "min-h-[48px] min-w-[48px] h-12 w-12 rounded-2xl border flex items-center justify-center transition-all cursor-pointer active:scale-95 shrink-0 shadow-2xs",
+                  isSaved
+                    ? "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border-rose-300 dark:border-rose-800"
+                    : "border-black/15 dark:border-white/15 text-zinc-600 dark:text-zinc-300 hover:text-rose-600 hover:border-rose-300 dark:hover:border-rose-700 hover:bg-rose-50/50 dark:hover:bg-rose-950/30"
+                )}
+                aria-label={
+                  isSaved
+                    ? isTa ? `${book.title} — விருப்பப்பட்டியலிலிருந்து நீக்குக` : `Remove ${book.titleEn} from wishlist`
+                    : isTa ? `${book.title} — விருப்பப்பட்டியலில் சேர்க்க` : `Add ${book.titleEn} to wishlist`
+                }
+                title={isSaved ? (isTa ? "விருப்பத்தில் உள்ளது" : "In Wishlist") : (isTa ? "விருப்பப்பட்டியல்" : "Add to Wishlist")}
+              >
+                <Heart className={cn("h-5 w-5", isSaved && "fill-rose-600 text-rose-600 scale-110")} />
+              </button>
+
               <button
                 type="button"
                 onClick={handleAddToCart}
-                className="min-h-[48px] px-5 rounded-2xl border-2 border-[#0A6847] text-[#0A6847] hover:bg-[#0A6847]/10 font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] font-tamil cursor-pointer"
+                className="min-h-[48px] px-5 rounded-2xl border-2 border-[#0A6847] dark:border-emerald-500 text-[#0A6847] dark:text-emerald-400 hover:bg-[#0A6847]/10 dark:hover:bg-emerald-500/20 font-bold text-sm sm:text-base flex items-center justify-center gap-2 shadow-xs transition-all active:scale-[0.98] font-tamil cursor-pointer"
               >
                 <ShoppingBag className="h-5 w-5 shrink-0" />
                 <span>{isTa ? "கூடையில் சேர்" : "Add to Cart"}</span>
@@ -188,7 +249,7 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
               <button
                 type="button"
                 onClick={handleBuyNow}
-                className="flex-1 min-h-[48px] px-6 rounded-2xl bg-[#0A6847] hover:bg-[#085237] text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md transition-all active:scale-[0.98] font-tamil cursor-pointer"
+                className="flex-1 min-h-[48px] px-6 rounded-2xl bg-[#0A6847] hover:bg-[#085237] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md transition-all active:scale-[0.98] font-tamil cursor-pointer"
               >
                 <CreditCard className="h-5 w-5 shrink-0" />
                 <span className="font-tamil">
@@ -270,7 +331,7 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
       {/* Tabs: Apple HIG Segmented Control */}
       <div className="space-y-4">
         <div
-          className="p-1 rounded-2xl bg-black/[0.04] backdrop-blur-md border border-black/[0.08] flex items-center gap-1 w-fit shadow-2xs"
+          className="p-1 rounded-2xl bg-black/[0.04] dark:bg-white/[0.06] backdrop-blur-md border border-black/[0.08] dark:border-white/[0.1] flex items-center gap-1 w-fit shadow-2xs"
           role="tablist"
         >
           {(["description", "details"] as const).map((tab) => (
@@ -283,8 +344,8 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
               className={cn(
                 "min-h-[40px] px-5 py-2 text-xs sm:text-sm font-semibold transition-all rounded-xl cursor-pointer font-tamil active:scale-[0.98]",
                 activeTab === tab
-                  ? "bg-[#0A6847] text-white shadow-xs font-bold"
-                  : "text-zinc-600 hover:text-zinc-950 hover:bg-black/[0.03]"
+                  ? "bg-[#0A6847] dark:bg-emerald-600 text-white shadow-xs font-bold"
+                  : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
               )}
             >
               {tab === "description"
@@ -327,12 +388,12 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
                   </span>
                 </div>
               )}
-              <p className="text-sm sm:text-base text-[#222222] leading-[1.8] font-tamil whitespace-pre-line text-pretty">
+              <p className="text-sm sm:text-base text-[#222222] dark:text-zinc-200 leading-[1.8] font-tamil whitespace-pre-line text-pretty">
                 {isTa ? book.descriptionTa : book.descriptionEn}
               </p>
             </div>
           ) : (
-            <div className="space-y-1 bg-white rounded-2xl border border-black/8 p-4">
+            <div className="space-y-1 bg-white dark:bg-zinc-900 rounded-2xl border border-black/8 dark:border-white/10 p-4">
               {[
                 { labelTa: "நூல் பதிவு எண்", labelEn: "Archival ID", value: `MK-ARCH-${book.id.padStart(4, "0")}` },
                 { labelTa: "வெளியீட்டு ஆண்டு", labelEn: "Publication Year", value: book.year },
@@ -345,11 +406,11 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
               ]
                 .filter((item) => item.value)
                 .map((item) => (
-                  <div key={item.labelEn} className="flex items-center justify-between py-2.5 border-b border-black/5 last:border-0 text-xs">
-                    <span className="font-semibold text-[#555555] font-tamil shrink-0">
+                  <div key={item.labelEn} className="flex items-center justify-between py-2.5 border-b border-black/5 dark:border-white/10 last:border-0 text-xs">
+                    <span className="font-semibold text-[#555555] dark:text-zinc-400 font-tamil shrink-0">
                       {isTa ? item.labelTa : item.labelEn}
                     </span>
-                    <span className="font-bold text-[#111111] font-tamil text-right">
+                    <span className="font-bold text-[#111111] dark:text-zinc-100 font-tamil text-right">
                       {item.value}
                     </span>
                   </div>
@@ -365,37 +426,58 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
       {!isSoldOut && (
         <aside
           aria-label={isTa ? "விரைவு வாங்கு பலகை" : "Quick Purchase Bar"}
-          className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-xl border-t border-black/10 px-4 py-2.5 sm:hidden flex items-center justify-between gap-2.5 shadow-2xl"
+          className="fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-[#121110]/95 backdrop-blur-xl border-t border-black/10 dark:border-white/10 px-4 py-2.5 sm:hidden flex items-center justify-between gap-2.5 shadow-2xl"
           style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
         >
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <div className="relative h-11 w-8 rounded-lg overflow-hidden border border-black/10 shrink-0 shadow-2xs">
+            <div className="relative h-11 w-8 rounded-lg overflow-hidden border border-black/10 dark:border-white/10 shrink-0 shadow-2xs">
               <Image
-                src={book.image}
+                src={imgSrc}
                 alt={book.title}
                 fill
                 sizes="32px"
                 className="object-cover"
+                onError={() => setImgSrc("/images/books/book-placeholder.webp")}
               />
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-bold text-zinc-900 truncate font-tamil leading-tight">
+              <div className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate font-tamil leading-tight">
                 {isTa ? book.title : book.titleEn}
               </div>
-              <div className="text-xs font-black text-[#0A6847] font-mono mt-0.5">
+              <div className="text-xs font-black text-[#0A6847] dark:text-emerald-400 font-mono mt-0.5">
                 {formatINR(book.discountPrice ?? book.price)}
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
+            {/* Mobile Sticky Wishlist Heart (44x44px touch target) */}
+            <button
+              type="button"
+              onClick={handleToggleWishlist}
+              aria-label={
+                isSaved
+                  ? isTa ? `${book.title} — விருப்பப்பட்டியலிலிருந்து நீக்குக` : `Remove ${book.titleEn} from wishlist`
+                  : isTa ? `${book.title} — விருப்பப்பட்டியலில் சேர்க்க` : `Add ${book.titleEn} to wishlist`
+              }
+              title={isSaved ? (isTa ? "விருப்பத்தில் உள்ளது" : "In Wishlist") : (isTa ? "விருப்பப்பட்டியல்" : "Add to Wishlist")}
+              className={cn(
+                "min-h-[44px] min-w-[44px] h-11 w-11 rounded-xl border flex items-center justify-center active:scale-95 transition-all cursor-pointer shrink-0",
+                isSaved
+                  ? "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border-rose-300 dark:border-rose-800"
+                  : "border-black/15 dark:border-white/15 text-zinc-600 dark:text-zinc-300 hover:text-rose-600 hover:border-rose-300 dark:hover:border-rose-700"
+              )}
+            >
+              <Heart className={cn("h-4.5 w-4.5 shrink-0", isSaved && "fill-rose-600 text-rose-600 scale-110")} />
+            </button>
+
             {/* Mobile Sticky Add to Cart (44x44px touch target) */}
             <button
               type="button"
               onClick={handleAddToCart}
               aria-label={isTa ? "கூடையில் சேர்க்க" : "Add to Cart"}
               title={isTa ? "கூடையில் சேர்க்க" : "Add to Cart"}
-              className="min-h-[44px] min-w-[44px] h-11 w-11 rounded-xl border border-[#0A6847]/30 text-[#0A6847] bg-[#0A6847]/5 hover:bg-[#0A6847]/15 font-bold text-xs flex items-center justify-center active:scale-95 transition-all font-tamil cursor-pointer shrink-0"
+              className="min-h-[44px] min-w-[44px] h-11 w-11 rounded-xl border border-[#0A6847]/30 dark:border-emerald-500/40 text-[#0A6847] dark:text-emerald-400 bg-[#0A6847]/5 dark:bg-emerald-500/10 hover:bg-[#0A6847]/15 dark:hover:bg-emerald-500/20 font-bold text-xs flex items-center justify-center active:scale-95 transition-all font-tamil cursor-pointer shrink-0"
             >
               <ShoppingBag className="h-4.5 w-4.5 shrink-0" />
             </button>
@@ -405,7 +487,7 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
               type="button"
               onClick={handleBuyNow}
               aria-label={isTa ? "இப்போதே வாங்குக" : "Buy Now"}
-              className="min-h-[44px] px-4 rounded-xl bg-[#0A6847] hover:bg-[#085237] text-white font-bold text-xs flex items-center gap-1.5 shadow-md active:scale-95 transition-all shrink-0 font-tamil cursor-pointer"
+              className="min-h-[44px] px-4 rounded-xl bg-[#0A6847] hover:bg-[#085237] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md active:scale-95 transition-all shrink-0 font-tamil cursor-pointer"
             >
               <CreditCard className="h-4 w-4 shrink-0" />
               <span>{isTa ? "வாங்க" : "Buy Now"}</span>
