@@ -78,7 +78,7 @@ export async function GET(req: NextRequest) {
           video_path: row.video_path || undefined,
           video_url: row.video_url || undefined,
           poster_path: row.poster_path || undefined,
-          poster_url: row.poster_url || "/images/video-posters/1.webp",
+          poster_url: row.poster_url || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/video-posters/1.webp",
           duration_seconds: row.duration_seconds || undefined,
           duration_formatted: row.duration_seconds
             ? `${Math.floor(row.duration_seconds / 60)}:${(row.duration_seconds % 60).toString().padStart(2, "0")}`

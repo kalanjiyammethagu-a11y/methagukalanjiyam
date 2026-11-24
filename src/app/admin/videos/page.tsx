@@ -49,7 +49,7 @@ const initialFormData: VideoFormData = {
   video_url: "",
   embed_url: "",
   poster_path: "",
-  poster_url: "/images/video-posters/1.webp",
+  poster_url: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/video-posters/1.webp",
   duration_seconds: 0,
   file_size_bytes: 0,
   mime_type: "video/mp4",

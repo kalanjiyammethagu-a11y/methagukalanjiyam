@@ -75,7 +75,7 @@ export function BooksCatalogClient({
               authorEn: b.author_en || b.authorEn || b.author,
               price: Number(b.price),
               discountPrice: b.discount_price ? Number(b.discount_price) : (b.discountPrice ? Number(b.discountPrice) : undefined),
-              image: b.cover_front || b.cover_url || b.image || "/images/books/book-01.webp",
+              image: b.cover_image_url || b.cover_front || b.cover_url || b.image || "/images/books/book-placeholder.webp",
               categorySlug: b.categories?.slug || b.category_slug || b.categorySlug || "history",
               categoryTa: b.categories?.name_ta || b.category_ta || b.categoryTa || "வரலாறு",
               categoryEn: b.categories?.name_en || b.category_en || b.categoryEn || "History",

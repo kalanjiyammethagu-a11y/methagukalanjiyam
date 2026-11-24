@@ -41,7 +41,7 @@ async function resolveBook(slug: string): Promise<BookItem | undefined> {
         categorySlug: dbBook.categories?.slug || staticBook?.categorySlug || "history",
         categoryTa: dbBook.categories?.name_ta || staticBook?.categoryTa || "வரலாறு",
         categoryEn: dbBook.categories?.name_en || staticBook?.categoryEn || "History",
-        image: dbBook.cover_front || dbBook.cover_url || staticBook?.image || "/images/books/book-01.webp",
+        image: dbBook.cover_image_url || dbBook.cover_front || dbBook.cover_url || staticBook?.image || "/images/books/book-placeholder.webp",
         featured: Boolean(dbBook.is_featured),
         stock: Number(dbBook.stock ?? 10),
         pages: dbBook.pages || staticBook?.pages,

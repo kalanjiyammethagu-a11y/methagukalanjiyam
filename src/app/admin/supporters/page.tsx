@@ -41,7 +41,7 @@ const initialFormData: MemberFormData = {
   nameTa: "",
   roleEn: "",
   roleTa: "",
-  image: "/images/supporters/harvin.webp",
+  image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/harvin.webp",
   logo_or_photo_path: "",
   logo_or_photo_url: "",
   status: "published",
@@ -429,7 +429,7 @@ export default function AdminSupportersPage() {
                 {/* Avatar with fallback */}
                 <div className="relative h-14 w-14 rounded-2xl overflow-hidden border border-gray-200 bg-gray-100 shrink-0 shadow-2xs">
                   <Image
-                    src={s.image || "/images/supporters/harvin.webp"}
+                    src={s.image || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/harvin.webp"}
                     alt={s.nameEn || s.nameTa}
                     width={56}
                     height={56}
@@ -568,7 +568,7 @@ export default function AdminSupportersPage() {
                 <div className="flex items-center gap-4">
                   <div className="relative h-16 w-16 rounded-2xl overflow-hidden border border-gray-200 bg-gray-50 shrink-0">
                     <Image
-                      src={formData.image || "/images/supporters/harvin.webp"}
+                      src={formData.image || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/harvin.webp"}
                       alt="Preview"
                       width={64}
                       height={64}
@@ -747,7 +747,7 @@ export default function AdminSupportersPage() {
                 <div className="flex items-center gap-4">
                   <div className="relative h-16 w-16 rounded-2xl overflow-hidden border border-gray-200 bg-gray-50 shrink-0">
                     <Image
-                      src={formData.image || "/images/supporters/harvin.webp"}
+                      src={formData.image || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/harvin.webp"}
                       alt="Preview"
                       width={64}
                       height={64}

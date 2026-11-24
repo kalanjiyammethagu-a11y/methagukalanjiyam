@@ -46,7 +46,7 @@ const CATEGORY_OPTIONS = [
   "Announcements & News",
 ];
 
-const DEFAULT_COVER = "/images/blogs/thalapathi-vinayagam-banner.webp";
+const DEFAULT_COVER = "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp";
 
 function mapSupabaseBlog(b: any): ArticleItem {
   return {
@@ -807,7 +807,7 @@ export default function AdminArticlesPage() {
                       type="text"
                       value={formData.coverImage}
                       onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                      placeholder="/images/blogs/thalapathi-vinayagam-banner.webp"
+                      placeholder="https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp"
                       className="w-full px-3 py-1.5 rounded-xl border border-gray-200 text-xs text-gray-700 font-mono focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
                     />
                   </div>

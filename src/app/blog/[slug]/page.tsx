@@ -22,23 +22,47 @@ async function resolveArticle(slug: string): Promise<ArticleDetailData | undefin
       .eq("status", "published")
       .maybeSingle();
 
-    if (dbPost) {
+    let post = dbPost;
+    if (!post) {
+      const { data: legacyPost } = await (supabase.from("blogs") as any)
+        .select("*")
+        .eq("slug", slug)
+        .eq("is_published", true)
+        .maybeSingle();
+
+      if (legacyPost) {
+        post = {
+          slug: legacyPost.slug,
+          title: legacyPost.title,
+          seo_title: legacyPost.meta_title || legacyPost.title,
+          excerpt: legacyPost.excerpt,
+          seo_description: legacyPost.meta_description || legacyPost.excerpt,
+          cover_image_url: legacyPost.cover_image,
+          published_at: legacyPost.published_at,
+          reading_time_mins: legacyPost.reading_time_mins,
+          author: "சாந்தி நேசக்கரம்",
+          body: typeof legacyPost.content === "string" ? legacyPost.content : legacyPost.content?.html || "",
+        };
+      }
+    }
+
+    if (post) {
       return {
-        slug: dbPost.slug,
-        titleTa: dbPost.title,
-        titleEn: dbPost.seo_title || staticArticle?.titleEn || dbPost.title,
-        subtitleTa: dbPost.excerpt || staticArticle?.subtitleTa || "",
-        subtitleEn: dbPost.seo_description || staticArticle?.subtitleEn || "",
-        coverImage: dbPost.cover_image_url || staticArticle?.coverImage || "/images/blogs/thalapathi-vinayagam-banner.webp",
+        slug: post.slug,
+        titleTa: post.title,
+        titleEn: post.seo_title || staticArticle?.titleEn || post.title,
+        subtitleTa: post.excerpt || staticArticle?.subtitleTa || "",
+        subtitleEn: post.seo_description || staticArticle?.subtitleEn || "",
+        coverImage: post.cover_image_url || staticArticle?.coverImage || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp",
         categoryTa: "வரலாற்று ஆவணம்",
         categoryEn: "Historical Record",
-        publishedAt: dbPost.published_at ? dbPost.published_at.split("T")[0] : "2026-08-01",
-        readingTimeMinutes: dbPost.reading_time_mins || 5,
-        authorTa: dbPost.author || "சாந்தி நேசக்கரம்",
-        authorEn: dbPost.author || "Saanthi Nesakaram",
+        publishedAt: post.published_at ? post.published_at.split("T")[0] : "2026-08-01",
+        readingTimeMinutes: post.reading_time_mins || 5,
+        authorTa: post.author || "சாந்தி நேசக்கரம்",
+        authorEn: post.author || "Saanthi Nesakaram",
         relatedBookSlugs: staticArticle?.relatedBookSlugs || ["dhisai-thavara-kanai", "katunayake-attack-victory"],
-        htmlContentTa: dbPost.body || staticArticle?.htmlContentTa || "",
-        htmlContentEn: dbPost.body || staticArticle?.htmlContentEn || "",
+        htmlContentTa: post.body || staticArticle?.htmlContentTa || "",
+        htmlContentEn: post.body || staticArticle?.htmlContentEn || "",
       };
     }
   } catch {

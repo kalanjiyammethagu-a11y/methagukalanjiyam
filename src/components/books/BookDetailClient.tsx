@@ -364,7 +364,7 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
               {book.slug === "dhisai-thavara-kanai" && (
                 <div className="relative w-36 aspect-[4/5] rounded-xl overflow-hidden sm:float-right sm:ml-4 mb-3 border border-black/10 shadow-md">
                   <Image
-                    src="/images/books/thalapathi-vinayagam.webp"
+                    src="https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/thalapathi-vinayagam.webp"
                     alt="தளபதி விநாயகம் வரலாற்றுப் படம்"
                     fill
                     sizes="144px"
@@ -375,7 +375,7 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
               {book.author.includes("சாந்தி நேசக்கரம்") && (
                 <div className="inline-flex items-center gap-2 p-2 rounded-xl bg-amber-50/80 border border-amber-200/60 mb-2">
                   <Image
-                    src="/images/books/saanthi-nesakaram.webp"
+                    src="https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/saanthi-nesakaram.webp"
                     alt="சாந்தி நேசக்கரம் பதிப்பக முத்திரை"
                     width={32}
                     height={28}

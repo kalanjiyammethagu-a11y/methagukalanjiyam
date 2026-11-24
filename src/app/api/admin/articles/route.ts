@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
       `article-${Date.now()}`;
 
     const adminSupabase = createAdminClient();
-    const coverUrl = data.cover_image_url || "/images/blogs/thalapathi-vinayagam-banner.webp";
+    const coverUrl = data.cover_image_url || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp";
     const publishedAt = data.published_at || (data.status === "published" ? new Date().toISOString() : null);
 
     // Try inserting into blog_posts table

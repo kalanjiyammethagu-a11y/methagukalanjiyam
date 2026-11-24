@@ -47,11 +47,11 @@ export const revenueData: RevenueDataPoint[] = [
    TOP SELLING BOOKS
    ———————————————————————————————————— */
 export const topSellingBooks: TopSellingBook[] = [
-  { id: "1", title: "கட்டுநாயக்கா தாக்குதல் வெற்றி", titleEn: "Katunayake Air Base Victory", salesCount: 84, revenue: 8400, image: "/images/books/book-20.webp" },
-  { id: "2", title: "நெஞ்சுரம்", titleEn: "Nenjuram — Fortitude of Spirit", salesCount: 62, revenue: 9300, image: "/images/books/book-16.webp" },
-  { id: "3", title: "திலீபம்", titleEn: "Thileepam — Lt. Col. Thileepan", salesCount: 55, revenue: 4950, image: "/images/blogs/deelipan-memorial.webp" },
-  { id: "5", title: "புறநானூற்று வீரன்", titleEn: "Purananooru Veeran", salesCount: 48, revenue: 4800, image: "/images/books/book-07.webp" },
-  { id: "4", title: "கண்டேன் கண்டேன்", titleEn: "Kanden Kanden", salesCount: 41, revenue: 5330, image: "/images/blogs/kanden-kanden-banner.webp" },
+  { id: "1", title: "கட்டுநாயக்கா தாக்குதல் வெற்றி", titleEn: "Katunayake Air Base Victory", salesCount: 84, revenue: 8400, image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/book-20.webp" },
+  { id: "2", title: "நெஞ்சுரம்", titleEn: "Nenjuram — Fortitude of Spirit", salesCount: 62, revenue: 9300, image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/book-16.webp" },
+  { id: "3", title: "திலீபம்", titleEn: "Thileepam — Lt. Col. Thileepan", salesCount: 55, revenue: 4950, image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/deelipan-memorial.webp" },
+  { id: "5", title: "புறநானூற்று வீரன்", titleEn: "Purananooru Veeran", salesCount: 48, revenue: 4800, image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/book-07.webp" },
+  { id: "4", title: "கண்டேன் கண்டேன்", titleEn: "Kanden Kanden", salesCount: 41, revenue: 5330, image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/kanden-kanden-banner.webp" },
 ];
 
 /* ————————————————————————————————————
@@ -221,7 +221,7 @@ export const mockAdminBooks: AdminBook[] = [
   {
     id: "1", title: "கட்டுநாயக்கா தாக்குதல் வெற்றி", titleEn: "Katunayake Air Base Victory",
     author: "சாந்தி நேசக்கரம்", authorEn: "Saanthi Nesakaram", price: 100, categoryTa: "ஆவணத் தொகுப்பு",
-    categoryEn: "Archival Compilation", categorySlug: "archives", image: "/images/books/book-20.webp", stock: 10,
+    categoryEn: "Archival Compilation", categorySlug: "archives", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/book-20.webp", stock: 10,
     slug: "katunayake-attack-victory", year: "2001", pages: 220, publisher: "மேதகு களஞ்சியம்",
     publisherEn: "Methagu Kalanjiyam", descriptionTa: "கட்டுநாயக்கா சர்வதேச விமான நிலையத் தாக்குதல் வரலாறு.",
     descriptionEn: "Complete archival record of the Katunayake airbase operation.", status: "in_stock",
@@ -230,7 +230,7 @@ export const mockAdminBooks: AdminBook[] = [
   {
     id: "2", title: "நெஞ்சுரம்", titleEn: "Nenjuram — Fortitude of Spirit",
     author: "துளசிச்செல்வன்", authorEn: "Thulasichelvan", price: 150, categoryTa: "வரலாறு",
-    categoryEn: "History", categorySlug: "history", image: "/images/books/book-16.webp", stock: 5,
+    categoryEn: "History", categorySlug: "history", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/book-16.webp", stock: 5,
     slug: "nenjuram", year: "2003", pages: 280, publisher: "மேதகு களஞ்சியம்",
     publisherEn: "Methagu Kalanjiyam", descriptionTa: "போராளிகளின் நெஞ்சுரம் பற்றிய நூல்.",
     descriptionEn: "Authentic chronicles of fighters' unwavering fortitude.", status: "in_stock",
@@ -239,7 +239,7 @@ export const mockAdminBooks: AdminBook[] = [
   {
     id: "3", title: "திசை தவறாக்கணை தளபதிவிநாயகம்", titleEn: "Commander Vinayagam — The Unswerving Arrow",
     author: "சாந்தி நேசக்கரம்", authorEn: "Saanthi Nesakaram", price: 85, categoryTa: "ஆவண நூல்",
-    categoryEn: "Documentary", categorySlug: "archives", image: "/images/blogs/thalapathi-vinayagam-banner.webp", stock: 15,
+    categoryEn: "Documentary", categorySlug: "archives", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp", stock: 15,
     slug: "unswerving-arrow-commander-vinayagam", year: "2004", pages: 196, publisher: "மேதகு களஞ்சியம்",
     publisherEn: "Methagu Kalanjiyam", descriptionTa: "தளபதி விநாயகம் அவர்களின் போர்க்கள வரலாறு.",
     descriptionEn: "Military biography of Commander Vinayagam.", status: "in_stock",
@@ -248,7 +248,7 @@ export const mockAdminBooks: AdminBook[] = [
   {
     id: "4", title: "கண்டேன் கண்டேன்", titleEn: "Kanden Kanden — I Witnessed, I Witnessed",
     author: "சாந்தி நேசக்கரம்", authorEn: "Saanthi Nesakaram", price: 130, categoryTa: "போர்முனை நினைவுகள்",
-    categoryEn: "Battlefield Memoirs", categorySlug: "memoirs", image: "/images/blogs/kanden-kanden-banner.webp", stock: 3,
+    categoryEn: "Battlefield Memoirs", categorySlug: "memoirs", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/kanden-kanden-banner.webp", stock: 3,
     slug: "kanden-kanden", year: "2005", pages: 310, publisher: "மேதகு களஞ்சியம்",
     publisherEn: "Methagu Kalanjiyam", descriptionTa: "நேரில் கண்ட போர்க்களக் காட்சிகள்.",
     descriptionEn: "Firsthand eyewitness accounts from battlefield experiences.", status: "low_stock",
@@ -257,7 +257,7 @@ export const mockAdminBooks: AdminBook[] = [
   {
     id: "5", title: "புறநானூற்று வீரன்", titleEn: "Purananooru Veeran",
     author: "திருமுருகன்காளிலிங்கம்", authorEn: "Thirumurugan Kaleelingam", price: 100, categoryTa: "வரலாற்று ஆய்வு",
-    categoryEn: "Historical Research", categorySlug: "history", image: "/images/books/book-07.webp", stock: 12,
+    categoryEn: "Historical Research", categorySlug: "history", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/book-07.webp", stock: 12,
     slug: "purananooru-veeran", year: "2006", pages: 248, publisher: "மேதகு களஞ்சியம்",
     publisherEn: "Methagu Kalanjiyam", descriptionTa: "புறநானூற்றுக் கால வீரர்களின் ஒப்பாய்வு.",
     descriptionEn: "Comparative historical analysis of warriors in Purananooru era.", status: "in_stock",
@@ -266,7 +266,7 @@ export const mockAdminBooks: AdminBook[] = [
   {
     id: "6", title: "திலீபம்", titleEn: "Thileepam — Lt. Col. Thileepan",
     author: "சாந்தி நேசக்கரம்", authorEn: "Saanthi Nesakaram", price: 90, categoryTa: "நினைவேந்தல்",
-    categoryEn: "Memorial", categorySlug: "biographies", image: "/images/blogs/deelipan-memorial.webp", stock: 0,
+    categoryEn: "Memorial", categorySlug: "biographies", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/deelipan-memorial.webp", stock: 0,
     slug: "thileepam", year: "2007", pages: 180, publisher: "மேதகு களஞ்சியம்",
     publisherEn: "Methagu Kalanjiyam", descriptionTa: "லெப். கேணல் திலீபன் அவர்களின் வரலாறு.",
     descriptionEn: "Biography and fasting struggle of Lt. Col. Thileepan.", status: "out_of_stock",
@@ -324,13 +324,13 @@ export const mockArticles: AdminArticle[] = [
    SUPPORTERS MANAGEMENT MOCK DATA
    ———————————————————————————————————— */
 export const mockSupporters: AdminSupporter[] = [
-  { id: "1", nameTa: "தீபக் ஹார்வின்", nameEn: "Deepak Harvin", roleTa: "நிறுவனத்தின் முதல்வர் மற்றும் நிறுவனர்", roleEn: "Founder & Principal Director", image: "/images/supporters/harvin.webp", instagramUrl: "https://www.instagram.com/harvin_72", whatsappUrl: "https://wa.me/918248654946", isActive: true, joinedAt: "2024-01-01" },
-  { id: "2", nameTa: "சுபி மதன்", nameEn: "Subi Madhan", roleTa: "நிறுவனத்தின் முதல்வர் மற்றும் நிறுவனர்", roleEn: "Founder & Principal Director", image: "/images/supporters/subi.webp", instagramUrl: "https://www.instagram.com/thilo.subi", whatsappUrl: "https://wa.me/916374849095", isActive: true, joinedAt: "2024-01-01" },
-  { id: "3", nameTa: "பச்ச முத்து", nameEn: "Pacha Muthu", roleTa: "திட்ட நெறியாளர்", roleEn: "Project Coordinator", image: "/images/supporters/pachamuthu.webp", instagramUrl: "https://www.instagram.com/pachamuthu_2004", isActive: true, joinedAt: "2024-03-15" },
-  { id: "4", nameTa: "ரஞ்சித்", nameEn: "Ranjith", roleTa: "களஞ்சிய மேலாண்மையாளர்", roleEn: "Archives Manager", image: "/images/supporters/ranjith.webp", instagramUrl: "https://www.instagram.com/ranjith_tamileelam", isActive: true, joinedAt: "2024-04-01" },
-  { id: "5", nameTa: "முனிஸ்வரன்", nameEn: "Muniswaran", roleTa: "படவரி நிர்வாகி", roleEn: "Media Administrator", image: "/images/supporters/muniswaran.webp", instagramUrl: "https://www.instagram.com/_pandimuni", isActive: true, joinedAt: "2024-05-01" },
-  { id: "6", nameTa: "அஜய்", nameEn: "Ajay", roleTa: "ஆவணப் பதிவாளர்", roleEn: "Documenter & Cinematographer", image: "/images/supporters/ajay.webp", instagramUrl: "https://www.instagram.com/d_ajay_offizal", whatsappUrl: "https://wa.me/919884325269", isActive: true, joinedAt: "2024-06-01" },
-  { id: "7", nameTa: "சூரியபிரகாஷ்", nameEn: "Suriyaprakash", roleTa: "தொழில்நுட்ப உருவாக்குநர்", roleEn: "Platform Architect", image: "/images/supporters/suriya.webp", instagramUrl: "https://www.instagram.com/soora_byte", whatsappUrl: "https://wa.me/916382630040", isActive: true, joinedAt: "2024-07-01" },
-  { id: "8", nameTa: "திலீபன்", nameEn: "Dhilipan", roleTa: "தரவு ஒருங்கிணைப்பாளர்", roleEn: "Data Coordinator", image: "/images/supporters/deelip.webp", instagramUrl: "https://www.instagram.com/dhilip_offizial", isActive: true, joinedAt: "2024-08-01" },
-  { id: "9", nameTa: "செல்வா", nameEn: "Selva", roleTa: "சமூக நிர்வாகி", roleEn: "Community Administrator", image: "/images/supporters/selva.webp", instagramUrl: "https://www.instagram.com/tamil_warriors2.0", isActive: false, joinedAt: "2024-09-01" },
+  { id: "1", nameTa: "தீபக் ஹார்வின்", nameEn: "Deepak Harvin", roleTa: "நிறுவனத்தின் முதல்வர் மற்றும் நிறுவனர்", roleEn: "Founder & Principal Director", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/harvin.webp", instagramUrl: "https://www.instagram.com/harvin_72", whatsappUrl: "https://wa.me/918248654946", isActive: true, joinedAt: "2024-01-01" },
+  { id: "2", nameTa: "சுபி மதன்", nameEn: "Subi Madhan", roleTa: "நிறுவனத்தின் முதல்வர் மற்றும் நிறுவனர்", roleEn: "Founder & Principal Director", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/subi.webp", instagramUrl: "https://www.instagram.com/thilo.subi", whatsappUrl: "https://wa.me/916374849095", isActive: true, joinedAt: "2024-01-01" },
+  { id: "3", nameTa: "பச்ச முத்து", nameEn: "Pacha Muthu", roleTa: "திட்ட நெறியாளர்", roleEn: "Project Coordinator", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/pachamuthu.webp", instagramUrl: "https://www.instagram.com/pachamuthu_2004", isActive: true, joinedAt: "2024-03-15" },
+  { id: "4", nameTa: "ரஞ்சித்", nameEn: "Ranjith", roleTa: "களஞ்சிய மேலாண்மையாளர்", roleEn: "Archives Manager", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/ranjith.webp", instagramUrl: "https://www.instagram.com/ranjith_tamileelam", isActive: true, joinedAt: "2024-04-01" },
+  { id: "5", nameTa: "முனிஸ்வரன்", nameEn: "Muniswaran", roleTa: "படவரி நிர்வாகி", roleEn: "Media Administrator", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/muniswaran.webp", instagramUrl: "https://www.instagram.com/_pandimuni", isActive: true, joinedAt: "2024-05-01" },
+  { id: "6", nameTa: "அஜய்", nameEn: "Ajay", roleTa: "ஆவணப் பதிவாளர்", roleEn: "Documenter & Cinematographer", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/ajay.webp", instagramUrl: "https://www.instagram.com/d_ajay_offizal", whatsappUrl: "https://wa.me/919884325269", isActive: true, joinedAt: "2024-06-01" },
+  { id: "7", nameTa: "சூரியபிரகாஷ்", nameEn: "Suriyaprakash", roleTa: "தொழில்நுட்ப உருவாக்குநர்", roleEn: "Platform Architect", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/suriya.webp", instagramUrl: "https://www.instagram.com/soora_byte", whatsappUrl: "https://wa.me/916382630040", isActive: true, joinedAt: "2024-07-01" },
+  { id: "8", nameTa: "திலீபன்", nameEn: "Dhilipan", roleTa: "தரவு ஒருங்கிணைப்பாளர்", roleEn: "Data Coordinator", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/deelip.webp", instagramUrl: "https://www.instagram.com/dhilip_offizial", isActive: true, joinedAt: "2024-08-01" },
+  { id: "9", nameTa: "செல்வா", nameEn: "Selva", roleTa: "சமூக நிர்வாகி", roleEn: "Community Administrator", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/selva.webp", instagramUrl: "https://www.instagram.com/tamil_warriors2.0", isActive: false, joinedAt: "2024-09-01" },
 ];

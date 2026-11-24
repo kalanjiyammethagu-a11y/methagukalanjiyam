@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
           nameTa: row.name,
           roleEn: row.role_en || row.description || "Archival Contributor",
           roleTa: row.role_ta || row.description || "ஆவணப் பங்களிப்பாளர்",
-          image: row.logo_or_photo_url || row.avatar_url || "/images/supporters/harvin.webp",
+          image: row.logo_or_photo_url || row.avatar_url || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/harvin.webp",
           logo_or_photo_path: row.logo_or_photo_path || undefined,
           logo_or_photo_url: row.logo_or_photo_url || undefined,
           website_url: row.website_url || undefined,
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     const name = val.nameEn || val.nameTa || val.name || "Archive Supporter";
     const roleEn = val.roleEn || val.role_en || val.description || "Archival Contributor";
     const roleTa = val.roleTa || val.role_ta || val.description || "ஆவணப் பங்களிப்பாளர்";
-    const photoUrl = val.logo_or_photo_url || val.image || "/images/supporters/harvin.webp";
+    const photoUrl = val.logo_or_photo_url || val.image || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/harvin.webp";
     const photoPath = val.logo_or_photo_path || null;
     const isActive = val.isActive ?? val.is_active ?? true;
     const status = val.status || (isActive ? "published" : "draft");

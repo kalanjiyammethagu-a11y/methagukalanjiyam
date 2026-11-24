@@ -61,7 +61,7 @@ export default async function VideosPage() {
         descriptionEn: row.description || "",
         embedUrl: row.embed_url || row.video_url || "",
         videoUrl: row.video_url || undefined,
-        posterImage: row.poster_url || "/images/video-posters/1.webp",
+        posterImage: row.poster_url || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/video-posters/1.webp",
         categoryTa: "வரலாற்று ஆவணம்",
         categoryEn: "History",
         duration: row.duration_seconds

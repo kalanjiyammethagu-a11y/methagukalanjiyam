@@ -58,7 +58,7 @@ export default async function SupportersPage() {
         nameEn: row.name,
         roleTa: row.role_ta || row.description || "ஆவணப் பங்களிப்பாளர்",
         roleEn: row.role_en || row.description || "Archival Contributor",
-        image: row.logo_or_photo_url || row.avatar_url || "/images/supporters/harvin.webp",
+        image: row.logo_or_photo_url || row.avatar_url || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/harvin.webp",
         instagramUrl: row.website_url || undefined,
         whatsappUrl: undefined,
       }));

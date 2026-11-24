@@ -44,25 +44,47 @@ export default async function BlogPage() {
 
   try {
     const supabase = await createClient();
-    const { data: dbPosts } = await (supabase.from("blog_posts") as any)
+    const { data: dbPosts, error: blogPostsErr } = await (supabase.from("blog_posts") as any)
       .select("*")
       .eq("status", "published")
       .order("published_at", { ascending: false, nullsFirst: false });
 
-    if (dbPosts && dbPosts.length > 0) {
+    if (!blogPostsErr && dbPosts && dbPosts.length > 0) {
       initialArticles = dbPosts.map((p: any) => ({
         slug: p.slug,
         titleTa: p.title,
         titleEn: p.seo_title || p.title,
         excerptTa: p.excerpt || "",
         excerptEn: p.seo_description || p.excerpt || "",
-        coverImage: p.cover_image_url || "/images/blogs/thalapathi-vinayagam-banner.webp",
+        coverImage: p.cover_image_url || p.cover_image || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp",
         categoryTa: "வரலாற்று ஆவணம்",
         categoryEn: "Historical Record",
         publishedAt: p.published_at ? p.published_at.split("T")[0] : "2026-08-01",
         readingTimeMinutes: p.reading_time_mins || 5,
         featured: p.sort_order <= 1,
       }));
+    } else {
+      // Query blogs table
+      const { data: legacyBlogs } = await (supabase.from("blogs") as any)
+        .select("*")
+        .eq("is_published", true)
+        .order("published_at", { ascending: false, nullsFirst: false });
+
+      if (legacyBlogs && legacyBlogs.length > 0) {
+        initialArticles = legacyBlogs.map((b: any) => ({
+          slug: b.slug,
+          titleTa: b.title,
+          titleEn: b.meta_title || b.title,
+          excerptTa: b.excerpt || "",
+          excerptEn: b.meta_description || b.excerpt || "",
+          coverImage: b.cover_image || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp",
+          categoryTa: "வரலாற்று ஆவணம்",
+          categoryEn: "Historical Record",
+          publishedAt: b.published_at ? b.published_at.split("T")[0] : "2026-08-01",
+          readingTimeMinutes: b.reading_time_mins || 5,
+          featured: true,
+        }));
+      }
     }
   } catch {
     // Keep fallback static articles
