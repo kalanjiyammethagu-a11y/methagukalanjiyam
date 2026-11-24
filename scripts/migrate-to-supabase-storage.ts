@@ -13,6 +13,28 @@
 import * as fs from "fs";
 import * as path from "path";
 import { createClient } from "@supabase/supabase-js";
+import { loadEnvConfig } from "@next/env";
+
+// Automatically load .env.local, .env, and environment configurations
+loadEnvConfig(process.cwd());
+
+// Supplementary manual fallback parser for .env.local
+const envLocalPath = path.resolve(process.cwd(), ".env.local");
+if (fs.existsSync(envLocalPath)) {
+  const content = fs.readFileSync(envLocalPath, "utf-8");
+  for (const line of content.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const match = trimmed.match(/^([^=]+)=(.*)$/);
+    if (match) {
+      const key = match[1].trim();
+      const val = match[2].trim().replace(/^["']|["']$/g, "");
+      if (!process.env[key]) {
+        process.env[key] = val;
+      }
+    }
+  }
+}
 
 const isDryRun = process.argv.includes("--dry-run");
 
@@ -29,6 +51,7 @@ if (!supabaseUrl || !serviceKey) {
     console.log("[Info] Credentials not present in current env. Running dry-run simulation using mock endpoints.");
   } else {
     console.error("[Error] NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for live migration.");
+    console.error("       Please ensure .env.local contains these variables.");
     process.exit(1);
   }
 }
@@ -111,6 +134,37 @@ async function runMigration() {
   let totalUploaded = 0;
   let totalUpdated = 0;
 
+  // In live mode, verify bucket availability
+  if (!isDryRun && supabase) {
+    console.log("Checking Supabase connection and storage buckets...");
+    try {
+      const { data: buckets, error: bucketsErr } = await supabase.storage.listBuckets();
+      if (bucketsErr) {
+        console.warn(`[Warning] Could not list buckets: ${bucketsErr.message}`);
+      } else {
+        const bucketNames = new Set(buckets.map((b) => b.name));
+        for (const target of targets) {
+          if (!bucketNames.has(target.bucket)) {
+            console.log(`[Info] Bucket '${target.bucket}' not found. Attempting to create...`);
+            const { error: createErr } = await supabase.storage.createBucket(target.bucket, {
+              public: true,
+            });
+            if (createErr) {
+              console.warn(
+                `  [Notice] Could not auto-create bucket '${target.bucket}': ${createErr.message}.` +
+                ` Please apply 'supabase/migrations/016_storage_buckets_and_policies.sql' if required.`
+              );
+            } else {
+              console.log(`  ✓ Bucket '${target.bucket}' created successfully.`);
+            }
+          }
+        }
+      }
+    } catch (err: any) {
+      console.warn(`[Warning] Connection check notice: ${err.message || err}`);
+    }
+  }
+
   for (const target of targets) {
     console.log(`\n▶ Processing target: Bucket '${target.bucket}' from ${path.relative(process.cwd(), target.sourceDir)}`);
 
@@ -148,7 +202,7 @@ async function runMigration() {
       try {
         const fileBytes = fs.readFileSync(filePath);
 
-        // Upload to bucket (upsert: true to avoid duplicate failure)
+        // Upload to bucket (upsert: true so rerunning does not fail)
         const { error: uploadErr } = await supabase.storage
           .from(target.bucket)
           .upload(storagePath, fileBytes, {
@@ -157,7 +211,7 @@ async function runMigration() {
           });
 
         if (uploadErr) {
-          console.warn(`  [Warn] Failed to upload ${filename}: ${uploadErr.message}`);
+          console.warn(`  [Warn] Failed to upload ${filename} to ${target.bucket}: ${uploadErr.message}`);
           continue;
         }
 
@@ -170,8 +224,7 @@ async function runMigration() {
         const finalUrl = publicUrlData.publicUrl;
 
         // Update corresponding DB row
-        const matchValue = `/images/${path.basename(target.sourceDir)}/${filename}`;
-        const { data: updateData, error: dbErr } = await supabase
+        const { error: dbErr } = await supabase
           .from(target.table)
           .update({
             [target.pathColumn]: storagePath,
@@ -180,7 +233,7 @@ async function runMigration() {
           .ilike(target.matchField, `%${filename}%`);
 
         if (dbErr) {
-          console.warn(`  [Warn] DB update failed for ${filename} on ${target.table}: ${dbErr.message}`);
+          console.warn(`  [Notice] DB update notice for ${filename} on ${target.table}: ${dbErr.message}`);
         } else {
           totalUpdated++;
           console.log(`  ✓ Synced '${filename}' -> ${target.bucket}/${storagePath}`);
@@ -196,7 +249,7 @@ async function runMigration() {
   console.log(` Total Files Scanned : ${totalScanned}`);
   console.log(` Total Uploaded      : ${totalUploaded}`);
   console.log(` Total DB Rows Linked: ${totalUpdated}`);
-  console.log(" Status              : SUCCESS");
+  console.log(" Status              : COMPLETE");
   console.log("==================================================================");
 }
 
