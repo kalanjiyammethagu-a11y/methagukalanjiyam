@@ -116,15 +116,8 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // 2. Route protection for /account
-  if (pathname.startsWith("/account")) {
-    if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("redirectTo", pathname);
-      return NextResponse.redirect(url);
-    }
-  }
+  // /account is publicly accessible to all readers (saved wishlist, delivery address, settings, and orders).
+  // Authentication is handled progressively within the account page.
 
   return supabaseResponse;
 }
