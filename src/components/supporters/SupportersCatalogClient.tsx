@@ -95,9 +95,16 @@ const allSupporters: SupporterData[] = [
   },
 ];
 
-export function SupportersCatalogClient() {
+interface SupportersCatalogClientProps {
+  initialSupporters?: SupporterData[];
+}
+
+export function SupportersCatalogClient({
+  initialSupporters,
+}: SupportersCatalogClientProps = {}) {
   const { locale } = useLanguage();
   const isTa = locale === "ta";
+  const supporters = initialSupporters && initialSupporters.length > 0 ? initialSupporters : allSupporters;
 
   return (
     <div className="min-h-screen pb-24">
@@ -176,7 +183,7 @@ export function SupportersCatalogClient() {
 
         {/* Supporters Grid (Gestalt Similarity) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-          {allSupporters.map((supporter) => (
+          {supporters.map((supporter) => (
             <SupporterCard
               key={supporter.id}
               supporter={supporter}

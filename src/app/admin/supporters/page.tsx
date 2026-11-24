@@ -28,6 +28,9 @@ interface MemberFormData {
   roleEn: string;
   roleTa: string;
   image: string;
+  logo_or_photo_path?: string;
+  logo_or_photo_url?: string;
+  status: "draft" | "published";
   instagramUrl: string;
   whatsappUrl: string;
   isActive: boolean;
@@ -39,6 +42,9 @@ const initialFormData: MemberFormData = {
   roleEn: "",
   roleTa: "",
   image: "/images/supporters/harvin.webp",
+  logo_or_photo_path: "",
+  logo_or_photo_url: "",
+  status: "published",
   instagramUrl: "",
   whatsappUrl: "",
   isActive: true,
@@ -101,7 +107,12 @@ export default function AdminSupportersPage() {
 
       if (res.ok) {
         const result = await res.json();
-        setFormData((prev) => ({ ...prev, image: result.path }));
+        setFormData((prev) => ({
+          ...prev,
+          image: result.publicUrl || result.path,
+          logo_or_photo_url: result.publicUrl || result.path,
+          logo_or_photo_path: result.path,
+        }));
         showToast("Profile photo uploaded successfully!");
       } else {
         showToast("Photo upload failed. Using default image.");
@@ -149,6 +160,9 @@ export default function AdminSupportersPage() {
       roleEn: supporter.roleEn,
       roleTa: supporter.roleTa,
       image: supporter.image,
+      logo_or_photo_path: supporter.logo_or_photo_path || "",
+      logo_or_photo_url: supporter.logo_or_photo_url || supporter.image,
+      status: supporter.status || (supporter.isActive ? "published" : "draft"),
       instagramUrl: supporter.instagramUrl || "",
       whatsappUrl: supporter.whatsappUrl || "",
       isActive: supporter.isActive,

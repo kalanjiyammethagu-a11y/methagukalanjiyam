@@ -85,6 +85,13 @@ export interface AdminSupporter {
   roleTa: string;
   roleEn: string;
   image: string;
+  logo_or_photo_path?: string;
+  logo_or_photo_url?: string;
+  website_url?: string;
+  tagline?: string;
+  description?: string;
+  sort_order?: number;
+  status?: "draft" | "published";
   instagramUrl?: string;
   whatsappUrl?: string;
   isActive: boolean;

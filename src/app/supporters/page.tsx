@@ -1,7 +1,11 @@
 import * as React from "react";
 import type { Metadata } from "next";
 import { SupportersCatalogClient } from "@/components/supporters/SupportersCatalogClient";
+import type { SupporterData } from "@/components/supporters/SupporterCard";
 import { safeJsonLdStringify } from "@/lib/sanitize";
+import { createClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "களஞ்சியத்தின் ஆதரவாளர்கள் — Guardians & Archival Custodians | மேதகு களஞ்சியம்",
@@ -35,7 +39,34 @@ export const metadata: Metadata = {
   },
 };
 
-export default function SupportersPage() {
+export default async function SupportersPage() {
+  let dbSupporters: SupporterData[] = [];
+
+  try {
+    const supabase = await createClient();
+    const { data, error } = await (supabase.from("supporters") as any)
+      .select("*")
+      .eq("status", "published")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+
+    if (!error && data && data.length > 0) {
+      dbSupporters = data.map((row: any) => ({
+        id: row.id,
+        nameTa: row.name,
+        nameEn: row.name,
+        roleTa: row.role_ta || row.description || "ஆவணப் பங்களிப்பாளர்",
+        roleEn: row.role_en || row.description || "Archival Contributor",
+        image: row.logo_or_photo_url || row.avatar_url || "/images/supporters/harvin.webp",
+        instagramUrl: row.website_url || undefined,
+        whatsappUrl: undefined,
+      }));
+    }
+  } catch (err) {
+    console.error("Failed to load supporters from Supabase:", err);
+  }
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -79,7 +110,7 @@ export default function SupportersPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLdStringify(jsonLd) }}
       />
-      <SupportersCatalogClient />
+      <SupportersCatalogClient initialSupporters={dbSupporters.length > 0 ? dbSupporters : undefined} />
     </>
   );
 }

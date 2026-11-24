@@ -31,6 +31,10 @@ export function SupporterCard({
   const isTa = locale === "ta";
   const name = isTa ? supporter.nameTa : supporter.nameEn;
   const role = isTa ? supporter.roleTa : supporter.roleEn;
+  const imageSrc =
+    supporter.image.startsWith("http") || supporter.image.startsWith("/")
+      ? supporter.image
+      : `/${supporter.image}`;
 
   return (
     <div
@@ -44,7 +48,7 @@ export function SupporterCard({
         <div className="relative h-24 w-24 sm:h-28 sm:w-28 rounded-full overflow-hidden border-2 border-[#0A6847]/20 p-1 bg-white shadow-md group-hover:scale-105 group-hover:border-[#0A6847] transition-all duration-300">
           <div className="relative h-full w-full rounded-full overflow-hidden bg-black/5">
             <Image
-              src={supporter.image.startsWith("/") ? supporter.image : `/${supporter.image}`}
+              src={imageSrc}
               alt={name}
               fill
               sizes="112px"
