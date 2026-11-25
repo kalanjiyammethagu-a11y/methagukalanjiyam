@@ -3,15 +3,17 @@
 import * as React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, Lock, Mail, ArrowRight, Loader2, RefreshCw, AlertCircle, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, Lock, Mail, ArrowRight, Loader2, RefreshCw, AlertCircle, CheckCircle2, KeyRound } from "lucide-react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
 
   const [step, setStep] = React.useState<"credentials" | "otp">("credentials");
+  const [challengeMode, setChallengeMode] = React.useState<"otp" | "backup">("otp");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [otpCode, setOtpCode] = React.useState(["", "", "", "", "", ""]);
+  const [backupCode, setBackupCode] = React.useState("");
   const [maskedEmail, setMaskedEmail] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
@@ -58,25 +60,15 @@ export default function AdminLoginPage() {
         return;
       }
 
-      // 2FA bypassed: direct session issued — redirect immediately
-      if (data.success && data.redirect) {
-        setSuccessMessage("Login successful! Redirecting to dashboard...");
-        window.location.href = data.redirect;
-        return;
-      }
-
       setStep("otp");
+      setChallengeMode("otp");
+      setBackupCode("");
+      setOtpCode(["", "", "", "", "", ""]);
       setMaskedEmail(data.email || email);
-      setSuccessMessage(data.message || "A 6-digit verification code has been dispatched to your email.");
+      setSuccessMessage(data.message || "A 6-digit verification code has been dispatched to your email via Resend.");
       setCooldown(60);
       setAttemptsLeft(5);
       setLoading(false);
-
-      if (data.simulatedOtp) {
-        const digits = data.simulatedOtp.split("").slice(0, 6);
-        setOtpCode(digits);
-        setSuccessMessage(`Simulation Mode: Verification Code is ${data.simulatedOtp} (Auto-filled)`);
-      }
 
       // Auto-focus first OTP input on next tick
       setTimeout(() => {
@@ -124,24 +116,37 @@ export default function AdminLoginPage() {
     otpInputRefs.current[focusIndex]?.focus();
   };
 
-  // Handle Step 2: OTP submission
+  // Handle Step 2: OTP or Single-Use Backup Code submission
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
-    const code = otpCode.join("");
-    if (code.length !== 6) {
-      setErrorMessage("Please enter the complete 6-digit verification code.");
-      return;
+    if (challengeMode === "backup") {
+      const cleanedBackup = backupCode.trim();
+      if (cleanedBackup.length < 8) {
+        setErrorMessage("Please enter your complete backup recovery code (e.g. ABCD-EFGH).");
+        return;
+      }
+    } else {
+      const code = otpCode.join("");
+      if (code.length !== 6) {
+        setErrorMessage("Please enter the complete 6-digit verification code.");
+        return;
+      }
     }
 
     setLoading(true);
 
     try {
+      const payload =
+        challengeMode === "backup"
+          ? { backup_code: backupCode.trim() }
+          : { otp_code: otpCode.join("") };
+
       const res = await fetch("/api/auth/admin/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ otp_code: code }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -154,6 +159,7 @@ export default function AdminLoginPage() {
         if (data.lockout) {
           setStep("credentials");
           setPassword("");
+          setBackupCode("");
           setOtpCode(["", "", "", "", "", ""]);
         }
         setLoading(false);
@@ -332,43 +338,108 @@ export default function AdminLoginPage() {
               </button>
             </form>
           ) : (
-            /* STEP 2: 6-Digit OTP */
+            /* STEP 2: 6-Digit OTP or Single-Use Backup Code */
             <form onSubmit={handleOtpSubmit} className="space-y-5">
-              <div className="text-center space-y-1">
-                <p className="text-xs text-gray-500">
-                  Enter the 6-digit authentication code sent to:
-                </p>
-                <p className="text-xs font-mono font-bold text-[#0A6847]">
-                  {maskedEmail}
-                </p>
+              <div className="flex items-center p-1 bg-gray-100 rounded-xl border border-gray-200 text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setChallengeMode("otp");
+                    setErrorMessage(null);
+                  }}
+                  className={`flex-1 py-2 rounded-lg transition-all cursor-pointer min-h-[38px] ${
+                    challengeMode === "otp"
+                      ? "bg-white text-[#0A6847] shadow-2xs font-bold"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  Email Code (OTP)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setChallengeMode("backup");
+                    setErrorMessage(null);
+                  }}
+                  className={`flex-1 py-2 rounded-lg transition-all cursor-pointer min-h-[38px] ${
+                    challengeMode === "backup"
+                      ? "bg-white text-[#0A6847] shadow-2xs font-bold"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  Backup Code
+                </button>
               </div>
 
-              <div
-                className="flex items-center justify-center gap-2 sm:gap-2.5"
-                onPaste={handleOtpPaste}
-              >
-                {otpCode.map((digit, idx) => (
-                  <input
-                    key={idx}
-                    ref={(el) => {
-                      otpInputRefs.current[idx] = el;
-                    }}
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleOtpChange(idx, e.target.value)}
-                    onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                    className="w-11 h-12 text-center text-lg font-mono font-extrabold rounded-xl bg-gray-50 border border-gray-200 focus:border-[#0A6847] focus:ring-2 focus:ring-[#0A6847]/20 text-gray-900 outline-none transition-all"
-                  />
-                ))}
-              </div>
+              {challengeMode === "otp" ? (
+                <>
+                  <div className="text-center space-y-1">
+                    <p className="text-xs text-gray-500">
+                      Enter the 6-digit verification code sent via Resend to:
+                    </p>
+                    <p className="text-xs font-mono font-bold text-[#0A6847]">
+                      {maskedEmail}
+                    </p>
+                  </div>
+
+                  <div
+                    className="flex items-center justify-center gap-2 sm:gap-2.5"
+                    onPaste={handleOtpPaste}
+                  >
+                    {otpCode.map((digit, idx) => (
+                      <input
+                        key={idx}
+                        ref={(el) => {
+                          otpInputRefs.current[idx] = el;
+                        }}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={1}
+                        aria-label={`Verification digit ${idx + 1}`}
+                        value={digit}
+                        onChange={(e) => handleOtpChange(idx, e.target.value)}
+                        onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                        className="w-11 h-12 text-center text-lg font-mono font-extrabold rounded-xl bg-gray-50 border border-gray-200 focus:border-[#0A6847] focus:ring-2 focus:ring-[#0A6847]/20 text-gray-900 outline-none transition-all"
+                      />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-2">
+                  <label
+                    htmlFor="admin-backup-code"
+                    className="block text-xs font-semibold text-gray-600"
+                  >
+                    Single-Use Backup Recovery Code
+                  </label>
+                  <div className="relative">
+                    <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      id="admin-backup-code"
+                      type="text"
+                      autoFocus
+                      value={backupCode}
+                      onChange={(e) => setBackupCode(e.target.value.toUpperCase())}
+                      placeholder="XXXX-XXXX"
+                      className="w-full h-11 pl-10 pr-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-[#0A6847] focus:ring-2 focus:ring-[#0A6847]/20 text-gray-900 text-sm font-mono uppercase tracking-wider outline-none"
+                    />
+                  </div>
+                  <p className="text-[11px] text-gray-500 leading-relaxed">
+                    Enter one of your 8 single-use recovery codes. It will be invalidated immediately after login.
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <button
                   type="submit"
-                  disabled={loading || otpCode.join("").length !== 6}
+                  disabled={
+                    loading ||
+                    (challengeMode === "otp"
+                      ? otpCode.join("").length !== 6
+                      : backupCode.trim().length < 8)
+                  }
                   className="w-full h-11 rounded-xl bg-[#0A6847] hover:bg-[#085036] disabled:opacity-40 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
                 >
                   {loading ? (
@@ -390,6 +461,7 @@ export default function AdminLoginPage() {
                     onClick={() => {
                       setStep("credentials");
                       setOtpCode(["", "", "", "", "", ""]);
+                      setBackupCode("");
                       setErrorMessage(null);
                     }}
                     className="text-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
@@ -397,15 +469,17 @@ export default function AdminLoginPage() {
                     ← Back to credentials
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={handleResendOtp}
-                    disabled={cooldown > 0 || loading}
-                    className="text-[#0A6847] hover:text-[#085036] disabled:text-gray-300 font-semibold flex items-center gap-1 transition-colors cursor-pointer disabled:cursor-not-allowed"
-                  >
-                    <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
-                    <span>{cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend code"}</span>
-                  </button>
+                  {challengeMode === "otp" && (
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      disabled={cooldown > 0 || loading}
+                      className="text-[#0A6847] hover:text-[#085036] disabled:text-gray-300 font-semibold flex items-center gap-1 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
+                      <span>{cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend code"}</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </form>

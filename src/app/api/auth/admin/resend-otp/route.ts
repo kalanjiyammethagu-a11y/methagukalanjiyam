@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { hashSecret, generateSecureOtp } from "@/lib/auth-service";
+import { recordAuthEvent, rotateAdminOtpChallenge } from "@/lib/auth-service";
 import { sendAdminOtpEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
@@ -16,71 +15,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const preAuthHash = await hashSecret(preAuthToken);
-    const adminSupabase = createAdminClient();
-
-    // Find current active OTP record
-    const { data: record, error } = await (adminSupabase.from("admin_otp_codes") as any)
-      .select("*")
-      .eq("pre_auth_token_hash", preAuthHash)
-      .is("consumed_at", null)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error || !record) {
-      return NextResponse.json(
-        { error: "No active verification session found. Please sign in again." },
-        { status: 401 }
-      );
-    }
-
-    // Check 60-second cooldown
-    const lastSentAt = new Date(record.last_sent_at).getTime();
-    const cooldownMs = 60 * 1000;
-    const timeSinceLast = Date.now() - lastSentAt;
-
-    if (timeSinceLast < cooldownMs) {
-      const waitSeconds = Math.ceil((cooldownMs - timeSinceLast) / 1000);
+    const rotated = await rotateAdminOtpChallenge(preAuthToken);
+    if (!rotated.ok || !rotated.otpCode || !rotated.email) {
       return NextResponse.json(
         {
-          error: `Please wait ${waitSeconds} seconds before requesting a new code.`,
-          retryAfter: waitSeconds,
+          error: rotated.error || "Unable to resend verification code.",
+          retryAfter: rotated.retryAfterSeconds,
         },
-        { status: 429 }
+        { status: rotated.status }
       );
     }
 
-    // Check hourly limit / max resends (max 3 resends per login session)
-    if (record.resend_count >= 3) {
-      return NextResponse.json(
-        {
-          error:
-            "Maximum resend limit reached for this session. Please restart login from Step 1.",
-        },
-        { status: 429 }
-      );
-    }
-
-    // Generate new OTP
-    const newOtpCode = generateSecureOtp();
-    const newHashedCode = await hashSecret(newOtpCode);
-    const newExpiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-
-    await (adminSupabase.from("admin_otp_codes") as any)
-      .update({
-        hashed_code: newHashedCode,
-        resend_count: record.resend_count + 1,
-        attempts: 0, // Reset attempts on fresh code
-        last_sent_at: new Date().toISOString(),
-        expires_at: newExpiresAt,
-      })
-      .eq("id", record.id);
-
-    // Send email
     const emailResult = await sendAdminOtpEmail({
-      to: record.email,
-      otpCode: newOtpCode,
+      to: rotated.email,
+      otpCode: rotated.otpCode,
       expiresInMinutes: 10,
     });
 
@@ -91,19 +39,34 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const clientIp =
+      req.headers.get("cf-connecting-ip") ||
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      "unknown";
+    const userAgent = req.headers.get("user-agent") || undefined;
+
+    await recordAuthEvent({
+      userId: rotated.userId || null,
+      email: rotated.email,
+      eventType: "admin_2fa_otp_resent",
+      ipAddress: clientIp,
+      userAgent,
+      metadata: { simulated_email: emailResult.simulated || false },
+    });
+
     return NextResponse.json(
       {
         success: true,
-        message: "A new 6-digit verification code has been dispatched to your email.",
+        cooldownSeconds: 60,
+        message: "A fresh 6-digit verification code has been dispatched to your email via Resend.",
       },
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("API /api/auth/admin/resend-otp exception:", error);
+    console.error("API /api/auth/admin/resend-otp exception:", error?.message);
     return NextResponse.json(
-      { error: "Internal error processing code resend" },
+      { error: "Failed to resend verification code" },
       { status: 500 }
     );
   }
 }
-

@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -95,7 +95,38 @@ const NAV_ITEMS = [
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+
+  // Fail-closed runtime verification against DB admin_sessions + profiles.role === 'admin'
+  React.useEffect(() => {
+    if (pathname === "/admin/login") return;
+    let cancelled = false;
+
+    async function verifySession() {
+      try {
+        const res = await fetch("/api/auth/admin/session", { cache: "no-store" });
+        if (!cancelled && (res.status === 401 || res.status === 403)) {
+          router.replace("/admin/login");
+        }
+      } catch {
+        // Offline/transient error will still be gated by server requireAdmin() on every mutation
+      }
+    }
+
+    verifySession();
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname, router]);
+
+  const handleAdminSignOut = async () => {
+    try {
+      await fetch("/api/auth/admin/logout", { method: "POST" });
+    } catch {}
+    router.replace("/admin/login");
+    router.refresh();
+  };
 
   if (pathname === "/admin/login") {
     return <>{children}</>;
@@ -240,13 +271,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <ExternalLink className="h-4 w-4 text-gray-400" />
               <span>View Public Store</span>
             </Link>
-            <Link
-              href="/api/auth/admin/logout"
-              className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50 transition-colors"
+            <button
+              type="button"
+              onClick={handleAdminSignOut}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer text-left"
             >
               <LogOut className="h-4 w-4" />
               <span>Sign Out</span>
-            </Link>
+            </button>
             {/* Admin badge */}
             <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 mt-2">
               <div className="h-8 w-8 rounded-lg bg-emerald-100 text-[#0A6847] flex items-center justify-center shrink-0">

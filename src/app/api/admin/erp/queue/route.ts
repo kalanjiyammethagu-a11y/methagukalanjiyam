@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth-service";
+import { constantTimeEqual } from "@/lib/auth-crypto";
 import {
   getERPQueueItems,
   getERPAuditLogs,
@@ -9,15 +10,20 @@ import {
 
 export const dynamic = "force-dynamic";
 
+function isValidErpSyncToken(syncToken: string | null): boolean {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret || !syncToken) return false;
+  return (
+    constantTimeEqual(syncToken, secret) ||
+    constantTimeEqual(syncToken, `Bearer ${secret}`) ||
+    constantTimeEqual(syncToken, `token ${secret}`)
+  );
+}
+
 export async function GET(req: NextRequest) {
   try {
     const syncToken = req.headers.get("x-erp-sync-token") || req.headers.get("authorization");
-    const secret = process.env.AUTH_SECRET;
-    const isTokenAuthorized = !!(
-      secret &&
-      syncToken &&
-      (syncToken === secret || syncToken === `Bearer ${secret}` || syncToken === `token ${secret}`)
-    );
+    const isTokenAuthorized = isValidErpSyncToken(syncToken);
 
     if (!isTokenAuthorized) {
       const auth = await requireAdmin(req);
@@ -40,12 +46,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const syncToken = req.headers.get("x-erp-sync-token") || req.headers.get("authorization");
-    const secret = process.env.AUTH_SECRET;
-    const isTokenAuthorized = !!(
-      secret &&
-      syncToken &&
-      (syncToken === secret || syncToken === `Bearer ${secret}` || syncToken === `token ${secret}`)
-    );
+    const isTokenAuthorized = isValidErpSyncToken(syncToken);
 
     if (!isTokenAuthorized) {
       const auth = await requireAdmin(req);

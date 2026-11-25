@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { adminVerifyOtpSchema } from "@/lib/validators/auth";
-import { verifyAdminOtp, createAdminSession } from "@/lib/auth-service";
+import { adminStep2ChallengeSchema } from "@/lib/validators/auth";
+import {
+  createAdminSession,
+  recordAuthEvent,
+  verifyAdminBackupCode,
+  verifyAdminOtp,
+} from "@/lib/auth-service";
 
 export const dynamic = "force-dynamic";
 
@@ -20,47 +24,44 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const parseResult = adminVerifyOtpSchema.safeParse(body);
+    const parseResult = adminStep2ChallengeSchema.safeParse(body);
 
     if (!parseResult.success) {
       return NextResponse.json(
         {
-          error: "Invalid code format. Please provide a 6-digit verification code.",
+          error:
+            "Invalid verification format. Provide a 6-digit email code or an 8-character backup recovery code.",
           details: parseResult.error.flatten(),
         },
         { status: 400 }
       );
     }
 
-    const { otp_code } = parseResult.data;
+    const parsed = parseResult.data;
+    const isBackupAttempt = "backup_code" in parsed;
 
-    // Verify OTP using single-use, constant-time verification
-    const verification = await verifyAdminOtp(preAuthToken, otp_code);
+    const verification = isBackupAttempt
+      ? await verifyAdminBackupCode(preAuthToken, parsed.backup_code)
+      : await verifyAdminOtp(preAuthToken, parsed.otp_code);
 
     const clientIp =
       req.headers.get("cf-connecting-ip") ||
-      req.headers.get("x-forwarded-for")?.split(",")[0] ||
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       "unknown";
     const userAgent = req.headers.get("user-agent") || undefined;
-    const adminSupabase = createAdminClient();
 
     if (!verification.valid) {
-      // Audit failure
-      try {
-        await (adminSupabase.from("audit_logs") as any).insert({
-          action: "admin_otp_failed",
-          resource_type: "auth",
-          resource_id: verification.userId || "unknown",
-          ip_address: clientIp,
-          user_agent: userAgent,
-          metadata: {
-            lockout: verification.lockout,
-            attempts_left: verification.attemptsLeft,
-          },
-        });
-      } catch (auditErr) {
-        console.warn("Audit log error on OTP failure:", auditErr);
-      }
+      await recordAuthEvent({
+        userId: verification.userId || null,
+        email: verification.email || null,
+        eventType: isBackupAttempt ? "admin_2fa_backup_failed" : "admin_2fa_otp_failed",
+        ipAddress: clientIp,
+        userAgent,
+        metadata: {
+          lockout: Boolean(verification.lockout),
+          attempts_left: verification.attemptsLeft,
+        },
+      });
 
       const response = NextResponse.json(
         {
@@ -72,7 +73,6 @@ export async function POST(req: NextRequest) {
       );
 
       if (verification.lockout) {
-        // Clear pre-auth cookie if maximum attempts exceeded
         response.cookies.set("mk_admin_preauth", "", {
           path: "/",
           maxAge: 0,
@@ -82,50 +82,43 @@ export async function POST(req: NextRequest) {
       return response;
     }
 
-    // OTP Verified! Create full admin session
     const { sessionToken } = await createAdminSession(
       verification.userId!,
       clientIp,
       userAgent
     );
 
-    // Audit success
-    try {
-      await (adminSupabase.from("audit_logs") as any).insert({
-        user_id: verification.userId!,
-        action: "admin_login_otp_success",
-        resource_type: "auth",
-        resource_id: verification.userId!,
-        ip_address: clientIp,
-        user_agent: userAgent,
-        metadata: {
-          email: verification.email,
-        },
-      });
-    } catch (auditErr) {
-      console.warn("Audit log error on OTP success:", auditErr);
-    }
+    await recordAuthEvent({
+      userId: verification.userId!,
+      email: verification.email || null,
+      eventType: verification.usedBackupCode
+        ? "admin_2fa_backup_success"
+        : "admin_2fa_otp_success",
+      ipAddress: clientIp,
+      userAgent,
+    });
 
     const isProduction = process.env.NODE_ENV === "production";
     const response = NextResponse.json(
       {
         success: true,
-        message: "Two-step authentication confirmed. Admin session granted.",
+        usedBackupCode: Boolean(verification.usedBackupCode),
+        message: verification.usedBackupCode
+          ? "Backup recovery code accepted (now marked used). Admin session granted."
+          : "Two-step authentication confirmed. Admin session granted.",
         redirect: "/admin",
       },
       { status: 200 }
     );
 
-    // 1. Issue full admin session cookie (HttpOnly, Strict, Secure, 8-hour max)
     response.cookies.set("mk_admin_session", sessionToken, {
       path: "/",
       httpOnly: true,
       secure: isProduction,
       sameSite: "strict",
-      maxAge: 8 * 60 * 60, // 8 hours
+      maxAge: 8 * 60 * 60,
     });
 
-    // 2. Clear pre-auth cookie (consumed)
     response.cookies.set("mk_admin_preauth", "", {
       path: "/",
       maxAge: 0,
@@ -136,11 +129,10 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (error: any) {
-    console.error("API /api/auth/admin/verify-otp exception:", error);
+    console.error("API /api/auth/admin/verify-otp exception:", error?.message);
     return NextResponse.json(
       { error: "Internal verification error" },
       { status: 500 }
     );
   }
 }
-

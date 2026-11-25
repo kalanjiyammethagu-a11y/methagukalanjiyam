@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth-service";
 
 export const dynamic = "force-dynamic";
+
+const NO_STORE_HEADERS = {
+  "Cache-Control": "private, no-cache, no-store, max-age=0, must-revalidate",
+  Pragma: "no-cache",
+  Expires: "0",
+};
 
 export async function GET(req: NextRequest) {
   try {
@@ -14,26 +21,18 @@ export async function GET(req: NextRequest) {
     if (error || !user) {
       return NextResponse.json(
         { authenticated: false, user: null },
-        {
-          status: 200,
-          headers: {
-            "Cache-Control": "private, no-cache, no-store, max-age=0, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
-        }
+        { status: 200, headers: NO_STORE_HEADERS }
       );
     }
 
-    // Query profile for verified database role
     const { data: profile } = await (supabase.from("profiles") as any)
       .select("role, full_name")
       .eq("id", user.id)
       .maybeSingle();
 
     const role = profile?.role || user.app_metadata?.role || "customer";
-    const adminSessionCookie = req.cookies.get("mk_admin_session")?.value;
-    const isAdminVerified = role === "admin" && !!adminSessionCookie && adminSessionCookie.includes(".");
+    const adminAuth = role === "admin" ? await requireAdmin(req) : { authorized: false };
+    const isAdminVerified = role === "admin" && adminAuth.authorized;
 
     return NextResponse.json(
       {
@@ -43,29 +42,17 @@ export async function GET(req: NextRequest) {
           email: user.email,
           fullName: profile?.full_name || user.user_metadata?.full_name || null,
           role,
-          emailConfirmed: !!user.email_confirmed_at,
+          emailConfirmed:
+            Boolean(user.email_confirmed_at) && user.user_metadata?.email_verified !== false,
           isAdminVerified,
         },
       },
-      {
-        status: 200,
-        headers: {
-          "Cache-Control": "private, no-cache, no-store, max-age=0, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      }
+      { status: 200, headers: NO_STORE_HEADERS }
     );
   } catch (error: any) {
     return NextResponse.json(
       { authenticated: false, error: error.message },
-      {
-        status: 500,
-        headers: {
-          "Cache-Control": "private, no-cache, no-store, max-age=0, must-revalidate",
-        },
-      }
+      { status: 500, headers: NO_STORE_HEADERS }
     );
   }
 }
-
