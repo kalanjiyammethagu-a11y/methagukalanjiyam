@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@custom-variant dark (&:where(.dark, .dark *, [data-theme="night"], [data-theme="night"] *));
+@custom-variant dark (:is(.dark, [data-theme="night"]) &);
 
 @theme {
   /* Color Palette - Heritage Archival & Tamil Literary Aesthetics */

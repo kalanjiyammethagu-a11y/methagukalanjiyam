@@ -16,12 +16,18 @@ export interface QuantitySelectorProps {
 }
 
 /**
- * Touch-optimized Quantity Stepper:
- * - Meets WCAG 2.5.5 minimum 44x44px touch target requirement on all screen sizes
- * - Direct numeric input with inputmode="numeric" and pattern="[0-9]*"
- * - touch-action: manipulation to eliminate mobile 300ms double-tap zoom delay
- * - Clear active, focus-visible, and disabled states
- * - Uses data-dark attribute + inline style to bypass Tailwind dark: specificity issues
+ * Touch-optimized Quantity Stepper.
+ *
+ * Design: always uses a dark pill (#111111 bg, white text) so the number is
+ * ALWAYS visible regardless of theme or mode. This matches the screenshot
+ * where the bar appears dark — we lean into it and guarantee white text.
+ *
+ * Rules:
+ * - Meets WCAG 2.5.5 minimum 44×44 px touch target
+ * - inputMode="numeric" + pattern="[0-9]*" for mobile keyboard
+ * - touch-action: manipulation — eliminates 300 ms double-tap delay
+ * - WebkitTextFillColor + opacity:1 — overrides iOS Safari dimming
+ * - w-full so it fills its flex-col container on mobile (book detail page)
  */
 export function QuantitySelector({
   value,
@@ -34,25 +40,6 @@ export function QuantitySelector({
   disabled = false,
 }: QuantitySelectorProps) {
   const [inputValue, setInputValue] = React.useState<string>(String(value));
-  const [isDark, setIsDark] = React.useState(false);
-
-  // Detect dark/night mode at runtime — bypasses Tailwind specificity entirely
-  React.useEffect(() => {
-    const checkDark = () => {
-      const html = document.documentElement;
-      setIsDark(
-        html.classList.contains("dark") ||
-          html.getAttribute("data-theme") === "night"
-      );
-    };
-    checkDark();
-    const observer = new MutationObserver(checkDark);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class", "data-theme"],
-    });
-    return () => observer.disconnect();
-  }, []);
 
   // Sync internal input state when prop changes
   React.useEffect(() => {
@@ -112,24 +99,20 @@ export function QuantitySelector({
 
   const isTa = locale === "ta";
 
-  // Runtime-computed colors — always correct regardless of CSS specificity
-  const iconColor = isDark ? "#F0EDE6" : "#333333";
-  const inputTextColor = isDark ? "#FFFFFF" : "#111111";
-  const bgColor = isDark ? "#1a1918" : "#FFFFFF";
-  const borderColor = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
-  const hoverBg = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)";
-
   return (
     <div
       className={cn(
-        "inline-flex items-center rounded-xl shadow-2xs select-none",
+        // w-full so it fills flex-col containers on mobile; shrinks to content in flex-row
+        "flex items-center rounded-xl select-none w-full",
         size === "sm" ? "h-11" : "h-11",
         disabled && "opacity-50 pointer-events-none",
         className
       )}
       style={{
-        backgroundColor: bgColor,
-        border: `1px solid ${borderColor}`,
+        // Always dark pill — high contrast guaranteed in all themes/modes
+        backgroundColor: "#111111",
+        border: "1px solid rgba(255,255,255,0.12)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
       }}
       role="group"
       aria-label={isTa ? "எண்ணிக்கை தேர்வி" : "Quantity selector"}
@@ -145,18 +128,38 @@ export function QuantitySelector({
             : `Decrease quantity (currently ${value})`
         }
         className={cn(
-          "min-h-[44px] min-w-[44px] h-11 w-11 flex items-center justify-center rounded-l-xl active:scale-95 focus-visible:ring-2 focus-visible:ring-[#0A6847] focus-visible:outline-none transition-all cursor-pointer",
+          "min-h-[44px] min-w-[44px] h-11 flex-1 flex items-center justify-center rounded-l-xl active:scale-95 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none transition-all cursor-pointer",
           (disabled || value <= min) && "opacity-30 cursor-not-allowed active:scale-100"
         )}
-        style={{ touchAction: "manipulation", color: iconColor }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = hoverBg; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; }}
+        style={{
+          touchAction: "manipulation",
+          color: "#FFFFFF",
+          backgroundColor: "transparent",
+        }}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+            "rgba(255,255,255,0.12)";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+            "transparent";
+        }}
       >
-        <Minus className="h-4 w-4 stroke-[2.2]" />
+        <Minus className="h-4 w-4 stroke-[2.5]" />
       </button>
 
-      {/* Editable Numeric Input */}
-      <div className="relative flex items-center justify-center px-1">
+      {/* Divider */}
+      <div
+        style={{
+          width: "1px",
+          height: "24px",
+          backgroundColor: "rgba(255,255,255,0.15)",
+          flexShrink: 0,
+        }}
+      />
+
+      {/* Editable Numeric Input — always white text on dark bg */}
+      <div className="relative flex items-center justify-center px-2 flex-1">
         <input
           type="text"
           inputMode="numeric"
@@ -167,18 +170,31 @@ export function QuantitySelector({
           onKeyDown={handleKeyDown}
           aria-label={isTa ? "புத்தக எண்ணிக்கை" : "Quantity"}
           className={cn(
-            "w-10 sm:w-12 h-9 text-center font-bold bg-transparent border-0 outline-none tabular-nums font-mono focus:ring-1 focus:ring-[#0A6847] rounded-md",
+            "w-full h-9 text-center font-bold bg-transparent border-0 outline-none tabular-nums focus:ring-1 focus:ring-white/40 rounded-md",
             size === "sm" ? "text-sm" : "text-base"
           )}
           style={{
             touchAction: "manipulation",
             fontVariantNumeric: "tabular-nums",
-            color: inputTextColor,
-            WebkitTextFillColor: inputTextColor, // iOS Safari override
-            opacity: 1,                          // prevent iOS dimming
+            // Explicit white — works in ALL modes/themes
+            color: "#FFFFFF",
+            WebkitTextFillColor: "#FFFFFF", // iOS Safari
+            caretColor: "#FFFFFF",
+            opacity: 1, // prevent iOS disabled dimming
+            colorScheme: "dark", // hint browser to render as dark field
           }}
         />
       </div>
+
+      {/* Divider */}
+      <div
+        style={{
+          width: "1px",
+          height: "24px",
+          backgroundColor: "rgba(255,255,255,0.15)",
+          flexShrink: 0,
+        }}
+      />
 
       {/* Increment Button */}
       <button
@@ -191,14 +207,24 @@ export function QuantitySelector({
             : `Increase quantity (currently ${value})`
         }
         className={cn(
-          "min-h-[44px] min-w-[44px] h-11 w-11 flex items-center justify-center rounded-r-xl active:scale-95 focus-visible:ring-2 focus-visible:ring-[#0A6847] focus-visible:outline-none transition-all cursor-pointer",
+          "min-h-[44px] min-w-[44px] h-11 flex-1 flex items-center justify-center rounded-r-xl active:scale-95 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none transition-all cursor-pointer",
           (disabled || value >= max) && "opacity-30 cursor-not-allowed active:scale-100"
         )}
-        style={{ touchAction: "manipulation", color: iconColor }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = hoverBg; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; }}
+        style={{
+          touchAction: "manipulation",
+          color: "#FFFFFF",
+          backgroundColor: "transparent",
+        }}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+            "rgba(255,255,255,0.12)";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+            "transparent";
+        }}
       >
-        <Plus className="h-4 w-4 stroke-[2.2]" />
+        <Plus className="h-4 w-4 stroke-[2.5]" />
       </button>
     </div>
   );

@@ -24,7 +24,7 @@ function contrastRatio(hexA: string, hexB: string): number {
 
 test("globals.css binds Tailwind dark variant to .dark / [data-theme='night'] instead of OS media query", () => {
   const css = fs.readFileSync(path.join(ROOT, "src/app/globals.css"), "utf8");
-  assert.match(css, /@custom-variant\s+dark\s+\(&:where\(\.dark,\s*\.dark \*,\s*\[data-theme="night"\],\s*\[data-theme="night"\] \*\)\);/);
+  assert.match(css, /@custom-variant\s+dark\s+\(:is\(\.dark,\s*\[data-theme="night"\]\)\s+&\);/);
   assert.doesNotMatch(css, /\.text-zinc-600\s*\{[^}]*!important/);
   assert.match(css, /\[data-admin-surface="true"\]/);
 });
