@@ -18,6 +18,7 @@ import { defaultHeroSlides } from "@/data/hero-slides";
 import { CategoryFilterTabs } from "@/components/home/CategoryFilterTabs";
 import { allBooks, type BookItem } from "@/data/books";
 import { createClient } from "@/lib/supabase/server";
+import { resolveBookFrontCover } from "@/lib/book-images";
 
 export const metadata: Metadata = {
   title: "மேதகு களஞ்சியம் — Rare Tamil Literature & National Archives",
@@ -110,7 +111,10 @@ export default async function HomePage() {
         categorySlug: b.categories?.slug || "history",
         categoryTa: b.categories?.name_ta || "வரலாறு",
         categoryEn: b.categories?.name_en || "History",
-        image: b.cover_image_url || b.cover_front || "/images/books/book-placeholder.webp",
+        image: resolveBookFrontCover(b).url,
+        coverIsFront: resolveBookFrontCover(b).isFront,
+        coverAltEn: b.cover_alt_en || undefined,
+        coverAltTa: b.cover_alt_ta || undefined,
         featured: Boolean(b.is_featured),
         pages: b.pages,
         year: String(b.published_year || "2024"),

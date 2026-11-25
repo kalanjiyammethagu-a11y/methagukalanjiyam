@@ -49,9 +49,9 @@ export const revenueData: RevenueDataPoint[] = [
 export const topSellingBooks: TopSellingBook[] = [
   { id: "1", title: "கட்டுநாயக்கா தாக்குதல் வெற்றி", titleEn: "Katunayake Air Base Victory", salesCount: 84, revenue: 8400, image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/book-20.webp" },
   { id: "2", title: "நெஞ்சுரம்", titleEn: "Nenjuram — Fortitude of Spirit", salesCount: 62, revenue: 9300, image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/book-16.webp" },
-  { id: "3", title: "திலீபம்", titleEn: "Thileepam — Lt. Col. Thileepan", salesCount: 55, revenue: 4950, image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/deelipan-memorial.webp" },
+  { id: "3", title: "திலீபம்", titleEn: "Thileepam — Lt. Col. Thileepan", salesCount: 55, revenue: 4950, image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/book-19.webp" },
   { id: "5", title: "புறநானூற்று வீரன்", titleEn: "Purananooru Veeran", salesCount: 48, revenue: 4800, image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/book-07.webp" },
-  { id: "4", title: "கண்டேன் கண்டேன்", titleEn: "Kanden Kanden", salesCount: 41, revenue: 5330, image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/kanden-kanden-banner.webp" },
+  { id: "4", title: "கண்டேன் கண்டேன்", titleEn: "Kanden Kanden", salesCount: 41, revenue: 5330, image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/book-03.webp" },
 ];
 
 /* ————————————————————————————————————
@@ -239,7 +239,7 @@ export const mockAdminBooks: AdminBook[] = [
   {
     id: "3", title: "திசை தவறாக்கணை தளபதிவிநாயகம்", titleEn: "Commander Vinayagam — The Unswerving Arrow",
     author: "சாந்தி நேசக்கரம்", authorEn: "Saanthi Nesakaram", price: 85, categoryTa: "ஆவண நூல்",
-    categoryEn: "Documentary", categorySlug: "archives", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp", stock: 15,
+    categoryEn: "Documentary", categorySlug: "archives", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/book-13.webp", stock: 15,
     slug: "unswerving-arrow-commander-vinayagam", year: "2004", pages: 196, publisher: "மேதகு களஞ்சியம்",
     publisherEn: "Methagu Kalanjiyam", descriptionTa: "தளபதி விநாயகம் அவர்களின் போர்க்கள வரலாறு.",
     descriptionEn: "Military biography of Commander Vinayagam.", status: "in_stock",
@@ -248,7 +248,7 @@ export const mockAdminBooks: AdminBook[] = [
   {
     id: "4", title: "கண்டேன் கண்டேன்", titleEn: "Kanden Kanden — I Witnessed, I Witnessed",
     author: "சாந்தி நேசக்கரம்", authorEn: "Saanthi Nesakaram", price: 130, categoryTa: "போர்முனை நினைவுகள்",
-    categoryEn: "Battlefield Memoirs", categorySlug: "memoirs", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/kanden-kanden-banner.webp", stock: 3,
+    categoryEn: "Battlefield Memoirs", categorySlug: "memoirs", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/book-03.webp", stock: 3,
     slug: "kanden-kanden", year: "2005", pages: 310, publisher: "மேதகு களஞ்சியம்",
     publisherEn: "Methagu Kalanjiyam", descriptionTa: "நேரில் கண்ட போர்க்களக் காட்சிகள்.",
     descriptionEn: "Firsthand eyewitness accounts from battlefield experiences.", status: "low_stock",
@@ -266,7 +266,7 @@ export const mockAdminBooks: AdminBook[] = [
   {
     id: "6", title: "திலீபம்", titleEn: "Thileepam — Lt. Col. Thileepan",
     author: "சாந்தி நேசக்கரம்", authorEn: "Saanthi Nesakaram", price: 90, categoryTa: "நினைவேந்தல்",
-    categoryEn: "Memorial", categorySlug: "biographies", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/deelipan-memorial.webp", stock: 0,
+    categoryEn: "Memorial", categorySlug: "biographies", image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/book-19.webp", stock: 0,
     slug: "thileepam", year: "2007", pages: 180, publisher: "மேதகு களஞ்சியம்",
     publisherEn: "Methagu Kalanjiyam", descriptionTa: "லெப். கேணல் திலீபன் அவர்களின் வரலாறு.",
     descriptionEn: "Biography and fasting struggle of Lt. Col. Thileepan.", status: "out_of_stock",

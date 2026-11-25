@@ -5,6 +5,7 @@ import { safeJsonLdStringify } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/server";
 import { allBooks } from "@/data/books";
 import type { BookCardData } from "@/components/books/BookCard";
+import { resolveBookFrontCover } from "@/lib/book-images";
 
 export const revalidate = 60;
 
@@ -64,7 +65,10 @@ export default async function BooksPage() {
         categorySlug: b.categories?.slug || "history",
         categoryTa: b.categories?.name_ta || "வரலாறு",
         categoryEn: b.categories?.name_en || "History",
-        image: b.cover_image_url || b.cover_front || "/images/books/book-placeholder.webp",
+        image: resolveBookFrontCover(b).url,
+        coverIsFront: resolveBookFrontCover(b).isFront,
+        coverAltEn: b.cover_alt_en || undefined,
+        coverAltTa: b.cover_alt_ta || undefined,
         featured: Boolean(b.is_featured),
         pages: b.pages,
         year: String(b.published_year || "2024"),

@@ -10,6 +10,7 @@ import { formatINR } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
+import { BOOK_PLACEHOLDER_IMAGE, resolveBookFrontCover } from "@/lib/book-images";
 
 export interface BookCardData {
   id: string;
@@ -23,6 +24,9 @@ export interface BookCardData {
   categoryEn: string;
   categorySlug?: string;
   image: string;
+  coverIsFront?: boolean;
+  coverAltEn?: string;
+  coverAltTa?: string;
   stock: number;
   slug: string;
   featured?: boolean;
@@ -56,12 +60,18 @@ export function BookCard({
   const isSaved = wishlist.includes(book.id);
   const [justAdded, setJustAdded] = React.useState(false);
 
-  // Robust image fallback state
-  const [imgSrc, setImgSrc] = React.useState<string>(book.image || "/images/books/book-placeholder.webp");
+  const frontCover = resolveBookFrontCover({
+    image: book.image,
+    cover_is_front: book.coverIsFront,
+    slug: book.slug,
+  });
+
+  // Robust image fallback state (always anchored on outside front cover)
+  const [imgSrc, setImgSrc] = React.useState<string>(frontCover.url);
 
   React.useEffect(() => {
-    setImgSrc(book.image || "/images/books/book-placeholder.webp");
-  }, [book.image]);
+    setImgSrc(frontCover.url);
+  }, [frontCover.url]);
 
   const handleToggleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -193,12 +203,16 @@ export function BookCard({
 
             <Image
               src={imgSrc}
-              alt={locale === "ta" ? `${book.title} - அட்டைப்படம்` : `${book.titleEn} cover artwork`}
+              alt={
+                locale === "ta"
+                  ? book.coverAltTa || `${book.title} - முன் அட்டை`
+                  : book.coverAltEn || `${book.titleEn} front cover`
+              }
               fill
               sizes={isCompact ? "96px" : isFeatured ? "176px" : "160px"}
               className="object-cover"
               loading="lazy"
-              onError={() => setImgSrc("/images/books/book-placeholder.webp")}
+              onError={() => setImgSrc(BOOK_PLACEHOLDER_IMAGE)}
             />
           </div>
         </div>

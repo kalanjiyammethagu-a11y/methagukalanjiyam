@@ -53,6 +53,16 @@ export interface AdminBook {
   cmsStatus?: "draft" | "published";
   coverImagePath?: string | null;
   coverImageUrl?: string | null;
+  coverIsFront?: boolean;
+  coverAltEn?: string | null;
+  coverAltTa?: string | null;
+  galleryImages?: Array<{
+    url: string;
+    path?: string | null;
+    kind?: "inside" | "back_cover" | "spread" | "other";
+    alt_en?: string | null;
+    alt_ta?: string | null;
+  }>;
   whatsappLink?: string | null;
   salesCount: number;
   createdAt: string;

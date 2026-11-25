@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { allBooks } from "@/data/books";
 import { useSearchParams } from "next/navigation";
 import { matchesSearchQuery } from "@/lib/search";
+import { resolveBookFrontCover } from "@/lib/book-images";
 
 const categoryOptions: CategoryOption[] = [
   { slug: "history", labelTa: "வரலாறு", labelEn: "History" },
@@ -67,24 +68,31 @@ export function BooksCatalogClient({
         if (res.ok) {
           const data = await res.json();
           if (isMounted && data.books && Array.isArray(data.books) && data.books.length > 0) {
-            const mapped: BookCardData[] = data.books.map((b: any) => ({
-              id: b.id,
-              slug: b.slug,
-              title: b.title,
-              titleEn: b.title_en || b.titleEn || b.title,
-              author: b.author,
-              authorEn: b.author_en || b.authorEn || b.author,
-              price: Number(b.price),
-              discountPrice: b.discount_price ? Number(b.discount_price) : (b.discountPrice ? Number(b.discountPrice) : undefined),
-              image: b.cover_image_url || b.cover_front || b.cover_url || b.image || "/images/books/book-placeholder.webp",
-              categorySlug: b.categories?.slug || b.category_slug || b.categorySlug || "history",
-              categoryTa: b.categories?.name_ta || b.category_ta || b.categoryTa || "வரலாறு",
-              categoryEn: b.categories?.name_en || b.category_en || b.categoryEn || "History",
-              stock: Number(b.stock ?? 10),
-              featured: Boolean(b.is_featured || b.featured),
-              year: b.publication_year || b.year,
-              pages: b.pages,
-            }));
+            const mapped: BookCardData[] = data.books.map((b: any) => {
+              const staticMatch = allBooks.find((sb) => sb.slug === b.slug);
+              const cover = resolveBookFrontCover(b, staticMatch?.image);
+              return {
+                id: b.id,
+                slug: b.slug,
+                title: b.title,
+                titleEn: b.title_en || b.titleEn || b.title,
+                author: b.author,
+                authorEn: b.author_en || b.authorEn || b.author,
+                price: Number(b.price),
+                discountPrice: b.discount_price ? Number(b.discount_price) : (b.discountPrice ? Number(b.discountPrice) : undefined),
+                image: cover.url,
+                coverIsFront: cover.isFront,
+                coverAltEn: b.cover_alt_en || b.coverAltEn || staticMatch?.coverAltEn,
+                coverAltTa: b.cover_alt_ta || b.coverAltTa || staticMatch?.coverAltTa,
+                categorySlug: b.categories?.slug || b.category_slug || b.categorySlug || "history",
+                categoryTa: b.categories?.name_ta || b.category_ta || b.categoryTa || "வரலாறு",
+                categoryEn: b.categories?.name_en || b.category_en || b.categoryEn || "History",
+                stock: Number(b.stock ?? 10),
+                featured: Boolean(b.is_featured || b.featured),
+                year: b.published_year || b.publication_year || b.year,
+                pages: b.pages,
+              };
+            });
             setLiveBooks(mapped);
           }
         }

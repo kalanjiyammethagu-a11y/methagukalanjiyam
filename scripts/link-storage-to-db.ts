@@ -42,29 +42,28 @@ async function main() {
   console.log(" LINKING POSTGRES ROWS TO LIVE SUPABASE STORAGE ASSETS");
   console.log("==================================================================");
 
-  // 1. LINK BOOKS
+  // 1. LINK BOOKS (19 visually verified outside/front covers; methagu-kalanjiyam-aavanam flagged for manual cover)
   console.log("\n1. Linking Books...");
   const bookMappings: Record<string, string> = {
     "katunayake-attack-victory": "book-20.webp",
     "nenjuram": "book-16.webp",
-    "dhisai-thavara-kanai": "book-19.webp",
-    "niraiyaa-peruveli": "book-18.webp",
-    "uyiranai": "book-17.webp",
-    "amudhundha-vaaygal": "book-01.webp",
-    "arivaran-pottu-amman": "book-02.webp",
-    "peraattralon-kumaran": "book-03.webp",
-    "purananooru-veeran": "book-04.webp",
-    "kanden-kanden": "book-05.webp",
-    "varalaru-enathu-vazhikaatti": "book-06.webp",
-    "thileepanudan-12-naatkal": "book-07.webp",
-    "varalatru-thalaivan": "book-08.webp",
-    "tamileelam-viduthalai": "book-09.webp",
-    "thozhar-tamilarasan": "book-10.webp",
-    "makkal-thunaiyodu": "book-11.webp",
-    "maamanithar-velupillai": "book-12.webp",
-    "tamilar-padai-saadhanai": "book-13.webp",
-    "thileepam": "book-14.webp",
-    "methagu-kalanjiyam-aavanam": "book-15.webp",
+    "dhisai-thavara-kanai": "book-13.webp",
+    "niraiyaa-peruveli": "book-12.webp",
+    "uyiranai": "book-15.webp",
+    "amudhundha-vaaygal": "book-14.webp",
+    "arivaran-pottu-amman": "book-17.webp",
+    "peraattralon-kumaran": "book-18.webp",
+    "purananooru-veeran": "book-07.webp",
+    "kanden-kanden": "book-03.webp",
+    "varalaru-enathu-vazhikaatti": "book-10.webp",
+    "thileepanudan-12-naatkal": "book-02.webp",
+    "varalatru-thalaivan": "book-06.webp",
+    "tamileelam-viduthalai": "book-04.webp",
+    "thozhar-tamilarasan": "book-05.webp",
+    "makkal-thunaiyodu": "book-09.webp",
+    "maamanithar-velupillai": "book-01.webp",
+    "tamilar-padai-saadhanai": "book-11.webp",
+    "thileepam": "book-19.webp",
   };
 
   for (const [slug, filename] of Object.entries(bookMappings)) {

@@ -10,6 +10,16 @@ export interface BookItem {
   categoryEn: string;
   categorySlug: "history" | "memoirs" | "archives" | "biographies" | "political";
   image: string;
+  coverIsFront?: boolean;
+  coverAltEn?: string;
+  coverAltTa?: string;
+  galleryImages?: Array<{
+    url: string;
+    path?: string | null;
+    kind?: "inside" | "back_cover" | "spread" | "other";
+    alt_en?: string | null;
+    alt_ta?: string | null;
+  }>;
   stock: number;
   slug: string;
   year?: string;
@@ -259,7 +269,7 @@ export const allBooks: BookItem[] = [
     categoryTa: "வரலாற்று நேர்காணல்",
     categoryEn: "Historic Interviews",
     categorySlug: "archives",
-    image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/book-08.webp",
+    image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/book-10.webp",
     stock: 10,
     slug: "varalaru-enathu-vazhikaatti",
     year: "2006",
@@ -458,7 +468,8 @@ export const allBooks: BookItem[] = [
     categoryTa: "ஆவணத் தொகுப்பு",
     categoryEn: "Archival Compilation",
     categorySlug: "archives",
-    image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/book-10.webp",
+    image: "/images/books/book-placeholder.webp",
+    coverIsFront: false,
     stock: 10,
     slug: "methagu-kalanjiyam-aavanam",
     year: "2007",

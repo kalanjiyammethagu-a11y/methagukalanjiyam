@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { allBooks } from "@/data/books";
+import { normalizeGalleryImages, resolveBookFrontCover } from "@/lib/book-images";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +59,11 @@ export async function GET(req: NextRequest) {
           categorySlug: b.categories?.slug || "history",
           categoryTa: b.categories?.name_ta || "வரலாறு",
           categoryEn: b.categories?.name_en || "History",
-          image: b.cover_image_url || b.cover_front || "/images/books/book-placeholder.webp",
+          image: resolveBookFrontCover(b).url,
+          coverIsFront: resolveBookFrontCover(b).isFront,
+          coverAltEn: b.cover_alt_en || null,
+          coverAltTa: b.cover_alt_ta || null,
+          galleryImages: normalizeGalleryImages(b.gallery_images, b.cover_back, resolveBookFrontCover(b).url),
           featured: Boolean(b.is_featured),
           pages: b.pages,
           year: String(b.published_year || "2024"),

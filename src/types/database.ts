@@ -115,6 +115,16 @@ export interface Database {
           status: "draft" | "published";
           cover_image_path: string | null;
           cover_image_url: string | null;
+          cover_is_front?: boolean;
+          cover_alt_en?: string | null;
+          cover_alt_ta?: string | null;
+          gallery_images?: Array<{
+            url: string;
+            path?: string | null;
+            kind?: "inside" | "back_cover" | "spread" | "other";
+            alt_en?: string | null;
+            alt_ta?: string | null;
+          }> | null;
           whatsapp_link: string | null;
           is_active?: boolean;
           view_count: number;
@@ -145,6 +155,16 @@ export interface Database {
           status?: "draft" | "published";
           cover_image_path?: string | null;
           cover_image_url?: string | null;
+          cover_is_front?: boolean;
+          cover_alt_en?: string | null;
+          cover_alt_ta?: string | null;
+          gallery_images?: Array<{
+            url: string;
+            path?: string | null;
+            kind?: "inside" | "back_cover" | "spread" | "other";
+            alt_en?: string | null;
+            alt_ta?: string | null;
+          }> | null;
           whatsapp_link?: string | null;
           is_active?: boolean;
           view_count?: number;
@@ -174,6 +194,16 @@ export interface Database {
           status?: "draft" | "published";
           cover_image_path?: string | null;
           cover_image_url?: string | null;
+          cover_is_front?: boolean;
+          cover_alt_en?: string | null;
+          cover_alt_ta?: string | null;
+          gallery_images?: Array<{
+            url: string;
+            path?: string | null;
+            kind?: "inside" | "back_cover" | "spread" | "other";
+            alt_en?: string | null;
+            alt_ta?: string | null;
+          }> | null;
           whatsapp_link?: string | null;
           is_active?: boolean;
           view_count?: number;

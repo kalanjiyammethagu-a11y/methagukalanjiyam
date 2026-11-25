@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { allBooks } from "@/data/books";
 import { detailedArticles, getAllArticleSlugs } from "@/data/articles";
+import { toAbsoluteSiteImageUrl } from "@/lib/book-images";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://methagukalanjiyam.in";
@@ -62,6 +63,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: buildDate,
     changeFrequency: "weekly",
     priority: 0.85,
+    images: [
+      toAbsoluteSiteImageUrl(book.image, baseUrl),
+      ...(book.galleryImages || []).map((g) => toAbsoluteSiteImageUrl(g.url, baseUrl)),
+    ],
   }));
 
   const blogRoutes: MetadataRoute.Sitemap = getAllArticleSlugs().map((slug) => {

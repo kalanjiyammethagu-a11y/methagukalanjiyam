@@ -293,7 +293,14 @@ export default function OrderConfirmationPage() {
                 {order.order_items?.map((item) => (
                   <tr key={item.id}>
                     <td className="py-3 font-medium text-neutral-900 font-tamil">
-                      {item.title}
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={item.cover_url || "/images/books/book-placeholder.webp"}
+                          alt={item.title}
+                          className="h-12 w-9 rounded-md object-cover border border-black/10 bg-stone-100 shrink-0"
+                        />
+                        <span>{item.title}</span>
+                      </div>
                     </td>
                     <td className="py-3 text-center font-mono">{item.quantity}</td>
                     <td className="py-3 text-right font-mono">{formatINR(item.price)}</td>

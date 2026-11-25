@@ -7,10 +7,16 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { Badge } from "@/components/ui/Badge";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { BookCard } from "@/components/books/BookCard";
-import { BookDetailClient, BookCoverActions } from "@/components/books/BookDetailClient";
+import { BookCoverGallery } from "@/components/books/BookCoverGallery";
+import { BookDetailClient } from "@/components/books/BookDetailClient";
 import { allBooks, getBookBySlug, getRelatedBooks, type BookItem } from "@/data/books";
 import { safeJsonLdStringify } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/server";
+import {
+  normalizeGalleryImages,
+  resolveBookFrontCover,
+  toAbsoluteSiteImageUrl,
+} from "@/lib/book-images";
 
 export const revalidate = 60;
 
@@ -29,6 +35,13 @@ async function resolveBook(slug: string): Promise<BookItem | undefined> {
       .maybeSingle();
 
     if (dbBook) {
+      const cover = resolveBookFrontCover(dbBook, staticBook?.image);
+      const galleryImages = normalizeGalleryImages(
+        dbBook.gallery_images,
+        dbBook.cover_back,
+        cover.url
+      );
+
       return {
         id: dbBook.id,
         slug: dbBook.slug,
@@ -41,15 +54,19 @@ async function resolveBook(slug: string): Promise<BookItem | undefined> {
         categorySlug: dbBook.categories?.slug || staticBook?.categorySlug || "history",
         categoryTa: dbBook.categories?.name_ta || staticBook?.categoryTa || "வரலாறு",
         categoryEn: dbBook.categories?.name_en || staticBook?.categoryEn || "History",
-        image: dbBook.cover_image_url || dbBook.cover_front || dbBook.cover_url || staticBook?.image || "/images/books/book-placeholder.webp",
+        image: cover.url,
+        coverIsFront: cover.isFront,
+        coverAltEn: dbBook.cover_alt_en || staticBook?.coverAltEn,
+        coverAltTa: dbBook.cover_alt_ta || staticBook?.coverAltTa,
+        galleryImages: galleryImages.length > 0 ? galleryImages : staticBook?.galleryImages,
         featured: Boolean(dbBook.is_featured),
         stock: Number(dbBook.stock ?? 10),
         pages: dbBook.pages || staticBook?.pages,
-        year: String(dbBook.publication_year || staticBook?.year || "2024"),
+        year: String(dbBook.published_year || dbBook.publication_year || staticBook?.year || "2024"),
         publisher: dbBook.publisher || staticBook?.publisher,
         isbn: dbBook.isbn || staticBook?.isbn,
-        descriptionTa: dbBook.description_ta || staticBook?.descriptionTa || "",
-        descriptionEn: dbBook.description_en || staticBook?.descriptionEn || "",
+        descriptionTa: dbBook.description_ta || dbBook.description || staticBook?.descriptionTa || "",
+        descriptionEn: dbBook.description_en || staticBook?.descriptionEn || dbBook.description || "",
       };
     }
   } catch {
@@ -79,9 +96,7 @@ export async function generateMetadata({
 
   const title = `${book.title} (${book.titleEn}) — மேதகு களஞ்சியம்`;
   const description = `${book.descriptionTa.slice(0, 160)}...`;
-  const ogImageUrl = book.image.startsWith("http")
-    ? book.image
-    : `https://methagukalanjiyam.in${book.image}`;
+  const ogImageUrl = toAbsoluteSiteImageUrl(book.image);
 
   return {
     title,
@@ -125,6 +140,11 @@ export default async function BookDetailPage({ params }: BookPageProps) {
   const relatedBooks = getRelatedBooks(book);
   const isSoldOut = book.stock <= 0;
 
+  const primaryImageUrl = toAbsoluteSiteImageUrl(book.image);
+  const galleryAbsoluteUrls = (book.galleryImages || [])
+    .map((g) => toAbsoluteSiteImageUrl(g.url))
+    .filter((u) => u !== primaryImageUrl);
+
   // Structured Data Schema for Book (SEO)
   const bookSchema = {
     "@context": "https://schema.org",
@@ -144,7 +164,10 @@ export default async function BookDetailPage({ params }: BookPageProps) {
     datePublished: book.year || "2024",
     numberOfPages: book.pages,
     inLanguage: "ta",
-    image: `https://methagukalanjiyam.in${book.image}`,
+    image:
+      galleryAbsoluteUrls.length > 0
+        ? [primaryImageUrl, ...galleryAbsoluteUrls]
+        : primaryImageUrl,
     offers: {
       "@type": "Offer",
       price: book.discountPrice ?? book.price,
@@ -181,29 +204,11 @@ export default async function BookDetailPage({ params }: BookPageProps) {
             PRODUCT HERO — Z-Pattern Layout
             ============================================================ */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 pb-12 sm:pb-16">
-          {/* Left: Book Cover Gallery */}
+          {/* Left: Book Cover Gallery (Outside Front Cover first) */}
           <div className="lg:col-span-5">
             <div className="sticky top-24">
               <GlassPanel className="p-6 sm:p-8 rounded-3xl">
-                <div className="relative flex items-center justify-center">
-                  <div className="relative w-56 sm:w-64 lg:w-72 aspect-[3/4] rounded-xl overflow-hidden shadow-2xl bg-[#ECE8DF]">
-                    {/* Spine shadow for 3D tactile feel */}
-                    <div className="absolute inset-y-0 left-0 w-4 bg-gradient-to-r from-black/30 via-black/5 to-transparent z-10 pointer-events-none" />
-                    {/* Top light reflection */}
-                    <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-white/20 to-transparent z-10 pointer-events-none" />
-                    <Image
-                      src={book.image}
-                      alt={`${book.title} — ${book.titleEn}`}
-                      fill
-                      sizes="(max-width: 1024px) 280px, 320px"
-                      className="object-cover"
-                      priority
-                    />
-                  </div>
-                </div>
-
-                {/* Share action button below cover */}
-                <BookCoverActions book={book} />
+                <BookCoverGallery book={book} />
               </GlassPanel>
             </div>
           </div>

@@ -20,6 +20,21 @@ export const adminCategoryUpdateSchema = adminCategorySchema.partial();
 // ============================================================================
 // BOOKS VALIDATOR
 // ============================================================================
+export const bookGalleryImageSchema = z.object({
+  url: z
+    .string()
+    .trim()
+    .min(1, "Gallery image URL is required")
+    .refine(
+      (val) => val.startsWith("/") || val.startsWith("https://") || val.startsWith("http://"),
+      "Gallery image URL must be relative or HTTP(S)"
+    ),
+  path: z.string().trim().optional().nullable(),
+  kind: z.enum(["inside", "back_cover", "spread", "other"]).default("inside").optional(),
+  alt_en: z.string().trim().max(250).optional().nullable(),
+  alt_ta: z.string().trim().max(250).optional().nullable(),
+});
+
 export const adminBookSchema = z.object({
   title: z.string().trim().min(1, "Book title is required").max(200),
   slug: z
@@ -37,6 +52,10 @@ export const adminBookSchema = z.object({
   cover_image_path: z.string().trim().optional().nullable(),
   cover_image_url: z.string().trim().optional().nullable(),
   cover_front: z.string().trim().optional().nullable(),
+  cover_is_front: z.boolean().default(true).optional(),
+  cover_alt_en: z.string().trim().max(250).optional().nullable(),
+  cover_alt_ta: z.string().trim().max(250).optional().nullable(),
+  gallery_images: z.array(bookGalleryImageSchema).max(12).optional().default([]),
   whatsapp_link: z.string().trim().optional().nullable(),
   isbn: z.string().trim().max(30).optional().nullable(),
   pages: z.coerce.number().int().min(0).optional().nullable(),
@@ -48,9 +67,34 @@ export const adminBookSchema = z.object({
   status: z.enum(["draft", "published"]).default("published"),
 });
 
-export const adminBookUpdateSchema = adminBookSchema.partial().extend({
-  id: z.string().uuid("Invalid book ID"),
+export const adminBookCreateSchema = adminBookSchema.superRefine((data, ctx) => {
+  const coverUrl = (data.cover_image_url || data.cover_front || "").trim();
+  if (!coverUrl || coverUrl === "/images/books/book-placeholder.webp") {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["cover_image_url"],
+      message: "Front cover (outside) image is required.",
+    });
+  }
 });
+
+export const adminBookUpdateSchema = adminBookSchema
+  .partial()
+  .extend({
+    id: z.string().uuid("Invalid book ID"),
+  })
+  .superRefine((data, ctx) => {
+    if (data.cover_image_url !== undefined || data.cover_front !== undefined) {
+      const coverUrl = (data.cover_image_url || data.cover_front || "").trim();
+      if (!coverUrl || coverUrl === "/images/books/book-placeholder.webp") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["cover_image_url"],
+          message: "Front cover (outside) image cannot be blank.",
+        });
+      }
+    }
+  });
 
 // ============================================================================
 // BLOG POSTS VALIDATOR

@@ -44,14 +44,16 @@ export async function POST(req: NextRequest) {
 
     try {
       const adminSupabase = createAdminClient();
-      const { data } = await (adminSupabase.from("books") as any).select("id, title, price, description, cover_front");
+      const { data } = await (adminSupabase.from("books") as any).select(
+        "id, title, price, description, cover_image_url, cover_front"
+      );
       if (data && data.length > 0) {
         booksToSync = data.map((b: any) => ({
           id: b.id,
           title: b.title,
           price: b.price,
           description: b.description,
-          image: b.cover_front,
+          image: b.cover_image_url || b.cover_front,
         }));
       }
     } catch {}
