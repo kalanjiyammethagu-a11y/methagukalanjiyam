@@ -114,7 +114,7 @@ export function QuantitySelector({
             : `Decrease quantity (currently ${value})`
         }
         className={cn(
-          "min-h-[44px] min-w-[44px] h-11 w-11 flex items-center justify-center text-[#333333] dark:text-[#cccccc] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 active:bg-black/10 focus-visible:ring-2 focus-visible:ring-[#0A6847] focus-visible:outline-none transition-all cursor-pointer rounded-l-xl",
+          "min-h-[44px] min-w-[44px] h-11 w-11 flex items-center justify-center text-[#333333] dark:text-[#F0EDE6] hover:bg-black/5 dark:hover:bg-white/10 active:scale-95 active:bg-black/10 focus-visible:ring-2 focus-visible:ring-[#0A6847] focus-visible:outline-none transition-all cursor-pointer rounded-l-xl",
           (disabled || value <= min) && "opacity-30 cursor-not-allowed active:scale-100"
         )}
         style={{ touchAction: "manipulation" }}
@@ -134,7 +134,7 @@ export function QuantitySelector({
           onKeyDown={handleKeyDown}
           aria-label={isTa ? "புத்தக எண்ணிக்கை" : "Quantity"}
           className={cn(
-            "w-10 sm:w-12 h-9 text-center font-bold text-[#111111] dark:text-white bg-transparent border-0 outline-none tabular-nums font-mono text-sm sm:text-base focus:ring-1 focus:ring-[#0A6847] rounded-md",
+            "w-10 sm:w-12 h-9 text-center font-bold text-[var(--color-ink-primary)] dark:!text-[#FFFFFF] bg-transparent border-0 outline-none tabular-nums font-mono text-sm sm:text-base focus:ring-1 focus:ring-[#0A6847] rounded-md",
             size === "sm" ? "text-sm" : "text-base"
           )}
           style={{ touchAction: "manipulation", fontVariantNumeric: "tabular-nums" }}
@@ -152,7 +152,7 @@ export function QuantitySelector({
             : `Increase quantity (currently ${value})`
         }
         className={cn(
-          "min-h-[44px] min-w-[44px] h-11 w-11 flex items-center justify-center text-[#333333] dark:text-[#cccccc] hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 active:bg-black/10 focus-visible:ring-2 focus-visible:ring-[#0A6847] focus-visible:outline-none transition-all cursor-pointer rounded-r-xl",
+          "min-h-[44px] min-w-[44px] h-11 w-11 flex items-center justify-center text-[#333333] dark:text-[#F0EDE6] hover:bg-black/5 dark:hover:bg-white/10 active:scale-95 active:bg-black/10 focus-visible:ring-2 focus-visible:ring-[#0A6847] focus-visible:outline-none transition-all cursor-pointer rounded-r-xl",
           (disabled || value >= max) && "opacity-30 cursor-not-allowed active:scale-100"
         )}
         style={{ touchAction: "manipulation" }}
