@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { userSignInSchema } from "@/lib/validators/auth";
+import { recordAuthEvent } from "@/lib/auth-service";
 import { Database } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -19,8 +20,13 @@ export async function POST(req: NextRequest) {
 
     const { email, password } = parseResult.data;
     const normalizedEmail = email.toLowerCase().trim();
+    const clientIp =
+      req.headers.get("cf-connecting-ip") ||
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      "unknown";
+    const userAgent = req.headers.get("user-agent") || null;
 
-    let response = NextResponse.json(
+    const response = NextResponse.json(
       { success: true, message: "Logged in successfully." },
       { status: 200 }
     );
@@ -54,45 +60,75 @@ export async function POST(req: NextRequest) {
     });
 
     if (authError || !authData.user) {
+      await recordAuthEvent({
+        email: normalizedEmail,
+        eventType: "user_login_failed",
+        ipAddress: clientIp,
+        userAgent,
+      });
+
       return NextResponse.json(
         { error: "Invalid credentials. Please verify your email and password." },
         { status: 401 }
       );
     }
 
-    // ENFORCE EMAIL VERIFICATION: Unverified users cannot log in or access protected features
-    if (!authData.user.email_confirmed_at) {
-      // Invalidate current session
+    // Strict email verification enforcement: user must have confirmed email AND verified via Resend
+    const isVerified =
+      Boolean(authData.user.email_confirmed_at) &&
+      authData.user.user_metadata?.email_verified !== false;
+
+    if (!isVerified) {
       await supabase.auth.signOut();
 
-      // Clear any cookies set during the sign-in attempt
-      const cookies = response.cookies.getAll();
-      for (const cookie of cookies) {
+      const clearedCookies = response.cookies.getAll();
+      const unverifiedRes = NextResponse.json(
+        {
+          error: "email_unverified",
+          canResend: true,
+          message:
+            "Your email address has not been verified yet. Please check your inbox for the verification link or request a new one.",
+        },
+        { status: 403 }
+      );
+
+      for (const cookie of clearedCookies) {
         if (cookie.name.startsWith("sb-") || cookie.name.includes("auth-token")) {
-          response.cookies.set(cookie.name, "", {
+          unverifiedRes.cookies.set(cookie.name, "", {
             path: "/",
             maxAge: 0,
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: "lax",
           });
         }
       }
 
-      return NextResponse.json(
-        {
-          error: "email_unverified",
-          message:
-            "Your email address has not been verified yet. Please check your inbox for the confirmation link before signing in.",
-        },
-        { status: 403 }
-      );
+      await recordAuthEvent({
+        userId: authData.user.id,
+        email: normalizedEmail,
+        eventType: "user_login_blocked_unverified",
+        ipAddress: clientIp,
+        userAgent,
+      });
+
+      return unverifiedRes;
     }
+
+    await recordAuthEvent({
+      userId: authData.user.id,
+      email: normalizedEmail,
+      eventType: "user_login_success",
+      ipAddress: clientIp,
+      userAgent,
+    });
 
     return response;
   } catch (error: any) {
-    console.error("API /api/auth/login exception:", error);
+    console.error("API /api/auth/login exception:", error?.message);
     return NextResponse.json(
       { error: "Internal authentication error" },
       { status: 500 }
     );
   }
 }
-

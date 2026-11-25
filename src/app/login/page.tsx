@@ -35,8 +35,43 @@ function LoginForm() {
   const [loading, setLoading] = React.useState(false);
   const [serverError, setServerError] = React.useState<string | null>(null);
   const [serverSuccess, setServerSuccess] = React.useState<string | null>(null);
+  const [showResendVerification, setShowResendVerification] = React.useState(false);
+  const [resendCooldown, setResendCooldown] = React.useState(0);
+  const [resendingEmail, setResendingEmail] = React.useState(false);
   const [touched, setTouched] = React.useState<Record<string, boolean>>({});
   const [errors, setErrors] = React.useState<Record<string, string>>({});
+
+  React.useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setInterval(() => setResendCooldown((c) => Math.max(0, c - 1)), 1000);
+    return () => clearInterval(t);
+  }, [resendCooldown]);
+
+  const handleResendVerification = async () => {
+    if (!email.trim() || resendCooldown > 0 || resendingEmail) return;
+    setResendingEmail(true);
+    try {
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      setServerSuccess(
+        data.message ||
+          (isTa
+            ? "சரிபார்ப்பு இணைப்பு உங்கள் மின்னஞ்சலுக்கு அனுப்பப்பட்டுள்ளது."
+            : "A verification link has been sent to your inbox.")
+      );
+      setResendCooldown(60);
+    } catch {
+      setServerError(
+        isTa ? "சரிபார்ப்பு மின்னஞ்சல் அனுப்புவதில் பிழை." : "Failed to resend verification email."
+      );
+    } finally {
+      setResendingEmail(false);
+    }
+  };
 
   const validate = (field: string, val: string): string | null => {
     if (field === "email") {
@@ -72,6 +107,7 @@ function LoginForm() {
     e.preventDefault();
     setServerError(null);
     setServerSuccess(null);
+    setShowResendVerification(false);
 
     const newErrors: Record<string, string> = {};
     const eErr = validate("email", email);
@@ -104,10 +140,11 @@ function LoginForm() {
 
         if (!res.ok) {
           if (data.error === "email_unverified") {
+            setShowResendVerification(true);
             setServerError(
               isTa
-                ? "உங்கள் மின்னஞ்சல் இன்னும் உறுதிப்படுத்தப்படவில்லை. தயவுசெய்து உங்கள் மின்னஞ்சலில் வந்துள்ள சரிபார்ப்பு இணைப்பை உறுதிப்படுத்தவும்."
-                : "Your email is not verified yet. Please check your inbox for the activation link."
+                ? "உங்கள் மின்னஞ்சல் இன்னும் உறுதிப்படுத்தப்படவில்லை. தயவுசெய்து உங்கள் மின்னஞ்சலில் வந்துள்ள சரிபார்ப்பு இணைப்பைச் சொடுக்கி உறுதிப்படுத்தவும்."
+                : "Your email is not verified yet. Please verify via the link sent to your inbox before signing in."
             );
           } else {
             setServerError(
@@ -120,11 +157,9 @@ function LoginForm() {
           return;
         }
 
-        // Success: Refresh and redirect
         router.push(redirectTo);
         router.refresh();
       } else {
-        // Register flow through server-side auto-signin endpoint
         const res = await fetch("/api/auth/signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -149,19 +184,15 @@ function LoginForm() {
           return;
         }
 
-        // Auto sign-in was performed by the backend route
+        // Strict verification required before signing in
+        setShowResendVerification(true);
+        setResendCooldown(60);
         setServerSuccess(
           isTa
-            ? "கணக்கு வெற்றிகரமாக உருவாக்கப்பட்டு நீங்கள் உள்நுழைந்துள்ளீர்கள்! சரிபார்ப்பு இணைப்பு உங்கள் மின்னஞ்சலுக்கு அனுப்பப்பட்டுள்ளது."
-            : "Account created and automatically signed in! A verification email has been dispatched."
+            ? "கணக்கு உருவாக்கப்பட்டது! உங்கள் மின்னஞ்சலுக்கு அனுப்பப்பட்ட சரிபார்ப்பு இணைப்பை உறுதிப்படுத்திய பிறகு உள்நுழையவும்."
+            : "Account created! Please click the verification link sent to your email before signing in."
         );
         setLoading(false);
-
-        // Immediate redirection with active session
-        setTimeout(() => {
-          router.push(redirectTo);
-          router.refresh();
-        }, 800);
       }
     } catch (err: any) {
       console.error("Authentication exception:", err);
@@ -329,16 +360,56 @@ function LoginForm() {
 
               {/* Server-side Alert Feedback */}
               {serverError && (
-                <div className="mb-4 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-tamil flex items-start gap-2.5">
-                  <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
-                  <span>{serverError}</span>
+                <div className="mb-4 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-tamil space-y-2.5">
+                  <div className="flex items-start gap-2.5">
+                    <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                    <span>{serverError}</span>
+                  </div>
+                  {showResendVerification && (
+                    <button
+                      type="button"
+                      disabled={resendCooldown > 0 || resendingEmail}
+                      onClick={handleResendVerification}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-rose-300 text-rose-900 text-xs font-bold hover:bg-rose-100/60 disabled:opacity-60 cursor-pointer min-h-[36px]"
+                    >
+                      <span>
+                        {resendCooldown > 0
+                          ? isTa
+                            ? `${resendCooldown} வினாடிகளில் மீண்டும் அனுப்பலாம்`
+                            : `Resend verification in ${resendCooldown}s`
+                          : isTa
+                            ? "சரிபார்ப்பு இணைப்பை மீண்டும் அனுப்புக"
+                            : "Resend verification email"}
+                      </span>
+                    </button>
+                  )}
                 </div>
               )}
 
               {serverSuccess && (
-                <div className="mb-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-tamil flex items-start gap-2.5">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span>{serverSuccess}</span>
+                <div className="mb-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-tamil space-y-2.5">
+                  <div className="flex items-start gap-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span>{serverSuccess}</span>
+                  </div>
+                  {showResendVerification && (
+                    <button
+                      type="button"
+                      disabled={resendCooldown > 0 || resendingEmail}
+                      onClick={handleResendVerification}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-emerald-300 text-emerald-900 text-xs font-bold hover:bg-emerald-100/60 disabled:opacity-60 cursor-pointer min-h-[36px]"
+                    >
+                      <span>
+                        {resendCooldown > 0
+                          ? isTa
+                            ? `${resendCooldown} வினாடிகளில் மீண்டும் அனுப்பலாம்`
+                            : `Resend link in ${resendCooldown}s`
+                          : isTa
+                            ? "இணைப்பை மீண்டும் அனுப்புக"
+                            : "Resend verification email"}
+                      </span>
+                    </button>
+                  )}
                 </div>
               )}
             </div>

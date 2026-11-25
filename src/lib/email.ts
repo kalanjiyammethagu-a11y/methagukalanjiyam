@@ -1,18 +1,46 @@
 import { Resend } from "resend";
 
+export interface EmailSendPayload {
+  from: string;
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+}
+
+export interface EmailTransport {
+  send(payload: EmailSendPayload): Promise<{ data?: { id?: string } | null; error?: { message: string } | null }>;
+}
+
+let customEmailTransportForTests: EmailTransport | null = null;
+
+/**
+ * Registers a mock transport strictly in tests so no production Resend API call is ever made.
+ */
+export function _setEmailTransportForTests(transport: EmailTransport | null): void {
+  customEmailTransportForTests = transport;
+}
+
 /**
  * Resend Email Service Client
  * Runs strictly on the server; RESEND_API_KEY must never be exposed to client bundles.
  */
-function getResendClient(): Resend | null {
+function getResendTransport(): EmailTransport | null {
+  if (customEmailTransportForTests) {
+    return customEmailTransportForTests;
+  }
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey || apiKey.includes("placeholder") || apiKey === "mock") {
     return null;
   }
-  return new Resend(apiKey);
+  const resend = new Resend(apiKey);
+  return {
+    async send(payload) {
+      return await resend.emails.send(payload);
+    },
+  };
 }
 
-// In development or when domain is unverified, Resend allows sending from onboarding@resend.dev
 const DEFAULT_FROM =
   process.env.RESEND_FROM_EMAIL || "Methagu Kalanjiyam <onboarding@resend.dev>";
 
@@ -23,9 +51,18 @@ export interface EmailResult {
   error?: string;
 }
 
+function escapeHtml(raw: string): string {
+  return raw
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 /**
  * Sends a 6-digit Two-Step Verification OTP to an administrator.
- * Security: Plain, branded, single code in body, "ignore if not you" notice, no clickable login links.
+ * Never logs the OTP code itself.
  */
 export async function sendAdminOtpEmail(params: {
   to: string;
@@ -33,7 +70,7 @@ export async function sendAdminOtpEmail(params: {
   expiresInMinutes?: number;
 }): Promise<EmailResult> {
   const { to, otpCode, expiresInMinutes = 10 } = params;
-  const resend = getResendClient();
+  const transport = getResendTransport();
 
   const subject = "🔒 Your Admin Verification Code — Methagu Kalanjiyam";
   const html = `
@@ -53,7 +90,7 @@ export async function sendAdminOtpEmail(params: {
         </p>
 
         <div style="margin: 24px 0; padding: 16px; background-color: #f5f5f4; border-radius: 8px; display: inline-block; letter-spacing: 8px; font-size: 32px; font-weight: 800; font-family: monospace; color: #0A6847; border: 1px dashed #0A6847;">
-          ${otpCode}
+          ${escapeHtml(otpCode)}
         </div>
 
         <p style="font-size: 12px; color: #78716c; margin-bottom: 0;">
@@ -82,13 +119,12 @@ This code will expire in ${expiresInMinutes} minutes and can only be used once.
 Security Notice: If you did not initiate this login request, please ignore this email. Your password may be compromised.
   `.trim();
 
-  if (!resend) {
-    console.info(`[Email Simulation] Admin OTP sent to ${to}: [${otpCode}]`);
-    return { success: true, simulated: true, id: `mock-${Date.now()}` };
+  if (!transport) {
+    return { success: true, simulated: true, id: `mock-otp-${Date.now()}` };
   }
 
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await transport.send({
       from: DEFAULT_FROM,
       to,
       subject,
@@ -97,19 +133,20 @@ Security Notice: If you did not initiate this login request, please ignore this 
     });
 
     if (error) {
-      console.error("Resend sendAdminOtpEmail error:", error);
+      console.error("Resend sendAdminOtpEmail error:", error.message);
       return { success: false, error: error.message };
     }
 
     return { success: true, id: data?.id };
   } catch (err: any) {
-    console.error("Resend exception in sendAdminOtpEmail:", err);
-    return { success: false, error: err.message || "Failed to dispatch email" };
+    console.error("Resend exception in sendAdminOtpEmail:", err?.message || "unknown error");
+    return { success: false, error: err?.message || "Failed to dispatch email" };
   }
 }
 
 /**
- * Sends an email verification link to a newly registered user.
+ * Sends a bilingual email verification link to a newly registered user.
+ * Never logs the verification URL or token to console.
  */
 export async function sendVerificationEmail(params: {
   to: string;
@@ -117,7 +154,9 @@ export async function sendVerificationEmail(params: {
   verifyUrl: string;
 }): Promise<EmailResult> {
   const { to, name, verifyUrl } = params;
-  const resend = getResendClient();
+  const transport = getResendTransport();
+  const safeName = escapeHtml(name || "வாசகரே");
+  const safeVerifyUrl = escapeHtml(verifyUrl);
 
   const subject = "களஞ்சிய வாசகர் கணக்கு சரிபார்ப்பு — Verify your email";
   const html = `
@@ -127,56 +166,59 @@ export async function sendVerificationEmail(params: {
           மேதகு களஞ்சியம்
         </h1>
         <p style="font-size: 12px; color: #78716c; margin-top: 4px;">
-          Rare Tamil Literature & Archives
+          Rare Tamil Literature &amp; Archives
         </p>
       </div>
 
       <div style="background-color: #ffffff; padding: 28px; border-radius: 8px; border: 1px solid #e7e5e4; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
         <p style="font-size: 15px; color: #1c1917; margin-top: 0;">
-          வணக்கம் ${name || "வாசகரே"},
+          வணக்கம் ${safeName},
         </p>
         <p style="font-size: 14px; color: #44403c; line-height: 1.6;">
-          மேதகு களஞ்சியத்தில் வாசகர் கணக்கு தொடங்கியதற்கு நன்றி. உங்கள் கணக்கை உறுதிசெய்து நூல்களை வாசிக்க மற்றும் பாதுகாப்பாக ஆர்டர் செய்ய கீழே உள்ள இணைப்பை சொடுக்கவும்:
+          மேதகு களஞ்சியத்தில் வாசகர் கணக்கு தொடங்கியதற்கு நன்றி. உங்கள் மின்னஞ்சலை உறுதிசெய்த பிறகே கணக்கில் உள்நுழையவும் ஆர்டர் செய்யவும் முடியும்:
+        </p>
+        <p style="font-size: 13px; color: #57534e; line-height: 1.55;">
+          Thank you for creating an account with Methagu Kalanjiyam. Please verify your email address before signing in:
         </p>
 
         <div style="text-align: center; margin: 28px 0;">
-          <a href="${verifyUrl}" style="background-color: #0A6847; color: #ffffff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 700; display: inline-block;">
+          <a href="${safeVerifyUrl}" style="background-color: #0A6847; color: #ffffff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 700; display: inline-block;">
             மின்னஞ்சலை உறுதிப்படுத்துக (Verify Email)
           </a>
         </div>
 
         <p style="font-size: 12px; color: #78716c; line-height: 1.5; margin-bottom: 0;">
-          இந்த இணைப்பு 24 மணி நேரம் மட்டுமே செயல்பாட்டில் இருக்கும். பட்டன் வேலை செய்யவில்லை என்றால், கீழே உள்ள இணைப்பை உலாவி முகவரியில் ஒட்டவும்:<br/>
-          <span style="color: #0A6847; word-break: break-all;">${verifyUrl}</span>
+          இந்த இணைப்பு 24 மணி நேரம் மட்டுமே செயல்பாட்டில் இருக்கும். பட்டன் வேலை செய்யவில்லை என்றால், கீழே உள்ள இணைப்பை உலாவியில் திறக்கவும்:<br/>
+          <span style="color: #0A6847; word-break: break-all;">${safeVerifyUrl}</span>
         </p>
       </div>
 
       <div style="margin-top: 20px; font-size: 11px; color: #a8a29e; text-align: center;">
         <p style="margin: 0;">
-          நீங்கள் இந்த கணக்கை உருவாக்கவில்லை என்றால், இந்த மின்னஞ்சலை புறக்கணிக்கலாம்.
+          நீங்கள் இந்த கணக்கை உருவாக்கவில்லை என்றால், இந்த மின்னஞ்சலை புறக்கணிக்கலாம். If you did not create this account, please ignore this email.
         </p>
       </div>
     </div>
   `;
 
   const text = `
-மேதகு களஞ்சியம் — வாசகர் கணக்கு உறுதிப்படுத்தல்
+மேதகு களஞ்சியம் — வாசகர் கணக்கு உறுதிப்படுத்தல் (Email Verification)
 
 வணக்கம் ${name || "வாசகரே"},
 
-உங்கள் மின்னஞ்சலை உறுதிப்படுத்த பின்வரும் இணைப்பை திறக்கவும்:
+உங்கள் மின்னஞ்சலை உறுதிப்படுத்த பின்வரும் இணைப்பை திறக்கவும் (24 மணி நேரம் செல்லுபடியாகும்):
 ${verifyUrl}
 
-இந்த இணைப்பு 24 மணி நேரம் செல்லுபடியாகும்.
+Hello ${name || "Reader"},
+Verify your Methagu Kalanjiyam account using the link above before signing in.
   `.trim();
 
-  if (!resend) {
-    console.info(`[Email Simulation] Verification email sent to ${to}: ${verifyUrl}`);
-    return { success: true, simulated: true, id: `mock-${Date.now()}` };
+  if (!transport) {
+    return { success: true, simulated: true, id: `mock-verify-${Date.now()}` };
   }
 
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await transport.send({
       from: DEFAULT_FROM,
       to,
       subject,
@@ -185,14 +227,14 @@ ${verifyUrl}
     });
 
     if (error) {
-      console.error("Resend sendVerificationEmail error:", error);
+      console.error("Resend sendVerificationEmail error:", error.message);
       return { success: false, error: error.message };
     }
 
     return { success: true, id: data?.id };
   } catch (err: any) {
-    console.error("Resend exception in sendVerificationEmail:", err);
-    return { success: false, error: err.message || "Failed to dispatch email" };
+    console.error("Resend exception in sendVerificationEmail:", err?.message || "unknown error");
+    return { success: false, error: err?.message || "Failed to dispatch email" };
   }
 }
 
@@ -205,7 +247,9 @@ export async function sendAlreadyRegisteredEmail(params: {
   loginUrl: string;
 }): Promise<EmailResult> {
   const { to, loginUrl } = params;
-  const resend = getResendClient();
+  const transport = getResendTransport();
+  const safeEmail = escapeHtml(to);
+  const safeLoginUrl = escapeHtml(loginUrl);
 
   const subject = "களஞ்சிய வாசகர் கணக்கு அறிவிப்பு — Account Notice";
   const html = `
@@ -218,14 +262,14 @@ export async function sendAlreadyRegisteredEmail(params: {
 
       <div style="background-color: #ffffff; padding: 28px; border-radius: 8px; border: 1px solid #e7e5e4;">
         <p style="font-size: 14px; color: #44403c; line-height: 1.6; margin-top: 0;">
-          இந்த மின்னஞ்சல் முகவரியில் (${to}) ஏற்கனவே ஒரு வாசகர் கணக்கு பதிவு செய்யப்பட்டுள்ளது.
+          இந்த மின்னஞ்சல் முகவரியில் (${safeEmail}) ஏற்கனவே ஒரு வாசகர் கணக்கு பதிவு செய்யப்பட்டுள்ளது.
         </p>
         <p style="font-size: 14px; color: #44403c; line-height: 1.6;">
           நீங்கள் உங்கள் கணக்கில் உள்நுழைய விரும்பினால், கீழே உள்ள இணைப்பைப் பயன்படுத்தவும்:
         </p>
 
         <div style="text-align: center; margin: 24px 0;">
-          <a href="${loginUrl}" style="background-color: #0A6847; color: #ffffff; padding: 10px 24px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 700; display: inline-block;">
+          <a href="${safeLoginUrl}" style="background-color: #0A6847; color: #ffffff; padding: 10px 24px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 700; display: inline-block;">
             உள்நுழைய (Sign In)
           </a>
         </div>
@@ -240,13 +284,12 @@ export async function sendAlreadyRegisteredEmail(params: {
 உள்நுழைய: ${loginUrl}
   `.trim();
 
-  if (!resend) {
-    console.info(`[Email Simulation] Already registered notice sent to ${to}`);
-    return { success: true, simulated: true, id: `mock-${Date.now()}` };
+  if (!transport) {
+    return { success: true, simulated: true, id: `mock-notice-${Date.now()}` };
   }
 
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await transport.send({
       from: DEFAULT_FROM,
       to,
       subject,
@@ -255,14 +298,13 @@ export async function sendAlreadyRegisteredEmail(params: {
     });
 
     if (error) {
-      console.error("Resend sendAlreadyRegisteredEmail error:", error);
+      console.error("Resend sendAlreadyRegisteredEmail error:", error.message);
       return { success: false, error: error.message };
     }
 
     return { success: true, id: data?.id };
   } catch (err: any) {
-    console.error("Resend exception in sendAlreadyRegisteredEmail:", err);
-    return { success: false, error: err.message };
+    console.error("Resend exception in sendAlreadyRegisteredEmail:", err?.message || "unknown error");
+    return { success: false, error: err?.message || "Failed to dispatch email" };
   }
 }
-

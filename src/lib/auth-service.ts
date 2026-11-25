@@ -1,85 +1,100 @@
-import crypto from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  constantTimeEqual,
+  generateBackupCodes,
+  generateSecureOtp,
+  generateSecureToken,
+  hashSecret,
+  normalizeBackupCode,
+  signToken,
+  verifySecretHash,
+  verifySignedToken,
+} from "@/lib/auth-crypto";
 
-/**
- * Derives the server auth secret.
- * Priority: AUTH_SECRET → SUPABASE_SERVICE_ROLE_KEY → RAZORPAY_KEY_SECRET fallback
- */
-function getAuthSecret(): string {
-  const secret =
-    process.env.AUTH_SECRET ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.RAZORPAY_KEY_SECRET;
+export {
+  constantTimeEqual,
+  generateBackupCodes,
+  generateSecureOtp,
+  generateSecureToken,
+  hashSecret,
+  normalizeBackupCode,
+  signToken,
+  verifySecretHash,
+  verifySignedToken,
+};
 
-  if (!secret) {
-    throw new Error("Server authentication secret is missing from environment.");
+function isSchemaMissingError(err: any): boolean {
+  const code = String(err?.code || "");
+  const msg = String(err?.message || "").toLowerCase();
+  return (
+    code === "PGRST204" ||
+    code === "PGRST205" ||
+    code === "42703" ||
+    code === "42P01" ||
+    msg.includes("does not exist") ||
+    msg.includes("could not find")
+  );
+}
+
+const SENSITIVE_META_KEY = /otp|code|token|secret|password|hash|backup/i;
+
+function sanitizeEventMetadata(meta?: Record<string, unknown>): Record<string, unknown> {
+  if (!meta) return {};
+  const clean: Record<string, unknown> = {};
+  for (const [key, val] of Object.entries(meta)) {
+    if (SENSITIVE_META_KEY.test(key)) continue;
+    clean[key] = val;
   }
-  return secret;
+  return clean;
 }
 
 /**
- * Generates a cryptographically strong 6-digit OTP code using CSPRNG.
+ * Records a non-sensitive security/auth audit event into `auth_events` (fallback `audit_logs`).
+ * Strictly strips any sensitive secret/OTP/token/backup-code keys before writing.
  */
-export function generateSecureOtp(): string {
-  // crypto.randomInt is cryptographically secure
-  const code = crypto.randomInt(100000, 1000000);
-  return code.toString();
-}
+export async function recordAuthEvent(params: {
+  userId?: string | null;
+  email?: string | null;
+  eventType: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  const adminSupabase = createAdminClient();
+  const safeMeta = sanitizeEventMetadata(params.metadata);
 
-/**
- * Generates a 256-bit CSPRNG hex token for session or verification links.
- */
-export function generateSecureToken(bytes = 32): string {
-  return crypto.randomBytes(bytes).toString("hex");
-}
+  try {
+    const { error } = await (adminSupabase.from("auth_events") as any).insert({
+      user_id: params.userId || null,
+      email: params.email ? params.email.toLowerCase().trim() : null,
+      event_type: params.eventType,
+      ip_address: params.ipAddress || null,
+      user_agent: params.userAgent || null,
+      metadata: safeMeta,
+    });
 
-/**
- * Computes HMAC-SHA256 hash of a secret or code.
- */
-export function hashSecret(value: string): string {
-  const secret = getAuthSecret();
-  return crypto.createHmac("sha256", secret).update(value).digest("hex");
-}
+    if (!error) return;
+    if (!isSchemaMissingError(error)) {
+      console.warn("[auth_events] insert error:", error.message);
+      return;
+    }
+  } catch {
+    // Fall through to legacy audit_logs fallback if migration 021 not applied yet
+  }
 
-/**
- * Constant-time comparison of a value against its stored hash.
- */
-export function verifySecretHash(value: string, expectedHash: string): boolean {
-  const computed = hashSecret(value);
-  if (computed.length !== expectedHash.length) return false;
-  return crypto.timingSafeEqual(
-    Buffer.from(computed, "utf8"),
-    Buffer.from(expectedHash, "utf8")
-  );
-}
-
-/**
- * Signs a payload string with HMAC-SHA256.
- * Format: payload.signature
- */
-export function signToken(payload: string): string {
-  const secret = getAuthSecret();
-  const signature = crypto.createHmac("sha256", secret).update(payload).digest("hex");
-  return `${payload}.${signature}`;
-}
-
-/**
- * Verifies and unpacks an HMAC-SHA256 signed token.
- */
-export function verifySignedToken(signedToken: string): string | null {
-  const parts = signedToken.split(".");
-  if (parts.length !== 2) return null;
-  const [payload, signature] = parts;
-  const secret = getAuthSecret();
-  const expectedSig = crypto.createHmac("sha256", secret).update(payload).digest("hex");
-
-  if (signature.length !== expectedSig.length) return null;
-  const matches = crypto.timingSafeEqual(
-    Buffer.from(signature, "utf8"),
-    Buffer.from(expectedSig, "utf8")
-  );
-
-  return matches ? payload : null;
+  try {
+    await (adminSupabase.from("audit_logs") as any).insert({
+      user_id: params.userId || null,
+      action: params.eventType,
+      resource_type: "auth",
+      resource_id: params.userId || "system",
+      ip_address: params.ipAddress || null,
+      user_agent: params.userAgent || null,
+      metadata: safeMeta,
+    });
+  } catch {
+    // Best-effort audit logging
+  }
 }
 
 // ============================================================================
@@ -98,20 +113,18 @@ export interface IssueAdminOtpResult {
 export async function issueAdminOtp(userId: string, email: string): Promise<IssueAdminOtpResult> {
   const adminSupabase = createAdminClient();
   const otpCode = generateSecureOtp();
-  const hashedCode = hashSecret(otpCode);
+  const hashedCode = await hashSecret(otpCode);
   const preAuthToken = generateSecureToken(32);
-  const preAuthTokenHash = hashSecret(preAuthToken);
+  const preAuthTokenHash = await hashSecret(preAuthToken);
 
   const expiresInMinutes = 10;
   const expiresAt = new Date(Date.now() + expiresInMinutes * 60 * 1000).toISOString();
 
-  // Invalidate previous active codes for this user
   await (adminSupabase.from("admin_otp_codes") as any)
     .update({ consumed_at: new Date().toISOString() })
     .eq("user_id", userId)
     .is("consumed_at", null);
 
-  // Insert newly generated OTP code
   const { error } = await (adminSupabase.from("admin_otp_codes") as any).insert({
     user_id: userId,
     email: email.toLowerCase(),
@@ -153,9 +166,8 @@ export async function verifyAdminOtp(
   submittedOtp: string
 ): Promise<VerifyAdminOtpResult> {
   const adminSupabase = createAdminClient();
-  const preAuthHash = hashSecret(preAuthToken);
+  const preAuthHash = await hashSecret(preAuthToken);
 
-  // Find active OTP record bound to this pre-auth token
   const { data: record, error } = await (adminSupabase.from("admin_otp_codes") as any)
     .select("*")
     .eq("pre_auth_token_hash", preAuthHash)
@@ -172,7 +184,6 @@ export async function verifyAdminOtp(
     };
   }
 
-  // Check expiration
   if (new Date(record.expires_at).getTime() < Date.now()) {
     await (adminSupabase.from("admin_otp_codes") as any)
       .update({ consumed_at: new Date().toISOString() })
@@ -185,7 +196,6 @@ export async function verifyAdminOtp(
     };
   }
 
-  // Check max attempts
   if (record.attempts >= record.max_attempts) {
     await (adminSupabase.from("admin_otp_codes") as any)
       .update({ consumed_at: new Date().toISOString() })
@@ -198,8 +208,7 @@ export async function verifyAdminOtp(
     };
   }
 
-  // Constant-time hash check
-  const isCorrect = verifySecretHash(submittedOtp.trim(), record.hashed_code);
+  const isCorrect = await verifySecretHash(submittedOtp.trim(), record.hashed_code);
 
   if (!isCorrect) {
     const updatedAttempts = record.attempts + 1;
@@ -223,10 +232,10 @@ export async function verifyAdminOtp(
     };
   }
 
-  // Code is valid! Consume it single-use
   await (adminSupabase.from("admin_otp_codes") as any)
     .update({ consumed_at: new Date().toISOString() })
-    .eq("id", record.id);
+    .eq("id", record.id)
+    .is("consumed_at", null);
 
   return {
     valid: true,
@@ -244,10 +253,6 @@ export interface CreateAdminSessionResult {
   expiresAt: string;
 }
 
-/**
- * Creates an active admin session after successful Step 2 OTP verification.
- * Shorter timeout: 2 hours idle / 8 hours absolute.
- */
 export async function createAdminSession(
   userId: string,
   ipAddress?: string,
@@ -255,9 +260,8 @@ export async function createAdminSession(
 ): Promise<CreateAdminSessionResult> {
   const adminSupabase = createAdminClient();
   const rawToken = generateSecureToken(32);
-  const sessionTokenHash = hashSecret(rawToken);
+  const sessionTokenHash = await hashSecret(rawToken);
 
-  // 8 hours absolute lifetime
   const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
 
   await (adminSupabase.from("admin_sessions") as any).insert({
@@ -269,8 +273,7 @@ export async function createAdminSession(
     expires_at: expiresAt,
   });
 
-  // Return signed session cookie payload
-  const signedToken = signToken(`${userId}:${rawToken}`);
+  const signedToken = await signToken(`${userId}:${rawToken}`);
 
   return {
     sessionToken: signedToken,
@@ -278,22 +281,19 @@ export async function createAdminSession(
   };
 }
 
-/**
- * Validates an admin session cookie.
- */
 export async function validateAdminSession(signedSessionToken: string): Promise<{
   valid: boolean;
   userId?: string;
 }> {
   if (!signedSessionToken) return { valid: false };
 
-  const payload = verifySignedToken(signedSessionToken);
+  const payload = await verifySignedToken(signedSessionToken);
   if (!payload) return { valid: false };
 
   const [userId, rawToken] = payload.split(":");
   if (!userId || !rawToken) return { valid: false };
 
-  const tokenHash = hashSecret(rawToken);
+  const tokenHash = await hashSecret(rawToken);
   const adminSupabase = createAdminClient();
 
   const { data: session, error } = await (adminSupabase.from("admin_sessions") as any)
@@ -305,19 +305,16 @@ export async function validateAdminSession(signedSessionToken: string): Promise<
 
   if (error || !session) return { valid: false };
 
-  // Check expiration
   const now = Date.now();
   if (new Date(session.expires_at).getTime() < now) {
     return { valid: false };
   }
 
-  // Check idle timeout (2 hours)
   const lastActive = new Date(session.last_active_at).getTime();
   if (now - lastActive > 2 * 60 * 60 * 1000) {
     return { valid: false };
   }
 
-  // Update last active timestamp
   await (adminSupabase.from("admin_sessions") as any)
     .update({ last_active_at: new Date().toISOString() })
     .eq("id", session.id);
@@ -334,9 +331,7 @@ export interface AdminAuthResult {
 }
 
 /**
- * Strict server-side admin authorization validator.
- * Enforces session token validity AND queries profiles.role === 'admin'.
- * Fails closed: no session = 401, wrong role = 403, query error = deny.
+ * Strict fail-closed server-side admin authorization validator.
  */
 export async function requireAdmin(cookieOrReq: any): Promise<AdminAuthResult> {
   let adminCookie: string | undefined;
@@ -383,17 +378,14 @@ export async function requireAdmin(cookieOrReq: any): Promise<AdminAuthResult> {
   }
 }
 
-/**
- * Revokes an admin session.
- */
 export async function revokeAdminSession(signedSessionToken: string): Promise<void> {
-  const payload = verifySignedToken(signedSessionToken);
+  const payload = await verifySignedToken(signedSessionToken);
   if (!payload) return;
 
   const [, rawToken] = payload.split(":");
   if (!rawToken) return;
 
-  const tokenHash = hashSecret(rawToken);
+  const tokenHash = await hashSecret(rawToken);
   const adminSupabase = createAdminClient();
 
   await (adminSupabase.from("admin_sessions") as any)
@@ -402,56 +394,98 @@ export async function revokeAdminSession(signedSessionToken: string): Promise<vo
 }
 
 // ============================================================================
-// USER EMAIL VERIFICATION TOKENS
+// USER EMAIL VERIFICATION TOKENS (Resend + Cooldown + Single-Use)
 // ============================================================================
 
+export interface IssueVerificationTokenOutcome {
+  issued: boolean;
+  rawToken?: string;
+  retryAfterSeconds?: number;
+}
+
 /**
- * Generates and stores a 24-hour single-use email verification token.
+ * Checks cooldown (default 60s) and issues a 24-hour single-use Web Crypto verification token.
  */
 export async function issueUserVerificationToken(
   userId: string,
-  email: string
-): Promise<string> {
+  email: string,
+  cooldownSeconds = 60
+): Promise<IssueVerificationTokenOutcome> {
   const adminSupabase = createAdminClient();
-  const rawToken = generateSecureToken(32);
-  const hashedToken = hashSecret(rawToken);
 
+  // Check cooldown on most recent issued token for this user (DB-backed)
+  if (cooldownSeconds > 0) {
+    const { data: latestToken } = await (adminSupabase.from("user_verification_tokens") as any)
+      .select("id, created_at, consumed_at")
+      .eq("user_id", userId)
+      .is("consumed_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (latestToken?.created_at) {
+      const elapsedSec = Math.floor(
+        (Date.now() - new Date(latestToken.created_at).getTime()) / 1000
+      );
+      if (elapsedSec >= 0 && elapsedSec < cooldownSeconds) {
+        return {
+          issued: false,
+          retryAfterSeconds: cooldownSeconds - elapsedSec,
+        };
+      }
+    }
+  }
+
+  const rawToken = generateSecureToken(32);
+  const hashedToken = await hashSecret(rawToken);
+  const nowIso = new Date().toISOString();
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
-  // Invalidate any prior unused tokens for this user
   await (adminSupabase.from("user_verification_tokens") as any)
-    .update({ consumed_at: new Date().toISOString() })
+    .update({ consumed_at: nowIso })
     .eq("user_id", userId)
     .is("consumed_at", null);
 
-  const { error } = await (adminSupabase.from("user_verification_tokens") as any).insert({
+  let { error } = await (adminSupabase.from("user_verification_tokens") as any).insert({
     user_id: userId,
-    email: email.toLowerCase(),
+    email: email.toLowerCase().trim(),
     hashed_token: hashedToken,
     token_type: "signup_confirmation",
+    last_sent_at: nowIso,
     expires_at: expiresAt,
   });
+
+  if (error && isSchemaMissingError(error)) {
+    ({ error } = await (adminSupabase.from("user_verification_tokens") as any).insert({
+      user_id: userId,
+      email: email.toLowerCase().trim(),
+      hashed_token: hashedToken,
+      token_type: "signup_confirmation",
+      expires_at: expiresAt,
+    }));
+  }
 
   if (error) {
     throw new Error(`Failed to store verification token: ${error.message}`);
   }
 
-  return rawToken;
+  return { issued: true, rawToken };
 }
 
 /**
- * Verifies an email verification token, marking the user as confirmed.
+ * Verifies an email verification token atomically (single-use) and marks Supabase account verified.
  */
 export async function verifyUserEmailToken(rawToken: string): Promise<{
   success: boolean;
   userId?: string;
+  email?: string;
   error?: string;
 }> {
-  if (!rawToken || rawToken.trim().length < 16) {
+  if (!rawToken || rawToken.trim().length < 32) {
     return { success: false, error: "Invalid verification link." };
   }
 
-  const hashedToken = hashSecret(rawToken.trim());
+  const hashedToken = await hashSecret(rawToken.trim());
   const adminSupabase = createAdminClient();
 
   const { data: record, error } = await (adminSupabase.from("user_verification_tokens") as any)
@@ -464,37 +498,50 @@ export async function verifyUserEmailToken(rawToken: string): Promise<{
     return { success: false, error: "Verification link is invalid or has already been used." };
   }
 
-  // Check expiration (24h)
+  const nowIso = new Date().toISOString();
   if (new Date(record.expires_at).getTime() < Date.now()) {
     await (adminSupabase.from("user_verification_tokens") as any)
-      .update({ consumed_at: new Date().toISOString() })
+      .update({ consumed_at: nowIso })
       .eq("id", record.id);
 
     return { success: false, error: "Verification link has expired. Please request a new one." };
   }
 
-  // Consume token
-  await (adminSupabase.from("user_verification_tokens") as any)
-    .update({ consumed_at: new Date().toISOString() })
-    .eq("id", record.id);
+  // Atomic single-use consumption check to block parallel replay
+  const { data: consumedRow, error: consumeErr } = await (
+    adminSupabase.from("user_verification_tokens") as any
+  )
+    .update({ consumed_at: nowIso })
+    .eq("id", record.id)
+    .is("consumed_at", null)
+    .select("id")
+    .maybeSingle();
 
-  // Mark user email confirmed in auth.users via Supabase Admin and update metadata
+  if (consumeErr || !consumedRow) {
+    return { success: false, error: "Verification link has already been consumed." };
+  }
+
   const { error: updateUserError } = await adminSupabase.auth.admin.updateUserById(
     record.user_id,
     {
       email_confirm: true,
       user_metadata: {
         email_verified: true,
-        email_verified_at: new Date().toISOString(),
+        email_verified_at: nowIso,
       },
     }
   );
 
   if (updateUserError) {
-    console.error("Failed to mark user verified in auth.users:", updateUserError);
+    console.error("Failed to mark user verified in auth.users:", updateUserError.message);
     return { success: false, error: "Failed to confirm user account." };
   }
 
-  return { success: true, userId: record.user_id };
-}
+  await recordAuthEvent({
+    userId: record.user_id,
+    email: record.email,
+    eventType: "email_verified_success",
+  });
 
+  return { success: true, userId: record.user_id, email: record.email };
+}

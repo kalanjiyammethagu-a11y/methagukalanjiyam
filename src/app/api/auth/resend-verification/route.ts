@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resendVerificationSchema } from "@/lib/validators/auth";
-import { issueUserVerificationToken } from "@/lib/auth-service";
+import { issueUserVerificationToken, recordAuthEvent } from "@/lib/auth-service";
 import { sendVerificationEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
+
+const COOLDOWN_SECONDS = 60;
+
+function resolvePublicAppUrl(req: NextRequest): string {
+  const configured =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL;
+  if (configured && configured.startsWith("http")) {
+    return configured.replace(/\/$/, "");
+  }
+  return req.nextUrl.origin;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,43 +33,67 @@ export async function POST(req: NextRequest) {
     const { email } = parseResult.data;
     const normalizedEmail = email.toLowerCase().trim();
     const adminSupabase = createAdminClient();
+    const appUrl = resolvePublicAppUrl(req);
+    const clientIp =
+      req.headers.get("cf-connecting-ip") ||
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      "unknown";
+    const userAgent = req.headers.get("user-agent") || null;
 
-    // Check if user exists and is unverified via Resend
-    const { data: userList } = await adminSupabase.auth.admin.listUsers();
-    const user = userList?.users?.find((u) => u.email?.toLowerCase() === normalizedEmail);
+    const { data: userList } = await adminSupabase.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000,
+    });
+    const user = userList?.users?.find(
+      (u) => u.email?.toLowerCase() === normalizedEmail
+    );
 
-    if (user && (!user.user_metadata?.email_verified || !user.email_confirmed_at)) {
-      const appUrl =
-        process.env.NEXT_PUBLIC_APP_URL ||
-        process.env.NEXT_PUBLIC_SITE_URL ||
-        "http://localhost:3000";
+    if (
+      user &&
+      (!user.email_confirmed_at || user.user_metadata?.email_verified === false)
+    ) {
+      const outcome = await issueUserVerificationToken(
+        user.id,
+        normalizedEmail,
+        COOLDOWN_SECONDS
+      );
 
-      const rawToken = await issueUserVerificationToken(user.id, normalizedEmail);
-      const verifyUrl = `${appUrl}/verify-email?token=${rawToken}`;
-      const name = (user.user_metadata?.full_name as string) || "வாசகரே";
+      if (outcome.issued && outcome.rawToken) {
+        const verifyUrl = `${appUrl}/verify-email?token=${outcome.rawToken}`;
+        const name = (user.user_metadata?.full_name as string) || "வாசகரே";
 
-      await sendVerificationEmail({
-        to: normalizedEmail,
-        name,
-        verifyUrl,
-      });
+        const mailResult = await sendVerificationEmail({
+          to: normalizedEmail,
+          name,
+          verifyUrl,
+        });
+
+        await recordAuthEvent({
+          userId: user.id,
+          email: normalizedEmail,
+          eventType: "user_verification_email_resent",
+          ipAddress: clientIp,
+          userAgent,
+          metadata: { email_sent: mailResult.success },
+        });
+      }
     }
 
-    // Always return neutral response (zero enumeration)
+    // Zero enumeration: return uniform neutral 200 regardless of account existence, state, or per-user cooldown
     return NextResponse.json(
       {
         success: true,
+        cooldownSeconds: COOLDOWN_SECONDS,
         message:
-          "If your account is registered and pending confirmation, a fresh verification link has been dispatched.",
+          "If your account is registered and pending verification, a confirmation link has been sent to your inbox.",
       },
       { status: 200 }
     );
   } catch (error: any) {
-    console.error("API /api/auth/resend-verification exception:", error);
+    console.error("API /api/auth/resend-verification exception:", error?.message);
     return NextResponse.json(
-      { error: "Failed to resend confirmation email" },
+      { error: "Failed to process verification email request" },
       { status: 500 }
     );
   }
 }
-

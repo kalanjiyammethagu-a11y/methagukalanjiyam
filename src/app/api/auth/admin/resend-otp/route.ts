@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const preAuthHash = hashSecret(preAuthToken);
+    const preAuthHash = await hashSecret(preAuthToken);
     const adminSupabase = createAdminClient();
 
     // Find current active OTP record
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
 
     // Generate new OTP
     const newOtpCode = generateSecureOtp();
-    const newHashedCode = hashSecret(newOtpCode);
+    const newHashedCode = await hashSecret(newOtpCode);
     const newExpiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
     await (adminSupabase.from("admin_otp_codes") as any)

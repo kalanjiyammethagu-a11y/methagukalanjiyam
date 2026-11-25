@@ -12,25 +12,32 @@ function VerifyEmailContent() {
   const queryStatus = searchParams.get("status");
   const queryMessage = searchParams.get("message");
 
-  const [status, setStatus] = React.useState<"loading" | "success" | "error">(
+  const [status, setStatus] = React.useState<"loading" | "success" | "error" | "prompt">(
     queryStatus === "success"
       ? "success"
       : queryStatus === "error"
       ? "error"
       : token
       ? "loading"
-      : "error"
+      : "prompt"
   );
   const [message, setMessage] = React.useState<string>(
     queryMessage ||
-      (status === "success"
-        ? "உங்கள் மின்னஞ்சல் வெற்றிகரமாக உறுதிப்படுத்தப்பட்டது! இப்போது நீங்கள் உள்நுழையலாம்."
+      (queryStatus === "success"
+        ? "உங்கள் மின்னஞ்சல் வெற்றிகரமாக உறுதிப்படுத்தப்பட்டது! இப்போது நீங்கள் உள்நுழையலாம். (Email verified successfully)"
         : "")
   );
 
   const [resendEmail, setResendEmail] = React.useState("");
   const [resendLoading, setResendLoading] = React.useState(false);
+  const [resendCooldown, setResendCooldown] = React.useState(0);
   const [resendMessage, setResendMessage] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setInterval(() => setResendCooldown((c) => Math.max(0, c - 1)), 1000);
+    return () => clearInterval(t);
+  }, [resendCooldown]);
 
   // If token is in query param, verify it
   React.useEffect(() => {
@@ -73,7 +80,7 @@ function VerifyEmailContent() {
 
   const handleResend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!resendEmail.trim()) return;
+    if (!resendEmail.trim() || resendCooldown > 0 || resendLoading) return;
 
     setResendLoading(true);
     setResendMessage(null);
@@ -86,7 +93,11 @@ function VerifyEmailContent() {
       });
 
       const data = await res.json();
-      setResendMessage(data.message || "சரிபார்ப்பு இணைப்பு அனுப்பப்பட்டது.");
+      setResendMessage(
+        data.message ||
+          "சரிபார்ப்பு இணைப்பு உங்கள் மின்னஞ்சலுக்கு அனுப்பப்பட்டது. (Verification link sent if eligible.)"
+      );
+      setResendCooldown(60);
     } catch {
       setResendMessage("பிழை ஏற்பட்டது. தயவுசெய்து சிறிது நேரம் கழித்து முயற்சிக்கவும்.");
     } finally {
@@ -145,17 +156,31 @@ function VerifyEmailContent() {
           </div>
         )}
 
-        {status === "error" && (
+        {(status === "error" || status === "prompt") && (
           <div className="space-y-5 py-4">
-            <div className="h-14 w-14 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 mx-auto flex items-center justify-center ring-8 ring-rose-50 dark:ring-rose-950/20">
-              <AlertCircle className="h-8 w-8" />
+            <div
+              className={`h-14 w-14 rounded-full mx-auto flex items-center justify-center ring-8 ${
+                status === "error"
+                  ? "bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 ring-rose-50 dark:ring-rose-950/20"
+                  : "bg-emerald-100 dark:bg-emerald-950/60 text-[#0A6847] dark:text-emerald-400 ring-emerald-50 dark:ring-emerald-950/20"
+              }`}
+            >
+              {status === "error" ? (
+                <AlertCircle className="h-8 w-8" />
+              ) : (
+                <Mail className="h-8 w-8" />
+              )}
             </div>
 
-            <h2 className="text-lg font-bold text-[#111111] dark:text-white font-tamil">
-              சரிபார்ப்பில் சிக்கல்
+            <h2 className="text-lg font-bold text-[#111111] dark:text-white font-tamil leading-snug">
+              {status === "error"
+                ? "சரிபார்ப்பில் சிக்கல் (Verification Issue)"
+                : "மின்னஞ்சல் சரிபார்ப்பு (Email Verification)"}
             </h2>
             <p className="text-xs text-[#555555] dark:text-[#aaaaaa] leading-relaxed font-tamil">
-              {message || "சரிபார்ப்பு இணைப்பு தவறானது அல்லது காலாவதியாகிவிட்டது."}
+              {status === "error"
+                ? message || "சரிபார்ப்பு இணைப்பு தவறானது அல்லது காலாவதியாகிவிட்டது."
+                : "புதிய சரிபார்ப்பு இணைப்பைப் பெற உங்கள் பதிவு செய்யப்பட்ட மின்னஞ்சலை உள்ளிடவும். Enter your email to receive a new verification link."}
             </p>
 
             {/* Resend link form */}
@@ -164,7 +189,7 @@ function VerifyEmailContent() {
                 htmlFor="resend-email"
                 className="block text-xs font-semibold text-[#444444] dark:text-[#bbbbbb] font-tamil"
               >
-                புதிய சரிபார்ப்பு இணைப்பைப் பெற மின்னஞ்சலை உள்ளிடுக:
+                மின்னஞ்சல் முகவரி (Email Address):
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#888888]" />
@@ -180,22 +205,26 @@ function VerifyEmailContent() {
               </div>
 
               {resendMessage && (
-                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-tamil">
+                <p className="text-xs text-emerald-700 dark:text-emerald-400 font-tamil leading-relaxed">
                   {resendMessage}
                 </p>
               )}
 
               <button
                 type="submit"
-                disabled={resendLoading || !resendEmail}
-                className="w-full min-h-[44px] h-11 rounded-xl bg-[#0A6847] hover:bg-[#085036] disabled:opacity-50 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer font-tamil"
+                disabled={resendLoading || !resendEmail || resendCooldown > 0}
+                className="w-full min-h-[44px] h-11 rounded-xl bg-[#0A6847] hover:bg-[#085036] disabled:opacity-50 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer font-tamil disabled:cursor-not-allowed"
               >
                 {resendLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <RefreshCw className="h-3.5 w-3.5" />
                 )}
-                <span>புதிய இணைப்பை அனுப்புக (Resend Link)</span>
+                <span>
+                  {resendCooldown > 0
+                    ? `${resendCooldown} வினாடிகளில் மீண்டும் அனுப்பலாம் (${resendCooldown}s)`
+                    : "புதிய இணைப்பை அனுப்புக (Resend Link)"}
+                </span>
               </button>
             </form>
 

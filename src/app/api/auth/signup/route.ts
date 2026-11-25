@@ -1,22 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { userSignUpSchema } from "@/lib/validators/auth";
-import { issueUserVerificationToken } from "@/lib/auth-service";
+import { issueUserVerificationToken, recordAuthEvent } from "@/lib/auth-service";
 import { sendVerificationEmail, sendAlreadyRegisteredEmail } from "@/lib/email";
-import { Database } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Equalizes response timing to prevent timing-based user enumeration.
- */
-async function equalizeTiming(startTime: number, minMs = 500) {
+async function equalizeTiming(startTime: number, minMs = 450) {
   const elapsed = Date.now() - startTime;
   if (elapsed < minMs) {
     await new Promise((r) => setTimeout(r, minMs - elapsed));
   }
 }
+
+function resolvePublicAppUrl(req: NextRequest): string {
+  const configured =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL;
+  if (configured && configured.startsWith("http")) {
+    return configured.replace(/\/$/, "");
+  }
+  return req.nextUrl.origin;
+}
+
+const NEUTRAL_SIGNUP_MESSAGE =
+  "If your email address is eligible, a verification link has been sent to your inbox. Please verify your email before signing in.";
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
@@ -24,7 +32,6 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // 1. Strict Zod validation
     const parseResult = userSignUpSchema.safeParse(body);
     if (!parseResult.success) {
       await equalizeTiming(startTime);
@@ -40,64 +47,97 @@ export async function POST(req: NextRequest) {
     const { email, password, full_name, locale } = parseResult.data;
     const normalizedEmail = email.toLowerCase().trim();
     const adminSupabase = createAdminClient();
+    const appUrl = resolvePublicAppUrl(req);
+    const clientIp =
+      req.headers.get("cf-connecting-ip") ||
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      "unknown";
+    const userAgent = req.headers.get("user-agent") || null;
 
-    // 2. Check if user already exists
-    const { data: existingUserList } = await adminSupabase.auth.admin.listUsers();
+    // 1. Check if account already exists (pagination-safe lookup across auth.users if small or filter)
+    const { data: existingUserList } = await adminSupabase.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000,
+    });
     const existingUser = existingUserList?.users?.find(
       (u) => u.email?.toLowerCase() === normalizedEmail
     );
 
-    const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      "http://localhost:3000";
-
     if (existingUser) {
-      // User already exists!
-      // Send "Account already exists" email to owner without leaking information to caller
-      try {
-        await sendAlreadyRegisteredEmail({
-          to: normalizedEmail,
-          loginUrl: `${appUrl}/login`,
-        });
-      } catch (mailErr) {
-        console.warn("Failed to dispatch already-registered email notice:", mailErr);
+      const isAlreadyVerified =
+        Boolean(existingUser.email_confirmed_at) &&
+        existingUser.user_metadata?.email_verified !== false;
+
+      if (!isAlreadyVerified) {
+        // Account exists but hasn't verified email yet: resend verification respecting 60s cooldown
+        try {
+          const outcome = await issueUserVerificationToken(
+            existingUser.id,
+            normalizedEmail,
+            60
+          );
+          if (outcome.issued && outcome.rawToken) {
+            const verifyUrl = `${appUrl}/verify-email?token=${outcome.rawToken}`;
+            await sendVerificationEmail({
+              to: normalizedEmail,
+              name: (existingUser.user_metadata?.full_name as string) || full_name,
+              verifyUrl,
+            });
+          }
+        } catch (resendErr: any) {
+          console.warn("Pending account verification resend warning:", resendErr?.message);
+        }
+      } else {
+        // Confirmed account already exists: email owner securely without exposing account existence in HTTP response
+        try {
+          await sendAlreadyRegisteredEmail({
+            to: normalizedEmail,
+            loginUrl: `${appUrl}/login`,
+          });
+        } catch (mailErr: any) {
+          console.warn("Failed to dispatch already-registered notice:", mailErr?.message);
+        }
       }
+
+      await recordAuthEvent({
+        userId: existingUser.id,
+        email: normalizedEmail,
+        eventType: "user_signup_duplicate_handled",
+        ipAddress: clientIp,
+        userAgent,
+      });
 
       await equalizeTiming(startTime);
 
-      // Return identical neutral success response to prevent account enumeration
       return NextResponse.json(
         {
           success: true,
-          message:
-            "If your email address is eligible, a verification link has been dispatched to your inbox.",
+          autoSignedIn: false,
+          requiresEmailVerification: true,
+          message: NEUTRAL_SIGNUP_MESSAGE,
         },
         { status: 200 }
       );
     }
 
-    // 3. User is new: Create user in Supabase Auth
-    // email_confirm: true enables instant session establishment for auto sign-in
-    // email_verified: false in user_metadata tracks Resend email verification
-    // Server enforces role: 'customer' (Hard-prevents role elevation / mass assignment)
+    // 2. Create user with email_confirm: false — strict email verification required before login
     const { data: newUserData, error: createError } =
       await adminSupabase.auth.admin.createUser({
         email: normalizedEmail,
         password,
-        email_confirm: true,
+        email_confirm: false,
         user_metadata: {
           full_name,
           locale,
           email_verified: false,
         },
         app_metadata: {
-          role: "customer", // Enforced server-side
+          role: "customer",
         },
       });
 
     if (createError || !newUserData.user) {
-      console.error("Supabase createUser error:", createError);
+      console.error("Supabase createUser error:", createError?.message);
       await equalizeTiming(startTime);
       return NextResponse.json(
         { error: "Registration could not be completed. Please try again." },
@@ -107,9 +147,10 @@ export async function POST(req: NextRequest) {
 
     const newUserId = newUserData.user.id;
 
-    // 4. Create profile entry in public.profiles table
+    // 3. Create customer profile in public.profiles
     await (adminSupabase.from("profiles") as any).upsert({
       id: newUserId,
+      email: normalizedEmail,
       full_name,
       role: "customer",
       locale,
@@ -117,11 +158,17 @@ export async function POST(req: NextRequest) {
       updated_at: new Date().toISOString(),
     });
 
-    // 5. Generate secure 24-hour verification token
-    const rawToken = await issueUserVerificationToken(newUserId, normalizedEmail);
-    const verifyUrl = `${appUrl}/verify-email?token=${rawToken}`;
+    // 4. Issue 24-hour single-use Web Crypto verification token & send via Resend
+    const tokenOutcome = await issueUserVerificationToken(newUserId, normalizedEmail, 0);
+    if (!tokenOutcome.issued || !tokenOutcome.rawToken) {
+      await equalizeTiming(startTime);
+      return NextResponse.json(
+        { error: "Could not initialize email verification." },
+        { status: 500 }
+      );
+    }
 
-    // 6. Send verification email via Resend
+    const verifyUrl = `${appUrl}/verify-email?token=${tokenOutcome.rawToken}`;
     const emailResult = await sendVerificationEmail({
       to: normalizedEmail,
       name: full_name,
@@ -129,88 +176,36 @@ export async function POST(req: NextRequest) {
     });
 
     if (!emailResult.success) {
-      console.warn("Warning: Resend verification email failed:", emailResult.error);
+      console.warn("Resend verification email dispatch error:", emailResult.error);
     }
 
-    // 7. Audit log
-    try {
-      const clientIp =
-        req.headers.get("cf-connecting-ip") ||
-        req.headers.get("x-forwarded-for")?.split(",")[0] ||
-        "unknown";
-
-      await (adminSupabase.from("audit_logs") as any).insert({
-        user_id: newUserId,
-        action: "user_signup_auto_signin",
-        resource_type: "auth",
-        resource_id: newUserId,
-        ip_address: clientIp,
-        user_agent: req.headers.get("user-agent") || null,
-        metadata: {
-          email: normalizedEmail,
-          simulated_email: emailResult.simulated || false,
-        },
-      });
-    } catch (auditErr) {
-      console.warn("Audit log error on signup:", auditErr);
-    }
-
-    // 8. Auto Sign-In: Establish user session and set SSR cookies on response
-    let response = NextResponse.json(
-      {
-        success: true,
-        autoSignedIn: true,
-        message:
-          "Account created successfully and signed in. Verification email dispatched.",
-        user: {
-          id: newUserId,
-          email: normalizedEmail,
-          fullName: full_name,
-        },
-      },
-      { status: 200 }
-    );
-
-    const isProduction = process.env.NODE_ENV === "production";
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-
-    const supabase = createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
-      cookies: {
-        getAll() {
-          return req.cookies.getAll();
-        },
-        setAll(cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, {
-              ...options,
-              httpOnly: true,
-              secure: isProduction,
-              sameSite: "lax",
-              path: "/",
-            });
-          });
-        },
+    // 5. Audit event (never stores token or secrets)
+    await recordAuthEvent({
+      userId: newUserId,
+      email: normalizedEmail,
+      eventType: "user_signup_verification_dispatched",
+      ipAddress: clientIp,
+      userAgent,
+      metadata: {
+        simulated_email: emailResult.simulated || false,
+        email_sent: emailResult.success,
       },
     });
 
-    try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: normalizedEmail,
-        password,
-      });
-
-      if (signInError) {
-        console.warn("Auto-signin error after account creation:", signInError);
-      }
-    } catch (authErr) {
-      console.warn("Exception during auto-signin:", authErr);
-    }
-
     await equalizeTiming(startTime);
-    return response;
+
+    // 6. Do NOT establish session cookies or auto sign in until verification link is confirmed
+    return NextResponse.json(
+      {
+        success: true,
+        autoSignedIn: false,
+        requiresEmailVerification: true,
+        message: NEUTRAL_SIGNUP_MESSAGE,
+      },
+      { status: 201 }
+    );
   } catch (error: any) {
-    console.error("API /api/auth/signup exception:", error);
+    console.error("API /api/auth/signup exception:", error?.message);
     await equalizeTiming(startTime);
     return NextResponse.json(
       { error: "Internal registration error" },
@@ -218,4 +213,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

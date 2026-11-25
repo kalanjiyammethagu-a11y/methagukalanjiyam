@@ -28,7 +28,7 @@ function SignUpContent() {
   const { locale } = useLanguage();
   const isTa = locale === "ta";
 
-  // Multi-step progress: 1 = Credentials, 2 = Profile, 3 = Auto Signed In & Verify Notice
+  // Multi-step progress: 1 = Credentials, 2 = Profile, 3 = Check Inbox & Verify Email
   const [currentStep, setCurrentStep] = React.useState<1 | 2 | 3>(1);
 
   // Form Fields
@@ -52,17 +52,6 @@ function SignUpContent() {
     }, 1000);
     return () => clearInterval(timer);
   }, [cooldown]);
-
-  // Optional auto-redirect on step 3 after 4 seconds
-  React.useEffect(() => {
-    if (currentStep === 3) {
-      const timer = setTimeout(() => {
-        router.push(redirectTo);
-        router.refresh();
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [currentStep, redirectTo, router]);
 
   // Live Password Criteria Calculations
   const hasMinLength = password.length >= 8;
@@ -453,32 +442,32 @@ function SignUpContent() {
           )}
 
           {/* ============================================================
-              STEP 3: AUTO SIGNED IN & EMAIL VERIFICATION DISPATCHED
+              STEP 3: EMAIL VERIFICATION REQUIRED BEFORE SIGN IN
               ============================================================ */}
           {currentStep === 3 && (
             <div className="space-y-6 text-center py-4">
               <div className="h-16 w-16 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-[#0A6847] dark:text-emerald-400 mx-auto flex items-center justify-center ring-8 ring-emerald-50 dark:ring-emerald-950/20">
-                <CheckCircle2 className="h-8 w-8 text-[#0A6847]" />
+                <Mail className="h-8 w-8 text-[#0A6847]" />
               </div>
 
               <div className="space-y-2">
-                <h2 className="text-xl font-bold text-[#111111] dark:text-white font-tamil">
+                <h2 className="text-xl font-bold text-[#111111] dark:text-white font-tamil leading-snug">
                   {isTa
-                    ? "கணக்கு உருவாக்கப்பட்டு நீங்கள் உள்நுழைந்துள்ளீர்கள்!"
-                    : "Account Created & Automatically Signed In!"}
+                    ? "உங்கள் மின்னஞ்சலை உறுதிப்படுத்தவும்!"
+                    : "Verify Your Email to Activate Your Account"}
                 </h2>
                 <p className="text-xs text-[#555555] dark:text-[#aaaaaa] font-tamil max-w-sm mx-auto leading-relaxed">
                   {isTa
-                    ? "உங்கள் வாசகர் கணக்கு உடனடியாக செயல்பாட்டிற்கு வந்துவிட்டது. உறுதிப்படுத்தல் இணைப்பு Resend வழியாக உங்கள் மின்னஞ்சலுக்கு அனுப்பப்பட்டுள்ளது:"
-                    : "Your reader profile is now active and signed in. An email activation link has also been dispatched via Resend to:"}
+                    ? "உங்கள் கணக்கு தொடங்கப்பட்டது. உள்நுழைவதற்கு முன்பு கீழே உள்ள மின்னஞ்சலில் அனுப்பப்பட்டுள்ள சரிபார்ப்பு இணைப்பை (Resend Email Verification) சொடுக்கவும்:"
+                    : "We have sent a verification link via Resend to the address below. You must confirm your email before signing in:"}
                 </p>
                 <p className="text-xs font-mono font-bold text-[#0A6847] dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 py-1.5 px-3 rounded-lg inline-block">
                   {email}
                 </p>
                 <p className="text-[11px] text-[#777777] font-tamil">
                   {isTa
-                    ? "நீங்கள் இப்போது நேரடியாக நூல்களை வாங்கலாம். (மின்னஞ்சல் இணைப்பு 24 மணி நேரம் செல்லுபடியாகும்)."
-                    : "You can proceed to browse, cart, and checkout immediately. (Verification link valid for 24h)."}
+                    ? "இந்த இணைப்பு 24 மணி நேரம் செல்லுபடியாகும். உறுதிப்படுத்திய பிறகு உள்நுழையவும்."
+                    : "The link is valid for 24 hours. Once verified, you can sign in and place orders."}
                 </p>
               </div>
 
@@ -489,25 +478,18 @@ function SignUpContent() {
               )}
 
               <div className="space-y-3 pt-2">
-                {/* Primary CTA: Continue to Cart or Account */}
                 <Link
-                  href={redirectTo}
+                  href={`/login?redirectTo=${encodeURIComponent(redirectTo)}`}
                   className="w-full h-11 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md font-tamil"
                 >
-                  <ShoppingBag className="h-4 w-4" />
                   <span>
-                    {redirectTo.includes("cart")
-                      ? isTa
-                        ? "கூடைக்குச் சென்று வாங்குக (Go to Cart)"
-                        : "Continue to Cart & Checkout"
-                      : isTa
-                      ? "வாசகர் கணக்கு & நூலகத்திற்குச் செல்க"
-                      : "Proceed to My Account"}
+                    {isTa
+                      ? "மின்னஞ்சலை உறுதிப்படுத்திய பிறகு உள்நுழையவும் (Go to Sign In)"
+                      : "Verified Inbox? Sign In Now"}
                   </span>
                   <ArrowRight className="h-4 w-4" />
                 </Link>
 
-                {/* Secondary CTA: Resend email */}
                 <button
                   type="button"
                   onClick={handleResendConfirmation}
@@ -527,12 +509,10 @@ function SignUpContent() {
                 </button>
               </div>
 
-              <div className="pt-4 border-t border-black/8 dark:border-white/8 text-[11px] text-[#888888]">
-                <span>
-                  {isTa
-                    ? "தானாக வழிசெலுத்தப்படுகிறது..."
-                    : "Redirecting you automatically..."}
-                </span>
+              <div className="pt-4 border-t border-black/8 dark:border-white/8 text-[11px] text-[#888888] font-tamil">
+                <Link href="/verify-email" className="underline hover:text-[#0A6847]">
+                  {isTa ? "சரிபார்ப்பு சிக்கலா? இங்கே சொடுக்கவும்" : "Need verification help?"}
+                </Link>
               </div>
             </div>
           )}
