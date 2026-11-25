@@ -35,25 +35,25 @@ export function Badge({
 
   const variants = {
     in_stock:
-      "bg-emerald-50 text-emerald-800 border border-emerald-300/70 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60",
+      "bg-emerald-50 text-emerald-800 border border-emerald-300/70 dark:bg-emerald-950/90 dark:text-emerald-300 dark:border-emerald-700/70",
     success:
-      "bg-emerald-50 text-[var(--color-accent)] border border-emerald-300/70 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60",
+      "bg-emerald-50 text-[#0A6847] border border-emerald-300/70 dark:bg-emerald-950/90 dark:text-emerald-300 dark:border-emerald-700/70",
     glass:
       "bg-[var(--color-surface-card)] text-[var(--color-ink-primary)] border border-[var(--color-border-subtle)] shadow-2xs",
     sold_out:
-      "bg-rose-50 text-rose-800 border border-rose-300/70 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60",
+      "bg-rose-50 text-rose-800 border border-rose-300/70 dark:bg-rose-950/90 dark:text-rose-300 dark:border-rose-700/70",
     category:
       "bg-[var(--color-surface-subtle)] text-[var(--color-ink-primary)] border border-[var(--color-border-hairline)] hover:border-[var(--color-accent)]",
     pending:
-      "bg-amber-50 text-amber-900 border border-amber-300/70 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60",
+      "bg-amber-50 text-amber-900 border border-amber-300/70 dark:bg-amber-950/90 dark:text-amber-200 dark:border-amber-700/70",
     dispatched:
-      "bg-sky-50 text-sky-900 border border-sky-300/70 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/60",
+      "bg-sky-50 text-sky-900 border border-sky-300/70 dark:bg-sky-950/90 dark:text-sky-200 dark:border-sky-700/70",
     delivered:
-      "bg-emerald-50 text-emerald-800 border border-emerald-300/70 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60",
+      "bg-emerald-50 text-emerald-800 border border-emerald-300/70 dark:bg-emerald-950/90 dark:text-emerald-300 dark:border-emerald-700/70",
     cancelled:
       "bg-[var(--color-surface-subtle)] text-[var(--color-ink-muted)] border border-[var(--color-border-hairline)]",
     gold:
-      "bg-amber-50 text-amber-900 border border-amber-300/80 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700/60",
+      "bg-amber-50 text-amber-900 border border-amber-300/80 dark:bg-amber-950/90 dark:text-amber-200 dark:border-amber-700/70",
     neutral:
       "bg-[var(--color-surface-subtle)] text-[var(--color-ink-primary)] border border-[var(--color-border-hairline)]",
   };

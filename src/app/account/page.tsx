@@ -201,7 +201,7 @@ function AccountContent() {
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-2">
         {/* User Hero Banner (Seamless Guest & Authenticated Experience) */}
-        <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-black/10 dark:border-white/10 bg-gradient-to-r from-emerald-950/85 via-emerald-900/70 to-neutral-900 text-white relative overflow-hidden mb-8 shadow-xl">
+        <div className="rounded-3xl p-6 sm:p-8 border border-black/10 dark:border-white/10 bg-[#0A3A29] bg-gradient-to-r from-emerald-950 via-emerald-900 to-neutral-900 text-white relative overflow-hidden mb-8 shadow-xl">
           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
               <div className="relative h-16 w-16 sm:h-20 sm:w-20 rounded-2xl overflow-hidden border-2 border-white/20 bg-white/10 backdrop-blur-md shrink-0 shadow-lg flex items-center justify-center">
@@ -290,7 +290,7 @@ function AccountContent() {
                 href={getGeneralWhatsAppUrl("வணக்கம் மேதகு களஞ்சியம், எனது வாசகர் கணக்கு மற்றும் நூல்கள் சம்பந்தமாக தொடர்பு கொள்கிறேன்.")}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md transition-all active:scale-95 min-h-[44px]"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0D5C3A] hover:bg-[#0A6847] text-white text-xs font-bold shadow-md transition-all active:scale-95 min-h-[44px]"
               >
                 <MessageCircle className="h-4 w-4" />
                 <span className="font-tamil">
@@ -357,8 +357,8 @@ function AccountContent() {
                 aria-selected={isActive}
                 onClick={() => handleTabChange(tab.id)}
                 className={`min-h-[44px] px-4 py-2 rounded-xl font-tamil text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all shrink-0 cursor-pointer active:scale-[0.98] ${isActive
-                  ? "bg-[#0A6847] dark:bg-emerald-600 text-white shadow-xs font-bold"
-                  : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
+                  ? "bg-[#0A6847] dark:bg-[#0D5C3A] text-white shadow-xs font-bold"
+                  : "text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
                   }`}
               >
                 <Icon
@@ -373,8 +373,8 @@ function AccountContent() {
                 {typeof tab.count === "number" && (
                   <span
                     className={`px-2 py-0.5 rounded-full text-[11px] font-mono ${isActive
-                      ? "bg-white/20 text-white"
-                      : "bg-black/8 dark:bg-white/10 text-[#555555] dark:text-zinc-300"
+                      ? "bg-black/25 text-white"
+                      : "bg-black/8 dark:bg-white/10 text-[#444444] dark:text-zinc-200"
                       }`}
                   >
                     {tab.count}
@@ -1006,7 +1006,7 @@ function AccountContent() {
                         href={getGeneralWhatsAppUrl("வணக்கம் மேதகு களஞ்சியம், நான் வெளிநாட்டிலிருந்து (Overseas Order) நூல்களை வாங்க தொடர்பு கொள்கிறேன்.")}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold shadow-xs transition-all active:scale-95"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0A6847] hover:bg-[#085237] text-white text-xs font-bold shadow-xs transition-all active:scale-95"
                       >
                         <MessageCircle className="h-3.5 w-3.5" />
                         <span>{isTa ? "வெளிநாட்டு ஆர்டருக்கு WhatsApp-இல் பேசுக" : "Inquire Overseas Order on WhatsApp"}</span>
@@ -1038,7 +1038,7 @@ function AccountContent() {
                     href={getGeneralWhatsAppUrl("வணக்கம் மேதகு களஞ்சியம், எனது பார்சல் நிலை குறித்து அறிய விரும்புகிறேன்.")}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="min-h-[44px] px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
+                    className="min-h-[44px] px-4 rounded-xl bg-[#0A6847] hover:bg-[#085237] text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
                   >
                     <MessageCircle className="h-4 w-4" />
                     <span>WhatsApp</span>

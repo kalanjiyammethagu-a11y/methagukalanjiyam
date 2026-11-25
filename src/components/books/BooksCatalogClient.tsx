@@ -208,18 +208,18 @@ export function BooksCatalogClient({
         {/* Hero Section */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-[#0A6847]" />
-            <span className="text-xs font-semibold tracking-wider uppercase text-[#0A6847] font-tamil">
+            <span className="h-2 w-2 rounded-full bg-[#0A6847] dark:bg-emerald-400" />
+            <span className="text-xs font-semibold tracking-wider uppercase text-[#0A6847] dark:text-emerald-400 font-tamil">
               {locale === "ta" ? "அனைத்து வெளியீடுகள்" : "All Publications"}
             </span>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-tamil text-[#111111] tracking-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-tamil text-[#111111] dark:text-zinc-100 tracking-tight">
                 {locale === "ta" ? "நூல்கள் களஞ்சியம்" : "Book Catalog"}
               </h1>
-              <p className="text-sm text-[#555555] font-tamil mt-1.5 max-w-2xl">
+              <p className="text-sm text-[#555555] dark:text-zinc-300 font-tamil mt-1.5 max-w-2xl">
                 {locale === "ta"
                   ? "அரிய வரலாற்று ஆவணங்கள், விடுதலைப் போராட்ட நூல்கள் மற்றும் கள ஆய்வுகளின் தொகுப்பு."
                   : "Preserved historical records, memoirs, and national literature from our archival collection."}
@@ -227,7 +227,7 @@ export function BooksCatalogClient({
             </div>
 
             {/* Results count pill */}
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-black/5 text-[#555555] self-start sm:self-auto font-tamil">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-black/5 dark:bg-white/10 text-[#555555] dark:text-zinc-300 self-start sm:self-auto font-tamil">
               <BookOpen className="h-3.5 w-3.5" />
               <span>
                 {locale === "ta"
@@ -243,7 +243,7 @@ export function BooksCatalogClient({
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Search Input */}
             <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#0A6847]" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#0A6847] dark:text-emerald-400" />
               <input
                 type="search"
                 value={search}
@@ -253,18 +253,18 @@ export function BooksCatalogClient({
                     ? "நூல் தலைப்பு, ஆசிரியர் பெயர் தேடுக..."
                     : "Search by title or author..."
                 }
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-black/12 bg-white/80 text-base sm:text-sm font-tamil text-[#111111] placeholder:text-[#777777] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/40 focus:border-[#0A6847] transition-all min-h-[44px]"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-black/12 dark:border-white/15 bg-white/80 dark:bg-zinc-900/90 text-base sm:text-sm font-tamil text-[#111111] dark:text-zinc-100 placeholder:text-[#555555] dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/40 focus:border-[#0A6847] transition-all min-h-[44px]"
               />
             </div>
 
             {/* Sort Dropdown */}
             <div className="flex items-center gap-2">
               <div className="relative">
-                <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#555555] pointer-events-none" />
+                <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#555555] dark:text-zinc-400 pointer-events-none" />
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="pl-8 pr-8 py-2.5 rounded-xl border border-black/12 bg-white/80 text-xs font-semibold text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/40 font-tamil appearance-none cursor-pointer min-h-[44px]"
+                  className="pl-8 pr-8 py-2.5 rounded-xl border border-black/12 dark:border-white/15 bg-white/80 dark:bg-zinc-900 text-xs font-semibold text-[#111111] dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/40 font-tamil appearance-none cursor-pointer min-h-[44px]"
                 >
                   <option value="relevance">
                     {locale === "ta" ? "முன்னுரிமை (Relevance)" : "Relevance"}
@@ -282,7 +282,7 @@ export function BooksCatalogClient({
               </div>
 
               {/* View Mode Toggle (Grid / List) */}
-              <div className="hidden sm:flex items-center border border-black/12 rounded-xl p-0.5 bg-white/80">
+              <div className="hidden sm:flex items-center border border-black/12 dark:border-white/15 rounded-xl p-0.5 bg-white/80 dark:bg-zinc-900">
                 <button
                   type="button"
                   onClick={() => setViewMode("grid")}
@@ -290,8 +290,8 @@ export function BooksCatalogClient({
                   className={cn(
                     "p-2 rounded-lg transition-all min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer",
                     viewMode === "grid"
-                      ? "bg-[#0A6847] text-white shadow-xs"
-                      : "text-[#555555] hover:text-[#111111]"
+                      ? "bg-[#0A6847] dark:bg-[#0D5C3A] text-white shadow-xs"
+                      : "text-[#555555] dark:text-zinc-300 hover:text-[#111111] dark:hover:text-white"
                   )}
                 >
                   <Grid3X3 className="h-4 w-4" />
@@ -303,8 +303,8 @@ export function BooksCatalogClient({
                   className={cn(
                     "p-2 rounded-lg transition-all min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer",
                     viewMode === "list"
-                      ? "bg-[#0A6847] text-white shadow-xs"
-                      : "text-[#555555] hover:text-[#111111]"
+                      ? "bg-[#0A6847] dark:bg-[#0D5C3A] text-white shadow-xs"
+                      : "text-[#555555] dark:text-zinc-300 hover:text-[#111111] dark:hover:text-white"
                   )}
                 >
                   <LayoutList className="h-4 w-4" />
@@ -355,7 +355,7 @@ export function BooksCatalogClient({
         ) : (
           /* Empty State */
           <EmptyState
-            icon={<BookOpen className="h-10 w-10 text-[#0A6847]" />}
+            icon={<BookOpen className="h-10 w-10 text-[#0A6847] dark:text-emerald-400" />}
             titleTa="நூல்கள் எதுவும் கிடைக்கவில்லை"
             titleEn="No Books Found"
             descriptionTa="நீங்கள் தேடிய சொல் அல்லது பிரிவில் நூல்கள் காணப்படவில்லை. மாற்று சொல்லைத் தட்டச்சு செய்யவும்."

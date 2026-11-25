@@ -163,18 +163,18 @@ export function BlogCatalogClient({
         {/* Header Hero Section */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-[#0A6847]" />
-            <span className="text-xs font-semibold tracking-wider uppercase text-[#0A6847] font-tamil">
+            <span className="h-2 w-2 rounded-full bg-[#0A6847] dark:bg-emerald-400" />
+            <span className="text-xs font-semibold tracking-wider uppercase text-[#0A6847] dark:text-emerald-400 font-tamil">
               {isTa ? "வரலாற்றுப் பெட்டகம்" : "Historical Chronicles"}
             </span>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#111111] font-tamil-serif tracking-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#111111] dark:text-zinc-100 font-tamil-serif tracking-tight">
                 {isTa ? "செய்திகள் & ஆவணப் பதிவுகள்" : "Articles, Stories & News"}
               </h1>
-              <p className="text-sm sm:text-base text-[#444444] font-tamil mt-2 max-w-2xl leading-relaxed">
+              <p className="text-sm sm:text-base text-[#444444] dark:text-zinc-300 font-tamil mt-2 max-w-2xl leading-relaxed">
                 {isTa
                   ? "அரிய வரலாற்று ஆவணங்கள், கள ஆய்வுகள், நினைவுப் பதிவுகள் மற்றும் மேதகு களஞ்சியத்தின் அதிகாரப்பூர்வ அறிவிப்புகள்."
                   : "Preserved historical articles, memoirs, field research, and official announcements from Methagu Kalanjiyam."}
@@ -184,10 +184,10 @@ export function BlogCatalogClient({
         </div>
 
         {/* Live Announcements Ticker / Feed Banner */}
-        <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-black/10 bg-gradient-to-br from-[#0A6847]/8 via-[#0A6847]/4 to-transparent shadow-xs">
-          <div className="flex items-center gap-2.5 mb-4 text-[#0A6847]">
+        <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-black/10 dark:border-white/10 bg-gradient-to-br from-[#0A6847]/8 via-[#0A6847]/4 to-transparent dark:from-emerald-950/60 dark:via-emerald-950/30 dark:to-transparent shadow-xs">
+          <div className="flex items-center gap-2.5 mb-4 text-[#0A6847] dark:text-emerald-400">
             <Bell className="h-5 w-5 animate-pulse" />
-            <h2 className="text-sm sm:text-base font-bold font-tamil tracking-wide">
+            <h2 className="text-sm sm:text-base font-bold font-tamil tracking-wide text-[#0A6847] dark:text-emerald-300">
               {isTa ? "சமீபத்திய அறிவிப்புகள்" : "Recent Announcements"}
             </h2>
           </div>
@@ -196,15 +196,15 @@ export function BlogCatalogClient({
             {announcements.map((item, idx) => (
               <div
                 key={idx}
-                className="p-4 rounded-2xl bg-white/80 border border-black/8 shadow-2xs space-y-1.5"
+                className="p-4 rounded-2xl bg-white/85 dark:bg-zinc-900/90 border border-black/8 dark:border-white/10 shadow-2xs space-y-1.5"
               >
-                <span className="text-[11px] font-bold text-[#0A6847] font-tamil block">
+                <span className="text-[11px] font-bold text-[#0A6847] dark:text-emerald-400 font-tamil block">
                   {item.date}
                 </span>
-                <h3 className="text-xs sm:text-sm font-bold text-[#111111] font-tamil leading-snug">
+                <h3 className="text-xs sm:text-sm font-bold text-[#111111] dark:text-zinc-100 font-tamil leading-snug">
                   {isTa ? item.titleTa : item.titleEn}
                 </h3>
-                <p className="text-xs text-[#555555] font-tamil line-clamp-2 leading-relaxed">
+                <p className="text-xs text-[#555555] dark:text-zinc-300 font-tamil line-clamp-2 leading-relaxed">
                   {isTa ? item.descTa : item.descEn}
                 </p>
               </div>
@@ -217,18 +217,18 @@ export function BlogCatalogClient({
           <div className="flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center">
             {/* Search Bar */}
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#0A6847]" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#0A6847] dark:text-emerald-400" />
               <input
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={isTa ? "பதிவுகளைத் தேடுக (Search articles)..." : "Search articles..."}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-black/12 bg-white/80 text-base sm:text-sm font-tamil text-[#111111] placeholder:text-[#777777] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/40 focus:border-[#0A6847] transition-all min-h-[44px]"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-black/12 dark:border-white/15 bg-white/80 dark:bg-zinc-900/90 text-base sm:text-sm font-tamil text-[#111111] dark:text-zinc-100 placeholder:text-[#555555] dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/40 focus:border-[#0A6847] transition-all min-h-[44px]"
               />
             </div>
 
             {/* Results counter */}
-            <span className="text-xs font-semibold text-[#555555] font-tamil self-center sm:self-auto">
+            <span className="text-xs font-semibold text-[#555555] dark:text-zinc-300 font-tamil self-center sm:self-auto">
               {isTa
                 ? `${filteredArticles.length} கட்டுரைகள் கிடைக்கின்றன`
                 : `${filteredArticles.length} articles found`}
@@ -258,7 +258,7 @@ export function BlogCatalogClient({
           </div>
         ) : (
           <EmptyState
-            icon={<Newspaper className="h-10 w-10 text-[#0A6847]" />}
+            icon={<Newspaper className="h-10 w-10 text-[#0A6847] dark:text-emerald-400" />}
             titleTa="பதிவுகள் எதுவும் கிடைக்கவில்லை"
             titleEn="No Articles Found"
             descriptionTa="நீங்கள் தேடிய தலைப்பில் ஆவணங்கள் எதுவும் இல்லை. மாற்று சொற்களைப் பயன்படுத்தி மீண்டும் தேடவும்."

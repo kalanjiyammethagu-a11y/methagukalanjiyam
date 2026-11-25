@@ -155,10 +155,10 @@ export default function OrderConfirmationPage() {
         <div className="h-16 w-16 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
           <AlertCircle className="h-8 w-8" />
         </div>
-        <h1 className="text-xl font-bold text-neutral-900 font-tamil">
+        <h1 className="text-xl font-bold text-neutral-900 dark:text-zinc-100 font-tamil">
           {isTa ? "ஆர்டர் காணப்படவில்லை" : "Order Not Found"}
         </h1>
-        <p className="text-xs text-neutral-600 font-tamil">
+        <p className="text-xs text-neutral-600 dark:text-zinc-300 font-tamil">
           {error || (isTa ? "கோரப்பட்ட ஆர்டர் எண் தவறானது அல்லது அகற்றப்பட்டுள்ளது." : "The requested order number could not be found.")}
         </p>
         <Link
@@ -225,7 +225,7 @@ export default function OrderConfirmationPage() {
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md min-h-[44px]"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0A6847] hover:bg-[#085237] text-white text-xs font-bold transition-all shadow-md min-h-[44px]"
               >
                 <MessageCircle className="h-4 w-4" />
                 <span>WhatsApp</span>
@@ -258,16 +258,16 @@ export default function OrderConfirmationPage() {
 
           if (order.is_authorized === false) {
             return (
-              <GlassPanel className="p-5 sm:p-6 rounded-2xl border-amber-500/30 bg-amber-50/70 space-y-3">
+              <GlassPanel className="p-5 sm:p-6 rounded-2xl border-amber-500/30 bg-amber-50/80 dark:bg-amber-950/60 space-y-3">
                 <div className="flex items-start gap-3">
-                  <ShieldCheck className="h-5 w-5 text-amber-800 shrink-0 mt-0.5" />
+                  <ShieldCheck className="h-5 w-5 text-amber-800 dark:text-amber-300 shrink-0 mt-0.5" />
                   <div className="space-y-1">
-                    <h3 className="text-sm font-bold text-neutral-900 font-tamil">
+                    <h3 className="text-sm font-bold text-neutral-900 dark:text-zinc-100 font-tamil">
                       {isTa
                         ? "பார்சல் கண்காணிப்பு மற்றும் முகவரியைக் காண உறுதிப்படுத்தவும்"
                         : "Verify Your Phone Digits to View Courier Tracking & Address"}
                     </h3>
-                    <p className="text-xs text-neutral-600 font-tamil leading-relaxed">
+                    <p className="text-xs text-neutral-700 dark:text-zinc-200 font-tamil leading-relaxed">
                       {isTa
                         ? `ஆர்டர் நிலை: ${statusLabel}. முழு கண்காணிப்பு எண் மற்றும் நிகழ்வுகளைக் காண உங்கள் தொலைபேசி எண்ணின் கடைசி 4 இலக்கங்களை உள்ளிடவும்.`
                         : `Current shipment status: ${statusLabel}. Enter the last 4 digits of your order phone number (or sign in) to unlock tracking details.`}
@@ -289,7 +289,7 @@ export default function OrderConfirmationPage() {
                     value={phoneVerifyInput}
                     onChange={(e) => setPhoneVerifyInput(e.target.value)}
                     placeholder={isTa ? "கடைசி 4 இலக்கங்கள் (எ.கா. 4321)" : "Last 4 digits of phone"}
-                    className="flex-1 min-w-[180px] px-3 py-2 rounded-xl border border-black/15 bg-white text-xs font-mono min-h-[44px]"
+                    className="flex-1 min-w-[180px] px-3 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-zinc-900 text-[#111111] dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 text-xs font-mono min-h-[44px]"
                   />
                   <button
                     type="submit"
@@ -310,35 +310,35 @@ export default function OrderConfirmationPage() {
           }
 
           return (
-            <GlassPanel className="p-5 sm:p-6 rounded-2xl border-emerald-500/30 bg-emerald-50/60 dark:bg-emerald-950/20 space-y-4">
+            <GlassPanel className="p-5 sm:p-6 rounded-2xl border-emerald-500/30 bg-emerald-50/75 dark:bg-emerald-950/60 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                  <div className="h-10 w-10 rounded-xl bg-[#0A6847] text-white flex items-center justify-center shrink-0">
                     <Truck className="h-5 w-5" />
                   </div>
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-sm font-bold text-neutral-900 font-tamil leading-snug">
+                      <h3 className="text-sm font-bold text-neutral-900 dark:text-zinc-100 font-tamil leading-snug">
                         {activeCourier}
                       </h3>
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 text-[11px] font-bold font-tamil">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/80 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 text-[11px] font-bold font-tamil">
                         {statusLabel}
                       </span>
                     </div>
 
                     {activeTrackingId ? (
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-700">
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-700 dark:text-zinc-200">
                         <span>{isTa ? "கண்காணிப்பு எண் (Tracking ID):" : "Tracking ID:"}</span>
-                        <span className="font-mono font-bold text-neutral-950 bg-white px-2 py-0.5 rounded border border-emerald-200">
+                        <span className="font-mono font-bold text-neutral-950 dark:text-white bg-white dark:bg-zinc-900 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-700">
                           {activeTrackingId}
                         </span>
                         <button
                           type="button"
                           onClick={() => handleCopyTracking(activeTrackingId)}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded border border-black/10 bg-white hover:bg-neutral-50 text-[11px] font-semibold cursor-pointer min-h-[32px]"
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded border border-black/10 dark:border-white/15 bg-white dark:bg-zinc-800 hover:bg-neutral-50 dark:hover:bg-zinc-700 text-[#111111] dark:text-zinc-100 text-[11px] font-semibold cursor-pointer min-h-[32px]"
                         >
                           {copiedTracking ? (
-                            <Check className="h-3 w-3 text-emerald-700" />
+                            <Check className="h-3 w-3 text-emerald-700 dark:text-emerald-400" />
                           ) : (
                             <Copy className="h-3 w-3" />
                           )}
@@ -346,7 +346,7 @@ export default function OrderConfirmationPage() {
                         </button>
                       </div>
                     ) : (
-                      <p className="text-xs text-neutral-600 font-tamil">
+                      <p className="text-xs text-neutral-700 dark:text-zinc-300 font-tamil">
                         {isTa
                           ? "உங்கள் பார்சல் தயார்படுத்தப்படுகிறது; அனுப்பப்பட்டதும் கண்காணிப்பு எண் இங்கு வெளியிடப்படும்."
                           : "Your parcel is being prepared; your ST Courier tracking ID will appear here once dispatched."}
@@ -354,7 +354,7 @@ export default function OrderConfirmationPage() {
                     )}
 
                     {(order.shipped_at || order.dispatched_at || order.estimated_delivery_date) && (
-                      <div className="flex flex-wrap gap-4 text-[11px] text-neutral-600 font-mono pt-0.5">
+                      <div className="flex flex-wrap gap-4 text-[11px] text-neutral-700 dark:text-zinc-300 font-mono pt-0.5">
                         {(order.shipped_at || order.dispatched_at) && (
                           <span>
                             {isTa ? "அனுப்பப்பட்ட தேதி:" : "Shipped:"}{" "}
@@ -376,7 +376,7 @@ export default function OrderConfirmationPage() {
                   href={externalTrackUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all min-h-[44px] shrink-0"
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#0A6847] hover:bg-[#085237] text-white text-xs font-bold transition-all min-h-[44px] shrink-0"
                 >
                   <span>{isTa ? `${activeCourier} இணையத்தில் கண்காணிக்க` : `Track on ${activeCourier}`}</span>
                   <ExternalLink className="h-3.5 w-3.5" />
@@ -384,8 +384,8 @@ export default function OrderConfirmationPage() {
               </div>
 
               {localizedNote && (
-                <div className="p-3 rounded-xl bg-white/90 border border-emerald-200 text-xs text-neutral-800 font-tamil leading-relaxed">
-                  <span className="font-bold text-emerald-900 mr-1.5">
+                <div className="p-3 rounded-xl bg-white/95 dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-800 text-xs text-neutral-800 dark:text-zinc-200 font-tamil leading-relaxed">
+                  <span className="font-bold text-emerald-900 dark:text-emerald-300 mr-1.5">
                     {isTa ? "குறிப்பு:" : "Dispatch Note:"}
                   </span>
                   {localizedNote}
@@ -393,27 +393,27 @@ export default function OrderConfirmationPage() {
               )}
 
               {events.length > 0 && (
-                <div className="pt-3 border-t border-emerald-200/80 space-y-2.5">
-                  <h4 className="text-xs font-bold text-neutral-800 flex items-center gap-1.5 font-tamil">
-                    <Clock className="h-3.5 w-3.5 text-emerald-700" />
+                <div className="pt-3 border-t border-emerald-200/80 dark:border-emerald-800/60 space-y-2.5">
+                  <h4 className="text-xs font-bold text-neutral-800 dark:text-zinc-100 flex items-center gap-1.5 font-tamil">
+                    <Clock className="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-400" />
                     <span>{isTa ? "பார்சல் பயண நிலை வரலாறு" : "Shipment Timeline"}</span>
                   </h4>
-                  <ol className="space-y-2 border-l-2 border-emerald-300 ml-2 pl-4">
+                  <ol className="space-y-2 border-l-2 border-emerald-300 dark:border-emerald-700 ml-2 pl-4">
                     {events.map((ev) => {
                       const st = normalizeShipmentStatus(ev.status);
                       return (
                         <li key={ev.id} className="relative text-xs">
-                          <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-emerald-600 ring-2 ring-emerald-50" />
+                          <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-emerald-600 ring-2 ring-emerald-50 dark:ring-emerald-950" />
                           <div className="flex flex-wrap items-baseline justify-between gap-2">
-                            <span className="font-bold text-neutral-900 font-tamil">
+                            <span className="font-bold text-neutral-900 dark:text-zinc-100 font-tamil">
                               {SHIPMENT_STATUS_LABELS[st][locale]}
                             </span>
-                            <span className="text-[11px] font-mono text-neutral-500">
+                            <span className="text-[11px] font-mono text-neutral-600 dark:text-zinc-400">
                               {new Date(ev.created_at).toLocaleString()}
                             </span>
                           </div>
                           {ev.note && (
-                            <p className="text-neutral-600 font-tamil mt-0.5 leading-relaxed">
+                            <p className="text-neutral-700 dark:text-zinc-300 font-tamil mt-0.5 leading-relaxed">
                               {ev.note}
                             </p>
                           )}
@@ -428,54 +428,54 @@ export default function OrderConfirmationPage() {
         })()}
 
         {/* Bill of Supply / Order Details Box */}
-        <div className="bg-white rounded-3xl border border-black/10 p-6 sm:p-8 space-y-6 shadow-sm">
+        <div className="bg-white dark:bg-[#1F1F23] rounded-3xl border border-black/10 dark:border-white/10 p-6 sm:p-8 space-y-6 shadow-sm">
           {/* Header */}
-          <div className="flex items-start justify-between border-b border-black/8 pb-6">
+          <div className="flex items-start justify-between border-b border-black/8 dark:border-white/10 pb-6">
             <div>
-              <div className="flex items-center gap-2 text-xs font-bold text-[#0A6847] font-tamil mb-1">
+              <div className="flex items-center gap-2 text-xs font-bold text-[#0A6847] dark:text-emerald-400 font-tamil mb-1">
                 <ArchivalWaxSealIcon className="h-4 w-4" />
                 <span>அரசு MSME பதிவு: UDYAM-TN-18-0101323</span>
               </div>
-              <h2 className="text-lg font-bold text-neutral-900 font-tamil">
+              <h2 className="text-lg font-bold text-neutral-900 dark:text-zinc-100 font-tamil">
                 மேதகு களஞ்சியம் — கொள்முதல் ரசீது (Bill of Supply)
               </h2>
-              <p className="text-xs text-neutral-500 font-tamil mt-0.5">
+              <p className="text-xs text-neutral-600 dark:text-zinc-400 font-tamil mt-0.5">
                 தமிழ்நாடு, இந்தியா • தொடர்பு: +91 82486 54946
               </p>
             </div>
             <div className="text-right">
-              <span className="text-xs text-neutral-500 font-tamil block">நிலை (Status):</span>
-              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 uppercase font-mono">
+              <span className="text-xs text-neutral-600 dark:text-zinc-400 font-tamil block">நிலை (Status):</span>
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/90 text-emerald-800 dark:text-emerald-300 uppercase font-mono">
                 {order.status}
               </span>
             </div>
           </div>
 
           {/* Delivery Address */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-neutral-50/80 p-4 rounded-2xl border border-black/5 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-neutral-50/80 dark:bg-zinc-900/80 p-4 rounded-2xl border border-black/5 dark:border-white/10 text-xs">
             <div className="space-y-1">
-              <span className="font-bold text-neutral-700 font-tamil block flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5 text-[#0A6847]" />
+              <span className="font-bold text-neutral-800 dark:text-zinc-200 font-tamil block flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 text-[#0A6847] dark:text-emerald-400" />
                 <span>{isTa ? "அஞ்சல் முகவரி (Delivery Destination):" : "Delivery Address:"}</span>
               </span>
-              <p className="font-bold text-neutral-900 font-tamil">{order.shipping_address?.full_name}</p>
-              <p className="text-neutral-600 font-tamil">{order.shipping_address?.house_name}</p>
-              <p className="text-neutral-600 font-tamil">
+              <p className="font-bold text-neutral-900 dark:text-zinc-100 font-tamil">{order.shipping_address?.full_name}</p>
+              <p className="text-neutral-700 dark:text-zinc-300 font-tamil">{order.shipping_address?.house_name}</p>
+              <p className="text-neutral-700 dark:text-zinc-300 font-tamil">
                 {order.shipping_address?.city}, {order.shipping_address?.state} -{" "}
-                <span className="font-mono font-bold text-neutral-900">{order.shipping_address?.pincode}</span>
+                <span className="font-mono font-bold text-neutral-900 dark:text-zinc-100">{order.shipping_address?.pincode}</span>
               </p>
-              <p className="text-neutral-600 font-tamil">அலைபேசி: {order.shipping_address?.phone}</p>
+              <p className="text-neutral-700 dark:text-zinc-300 font-tamil">அலைபேசி: {order.shipping_address?.phone}</p>
             </div>
 
             <div className="space-y-1 sm:text-right">
-              <span className="font-bold text-neutral-700 font-tamil block">
+              <span className="font-bold text-neutral-800 dark:text-zinc-200 font-tamil block">
                 {isTa ? "பணப் பரிவர்த்தனை விவரம்:" : "Payment Summary:"}
               </span>
-              <p className="text-neutral-600 font-tamil">முறை: Razorpay Online (UPI / Card / Netbanking)</p>
-              <p className="text-neutral-600 font-tamil">
+              <p className="text-neutral-700 dark:text-zinc-300 font-tamil">முறை: Razorpay Online (UPI / Card / Netbanking)</p>
+              <p className="text-neutral-700 dark:text-zinc-300 font-tamil">
                 தேதி: {new Date(order.created_at).toLocaleString()}
               </p>
-              <p className="text-neutral-600 font-tamil">
+              <p className="text-neutral-700 dark:text-zinc-300 font-tamil">
                 வரி நிலை: HSN 4901 (புத்தகங்கள் - 0% NIL GST)
               </p>
             </div>
@@ -485,56 +485,56 @@ export default function OrderConfirmationPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-black/10 text-neutral-500 font-tamil">
+                <tr className="border-b border-black/10 dark:border-white/10 text-neutral-600 dark:text-zinc-400 font-tamil">
                   <th className="py-2.5 font-bold">நூல் தலைப்பு (Publication)</th>
                   <th className="py-2.5 font-bold text-center">எண்ணிக்கை</th>
                   <th className="py-2.5 font-bold text-right">விலை</th>
                   <th className="py-2.5 font-bold text-right">மொத்தம்</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-black/5">
+              <tbody className="divide-y divide-black/5 dark:divide-white/10">
                 {order.order_items?.map((item) => (
                   <tr key={item.id}>
-                    <td className="py-3 font-medium text-neutral-900 font-tamil">
+                    <td className="py-3 font-medium text-neutral-900 dark:text-zinc-100 font-tamil">
                       <div className="flex items-center gap-3">
                         <img
                           src={item.cover_url || "/images/books/book-placeholder.webp"}
                           alt={item.title}
-                          className="h-12 w-9 rounded-md object-cover border border-black/10 bg-stone-100 shrink-0"
+                          className="h-12 w-9 rounded-md object-cover border border-black/10 dark:border-white/15 bg-stone-100 dark:bg-zinc-800 shrink-0"
                         />
                         <span>{item.title}</span>
                       </div>
                     </td>
-                    <td className="py-3 text-center font-mono">{item.quantity}</td>
-                    <td className="py-3 text-right font-mono">{formatINR(item.price)}</td>
-                    <td className="py-3 text-right font-bold font-mono text-neutral-900">
+                    <td className="py-3 text-center font-mono text-neutral-900 dark:text-zinc-100">{item.quantity}</td>
+                    <td className="py-3 text-right font-mono text-neutral-900 dark:text-zinc-100">{formatINR(item.price)}</td>
+                    <td className="py-3 text-right font-bold font-mono text-neutral-900 dark:text-zinc-100">
                       {formatINR(item.line_total)}
                     </td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
-                <tr className="border-t border-black/10">
-                  <td colSpan={3} className="pt-3 text-right text-neutral-600 font-tamil">
+                <tr className="border-t border-black/10 dark:border-white/10">
+                  <td colSpan={3} className="pt-3 text-right text-neutral-700 dark:text-zinc-300 font-tamil">
                     {isTa ? "நூல்கள் துணை மொத்தம் (Subtotal):" : "Subtotal:"}
                   </td>
-                  <td className="pt-3 text-right font-mono font-medium">
+                  <td className="pt-3 text-right font-mono font-medium text-neutral-900 dark:text-zinc-100">
                     {formatINR(order.subtotal)}
                   </td>
                 </tr>
                 <tr>
-                  <td colSpan={3} className="py-1 text-right text-neutral-600 font-tamil">
+                  <td colSpan={3} className="py-1 text-right text-neutral-700 dark:text-zinc-300 font-tamil">
                     {isTa ? "அஞ்சல் & பொட்டலக் கட்டணம் (Shipping & Postal):" : "Postal Shipping:"}
                   </td>
-                  <td className="py-1 text-right font-mono font-medium">
+                  <td className="py-1 text-right font-mono font-medium text-neutral-900 dark:text-zinc-100">
                     {formatINR(order.shipping_fee)}
                   </td>
                 </tr>
-                <tr className="border-t border-black/15 text-sm font-bold text-neutral-900">
-                  <td colSpan={3} className="pt-3 text-right font-tamil text-[#0A6847]">
+                <tr className="border-t border-black/15 dark:border-white/15 text-sm font-bold text-neutral-900 dark:text-zinc-100">
+                  <td colSpan={3} className="pt-3 text-right font-tamil text-[#0A6847] dark:text-emerald-400">
                     {isTa ? "மொத்தத் தொகை (Total Paid):" : "Grand Total:"}
                   </td>
-                  <td className="pt-3 text-right font-mono text-[#0A6847] text-base">
+                  <td className="pt-3 text-right font-mono text-[#0A6847] dark:text-emerald-400 text-base">
                     {formatINR(order.total_amount)}
                   </td>
                 </tr>
@@ -543,13 +543,13 @@ export default function OrderConfirmationPage() {
           </div>
 
           {/* Footer Notice */}
-          <div className="pt-4 border-t border-black/5 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-neutral-500 font-tamil">
+          <div className="pt-4 border-t border-black/5 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-neutral-600 dark:text-zinc-400 font-tamil">
             <p>
               நன்றி! உங்கள் ஆதரவு தமிழீழ வரலாற்று ஆவணங்களை தலைமுறை கடந்து பாதுகாக்க உதவுகிறது.
             </p>
             <Link
               href="/books"
-              className="text-[#0A6847] font-bold hover:underline inline-flex items-center gap-1 print:hidden"
+              className="text-[#0A6847] dark:text-emerald-400 font-bold hover:underline inline-flex items-center gap-1 print:hidden"
             >
               <span>{isTa ? "மேலும் நூல்களை உலாவுக" : "Continue Browsing"}</span>
               <ArrowRight className="h-3 w-3" />

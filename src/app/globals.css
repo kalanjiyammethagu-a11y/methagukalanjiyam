@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *, [data-theme="night"], [data-theme="night"] *));
 
 @theme {
   /* Color Palette - Heritage Archival & Tamil Literary Aesthetics */
@@ -154,6 +155,30 @@ html.dark {
   color-scheme: dark;
 }
 
+/* Force light tokens inside Admin Console even if public site used Night theme */
+[data-admin-surface="true"] {
+  --color-canvas: #F4F5F7;
+  --color-surface: #FFFFFF;
+  --color-surface-subtle: #F8F9FA;
+  --color-surface-card: #FFFFFF;
+  --color-surface-tint: #F1F3F5;
+
+  --color-ink-primary: #111827;
+  --color-ink-secondary: #4B5563;
+  --color-ink-muted: #6B7280;
+
+  --color-accent: #0A6847;
+  --color-accent-hover: #085036;
+  --color-accent-light: #EBF5EF;
+  --color-accent-fg: #FFFFFF;
+
+  --color-border-hairline: #E5E7EB;
+  --color-border-subtle: #D1D5DB;
+  --color-border-strong: #9CA3AF;
+
+  color-scheme: light;
+}
+
 @layer base {
   body {
     background-color: var(--color-canvas);
@@ -172,17 +197,16 @@ html.dark {
     touch-action: manipulation;
   }
 
-  /* Typographic balance */
-  h1, h2, h3, h4, h5, h6 {
+  /* Typographic balance (zero-specificity defaults so utility & container inheritance work cleanly) */
+  :where(h1, h2, h3, h4, h5, h6) {
     text-wrap: balance;
     letter-spacing: -0.01em;
     color: var(--color-ink-primary);
   }
 
-  p {
+  :where(p) {
     text-wrap: pretty;
     overflow-wrap: break-word;
-    color: var(--color-ink-secondary);
   }
 }
 
@@ -294,23 +318,7 @@ html[data-font-size="extra-large"] {
   text-wrap: pretty;
 }
 
-/* Contrast Fixes for Legacy Utility Colors */
-.text-\[\#777777\],
-.text-\[\#666666\] {
-  color: var(--color-ink-muted) !important;
-}
-
-.text-\[\#555555\],
-.text-\[\#444444\],
-.text-zinc-600 {
-  color: var(--color-ink-secondary) !important;
-}
-
-.text-\[\#111111\],
-.text-\[\#222222\],
-.text-\[\#2A2A2A\] {
-  color: var(--color-ink-primary) !important;
-}
+/* Explicit per-component semantic/dark utility classes handle contrast across all themes */
 
 /* Shimmer Loading Animation */
 @keyframes shimmer {

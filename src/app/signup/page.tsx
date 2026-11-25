@@ -115,9 +115,9 @@ function SignUpContent() {
       if (!res.ok) {
         setErrorMessage(
           data.error ||
-            (isTa
-              ? "பதிவு செய்வதில் சிக்கல் ஏற்பட்டது. தயவுசெய்து மீண்டும் முயற்சிக்கவும்."
-              : "Registration could not be completed.")
+          (isTa
+            ? "பதிவு செய்வதில் சிக்கல் ஏற்பட்டது. தயவுசெய்து மீண்டும் முயற்சிக்கவும்."
+            : "Registration could not be completed.")
         );
         setLoading(false);
         return;
@@ -153,9 +153,9 @@ function SignUpContent() {
       const data = await res.json();
       setResendMessage(
         data.message ||
-          (isTa
-            ? "புதிய சரிபார்ப்பு இணைப்பு உங்கள் மின்னஞ்சலுக்கு அனுப்பப்பட்டது."
-            : "A fresh verification link has been sent to your inbox.")
+        (isTa
+          ? "புதிய சரிபார்ப்பு இணைப்பு உங்கள் மின்னஞ்சலுக்கு அனுப்பப்பட்டது."
+          : "A fresh verification link has been sent to your inbox.")
       );
       setCooldown(60);
     } catch {
@@ -190,7 +190,7 @@ function SignUpContent() {
               </span>
             </Link>
 
-            <span className="text-xs text-[#777777] font-medium font-sans">
+            <span className="text-xs text-[#555555] dark:text-zinc-400 font-medium font-sans">
               {currentStep === 1 && (isTa ? "படி 1 / 3" : "Step 1 of 3")}
               {currentStep === 2 && (isTa ? "படி 2 / 3" : "Step 2 of 3")}
               {currentStep === 3 && (isTa ? "முடிந்தது" : "Verification")}
@@ -230,7 +230,7 @@ function SignUpContent() {
                 <h2 className="text-lg font-bold text-[#111111] dark:text-white font-tamil">
                   {isTa ? "வாசகர் கணக்கு தொடங்குங்கள்" : "Create your Reader Account"}
                 </h2>
-                <p className="text-xs text-[#666666] dark:text-[#aaaaaa] font-tamil leading-relaxed">
+                <p className="text-xs text-[#555555] dark:text-zinc-300 font-tamil leading-relaxed">
                   {isTa
                     ? "அரிய வரலாற்று நூல்கள் மற்றும் ஆவணங்களை ஆர்டர் செய்ய உங்கள் மின்னஞ்சலை பதிவு செய்யவும்."
                     : "Enter your email and a strong password to begin your archival journey."}
@@ -256,7 +256,7 @@ function SignUpContent() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@example.com"
-                    className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#222222] text-base sm:text-sm outline-none focus:border-[#0A6847] focus:ring-1 focus:ring-[#0A6847]"
+                    className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#222222] text-[#111111] dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 text-base sm:text-sm outline-none focus:border-[#0A6847] focus:ring-1 focus:ring-[#0A6847]"
                   />
                 </div>
               </div>
@@ -279,12 +279,12 @@ function SignUpContent() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="w-full h-11 pl-10 pr-12 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#222222] text-base sm:text-sm outline-none focus:border-[#0A6847] focus:ring-1 focus:ring-[#0A6847]"
+                    className="w-full h-11 pl-10 pr-12 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#222222] text-[#111111] dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 text-base sm:text-sm outline-none focus:border-[#0A6847] focus:ring-1 focus:ring-[#0A6847]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-[#777777] hover:text-[#111111] dark:hover:text-white cursor-pointer"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-[#555555] dark:text-zinc-300 hover:text-[#111111] dark:hover:text-white cursor-pointer"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -294,23 +294,23 @@ function SignUpContent() {
 
               {/* Live Password Strength Criteria Checklist */}
               <div className="p-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/5 space-y-1.5 text-[11px]">
-                <p className="font-semibold text-[#555555] dark:text-[#aaaaaa] font-tamil">
+                <p className="font-semibold text-[#555555] dark:text-zinc-300 font-tamil">
                   {isTa ? "கடவுச்சொல் தேவைகள்:" : "Password Requirements:"}
                 </p>
                 <div className="grid grid-cols-2 gap-1.5">
-                  <div className={`flex items-center gap-1.5 ${hasMinLength ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-[#777777]"}`}>
+                  <div className={`flex items-center gap-1.5 ${hasMinLength ? "text-emerald-700 dark:text-emerald-400 font-semibold" : "text-[#555555] dark:text-zinc-300"}`}>
                     <CheckCircle2 className="h-3 w-3" />
                     <span>8+ {isTa ? "எழுத்துக்கள்" : "characters"}</span>
                   </div>
-                  <div className={`flex items-center gap-1.5 ${hasUpperCase ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-[#777777]"}`}>
+                  <div className={`flex items-center gap-1.5 ${hasUpperCase ? "text-emerald-700 dark:text-emerald-400 font-semibold" : "text-[#555555] dark:text-zinc-300"}`}>
                     <CheckCircle2 className="h-3 w-3" />
                     <span>{isTa ? "பெரிய எழுத்து (A-Z)" : "Uppercase (A-Z)"}</span>
                   </div>
-                  <div className={`flex items-center gap-1.5 ${hasLowerCase ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-[#777777]"}`}>
+                  <div className={`flex items-center gap-1.5 ${hasLowerCase ? "text-emerald-700 dark:text-emerald-400 font-semibold" : "text-[#555555] dark:text-zinc-300"}`}>
                     <CheckCircle2 className="h-3 w-3" />
                     <span>{isTa ? "சிறிய எழுத்து (a-z)" : "Lowercase (a-z)"}</span>
                   </div>
-                  <div className={`flex items-center gap-1.5 ${hasNumber ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-[#777777]"}`}>
+                  <div className={`flex items-center gap-1.5 ${hasNumber ? "text-emerald-700 dark:text-emerald-400 font-semibold" : "text-[#555555] dark:text-zinc-300"}`}>
                     <CheckCircle2 className="h-3 w-3" />
                     <span>{isTa ? "எண் (0-9)" : "Number (0-9)"}</span>
                   </div>
@@ -320,18 +320,18 @@ function SignUpContent() {
               <button
                 type="submit"
                 disabled={!isPasswordValid || !email.trim()}
-                className="w-full h-11 rounded-xl bg-[#0A6847] hover:bg-[#085036] disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md font-tamil"
+                className="w-full h-11 rounded-xl bg-[#0A6847] hover:bg-[#085036] disabled:opacity-65 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md font-tamil"
               >
                 <span>{isTa ? "அடுத்த படிக்கு செல்லவும்" : "Continue to Profile"}</span>
                 <ArrowRight className="h-4 w-4" />
               </button>
 
               <div className="text-center pt-2">
-                <p className="text-xs text-[#666666] dark:text-[#aaaaaa] font-tamil">
+                <p className="text-xs text-[#555555] dark:text-zinc-300 font-tamil">
                   {isTa ? "ஏற்கனவே கணக்கு உள்ளதா?" : "Already have an account?"}{" "}
                   <Link
                     href="/login"
-                    className="text-[#0A6847] hover:underline font-bold"
+                    className="text-[#0A6847] dark:text-emerald-400 hover:underline font-bold"
                   >
                     {isTa ? "உள்நுழையவும்" : "Sign In"}
                   </Link>
@@ -349,7 +349,7 @@ function SignUpContent() {
                 <h2 className="text-lg font-bold text-[#111111] dark:text-white font-tamil">
                   {isTa ? "உங்கள் விவரங்கள்" : "Your Profile Details"}
                 </h2>
-                <p className="text-xs text-[#666666] dark:text-[#aaaaaa] font-tamil leading-relaxed">
+                <p className="text-xs text-[#555555] dark:text-zinc-300 font-tamil leading-relaxed">
                   {isTa
                     ? "ஆர்டர் உறுதிப்படுத்தல் மற்றும் நூல்கள் டெலிவரி செய்ய தேவையான விவரங்கள்."
                     : "Basic details for dispatch notifications and order correspondence."}
@@ -374,7 +374,7 @@ function SignUpContent() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder={isTa ? "எ.கா. க. மாதவன்" : "e.g. John Doe"}
-                    className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#222222] text-base sm:text-sm outline-none focus:border-[#0A6847] focus:ring-1 focus:ring-[#0A6847]"
+                    className="w-full h-11 pl-10 pr-3.5 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#222222] text-[#111111] dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 text-base sm:text-sm outline-none focus:border-[#0A6847] focus:ring-1 focus:ring-[#0A6847]"
                   />
                 </div>
               </div>
@@ -385,7 +385,7 @@ function SignUpContent() {
                   {isTa ? "விருப்ப மொழி" : "Preferred Language"}
                 </label>
                 <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-2 text-xs cursor-pointer font-tamil">
+                  <label className="flex items-center gap-2 text-xs text-[#222222] dark:text-zinc-200 cursor-pointer font-tamil">
                     <input
                       type="radio"
                       name="userLocale"
@@ -396,7 +396,7 @@ function SignUpContent() {
                     />
                     <span>தமிழ் (Tamil)</span>
                   </label>
-                  <label className="flex items-center gap-2 text-xs cursor-pointer font-sans">
+                  <label className="flex items-center gap-2 text-xs text-[#222222] dark:text-zinc-200 cursor-pointer font-sans">
                     <input
                       type="radio"
                       name="userLocale"
@@ -446,8 +446,8 @@ function SignUpContent() {
               ============================================================ */}
           {currentStep === 3 && (
             <div className="space-y-6 text-center py-4">
-              <div className="h-16 w-16 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-[#0A6847] dark:text-emerald-400 mx-auto flex items-center justify-center ring-8 ring-emerald-50 dark:ring-emerald-950/20">
-                <Mail className="h-8 w-8 text-[#0A6847]" />
+              <div className="h-16 w-16 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-[#0A6847] dark:text-emerald-400 mx-auto flex items-center justify-center ring-8 ring-emerald-50 dark:ring-emerald-950/30">
+                <Mail className="h-8 w-8 text-[#0A6847] dark:text-emerald-400" />
               </div>
 
               <div className="space-y-2">
@@ -456,15 +456,15 @@ function SignUpContent() {
                     ? "உங்கள் மின்னஞ்சலை உறுதிப்படுத்தவும்!"
                     : "Verify Your Email to Activate Your Account"}
                 </h2>
-                <p className="text-xs text-[#555555] dark:text-[#aaaaaa] font-tamil max-w-sm mx-auto leading-relaxed">
+                <p className="text-xs text-[#555555] dark:text-zinc-300 font-tamil max-w-sm mx-auto leading-relaxed">
                   {isTa
                     ? "உங்கள் கணக்கு தொடங்கப்பட்டது. உள்நுழைவதற்கு முன்பு கீழே உள்ள மின்னஞ்சலில் அனுப்பப்பட்டுள்ள சரிபார்ப்பு இணைப்பை (Resend Email Verification) சொடுக்கவும்:"
                     : "We have sent a verification link via Resend to the address below. You must confirm your email before signing in:"}
                 </p>
-                <p className="text-xs font-mono font-bold text-[#0A6847] dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 py-1.5 px-3 rounded-lg inline-block">
+                <p className="text-xs font-mono font-bold text-[#0A6847] dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 py-1.5 px-3 rounded-lg inline-block">
                   {email}
                 </p>
-                <p className="text-[11px] text-[#777777] font-tamil">
+                <p className="text-[11px] text-[#555555] dark:text-zinc-400 font-tamil">
                   {isTa
                     ? "இந்த இணைப்பு 24 மணி நேரம் செல்லுபடியாகும். உறுதிப்படுத்திய பிறகு உள்நுழையவும்."
                     : "The link is valid for 24 hours. Once verified, you can sign in and place orders."}
@@ -503,14 +503,14 @@ function SignUpContent() {
                         ? `${cooldown} வினாடிகளில் மீண்டும் அனுப்பலாம்`
                         : `Resend link in ${cooldown}s`
                       : isTa
-                      ? "இணைப்பை மீண்டும் அனுப்புக (Resend Email)"
-                      : "Resend Verification Email"}
+                        ? "இணைப்பை மீண்டும் அனுப்புக (Resend Email)"
+                        : "Resend Verification Email"}
                   </span>
                 </button>
               </div>
 
-              <div className="pt-4 border-t border-black/8 dark:border-white/8 text-[11px] text-[#888888] font-tamil">
-                <Link href="/verify-email" className="underline hover:text-[#0A6847]">
+              <div className="pt-4 border-t border-black/8 dark:border-white/8 text-[11px] text-[#555555] dark:text-zinc-400 font-tamil">
+                <Link href="/verify-email" className="underline hover:text-[#0A6847] dark:hover:text-emerald-400">
                   {isTa ? "சரிபார்ப்பு சிக்கலா? இங்கே சொடுக்கவும்" : "Need verification help?"}
                 </Link>
               </div>

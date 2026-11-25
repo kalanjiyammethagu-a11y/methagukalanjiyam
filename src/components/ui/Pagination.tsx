@@ -52,7 +52,7 @@ export function Pagination({
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
         aria-label={locale === "ta" ? "முந்தைய பக்கம்" : "Previous page"}
-        className="min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl flex items-center justify-center text-[#333333] hover:bg-black/5 hover:text-[#0A6847] disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+        className="min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl flex items-center justify-center text-[#333333] dark:text-zinc-200 hover:bg-black/5 dark:hover:bg-white/10 hover:text-[#0A6847] dark:hover:text-emerald-400 disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
       >
         <ChevronLeft className="h-5 w-5" />
       </button>
@@ -62,7 +62,7 @@ export function Pagination({
         page === "ellipsis" ? (
           <span
             key={`ellipsis-${i}`}
-            className="h-10 w-8 flex items-center justify-center text-[#999999] text-sm select-none"
+            className="h-10 w-8 flex items-center justify-center text-[#666666] dark:text-zinc-400 text-sm select-none"
             aria-hidden="true"
           >
             …
@@ -77,8 +77,8 @@ export function Pagination({
             className={cn(
               "min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl flex items-center justify-center text-sm font-semibold transition-all duration-200 cursor-pointer",
               currentPage === page
-                ? "bg-[#0A6847] text-white shadow-sm shadow-[#0A6847]/20"
-                : "text-[#333333] hover:bg-black/5 hover:text-[#0A6847]"
+                ? "bg-[#0A6847] dark:bg-[#0D5C3A] text-white shadow-sm shadow-[#0A6847]/20"
+                : "text-[#333333] dark:text-zinc-200 hover:bg-black/5 dark:hover:bg-white/10 hover:text-[#0A6847] dark:hover:text-emerald-400"
             )}
           >
             {page}
@@ -92,7 +92,7 @@ export function Pagination({
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
         aria-label={locale === "ta" ? "அடுத்த பக்கம்" : "Next page"}
-        className="min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl flex items-center justify-center text-[#333333] hover:bg-black/5 hover:text-[#0A6847] disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+        className="min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl flex items-center justify-center text-[#333333] dark:text-zinc-200 hover:bg-black/5 dark:hover:bg-white/10 hover:text-[#0A6847] dark:hover:text-emerald-400 disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
       >
         <ChevronRight className="h-5 w-5" />
       </button>

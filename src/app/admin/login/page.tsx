@@ -347,11 +347,10 @@ export default function AdminLoginPage() {
                     setChallengeMode("otp");
                     setErrorMessage(null);
                   }}
-                  className={`flex-1 py-2 rounded-lg transition-all cursor-pointer min-h-[38px] ${
-                    challengeMode === "otp"
-                      ? "bg-white text-[#0A6847] shadow-2xs font-bold"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  className={`flex-1 py-2 rounded-lg transition-all cursor-pointer min-h-[38px] ${challengeMode === "otp"
+                    ? "bg-white text-[#0A6847] shadow-2xs font-bold"
+                    : "text-gray-600 hover:text-gray-900"
+                    }`}
                 >
                   Email Code (OTP)
                 </button>
@@ -361,11 +360,10 @@ export default function AdminLoginPage() {
                     setChallengeMode("backup");
                     setErrorMessage(null);
                   }}
-                  className={`flex-1 py-2 rounded-lg transition-all cursor-pointer min-h-[38px] ${
-                    challengeMode === "backup"
-                      ? "bg-white text-[#0A6847] shadow-2xs font-bold"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  className={`flex-1 py-2 rounded-lg transition-all cursor-pointer min-h-[38px] ${challengeMode === "backup"
+                    ? "bg-white text-[#0A6847] shadow-2xs font-bold"
+                    : "text-gray-600 hover:text-gray-900"
+                    }`}
                 >
                   Backup Code
                 </button>
@@ -464,7 +462,7 @@ export default function AdminLoginPage() {
                       setBackupCode("");
                       setErrorMessage(null);
                     }}
-                    className="text-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
+                    className="text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
                   >
                     ← Back to credentials
                   </button>
@@ -474,7 +472,7 @@ export default function AdminLoginPage() {
                       type="button"
                       onClick={handleResendOtp}
                       disabled={cooldown > 0 || loading}
-                      className="text-[#0A6847] hover:text-[#085036] disabled:text-gray-300 font-semibold flex items-center gap-1 transition-colors cursor-pointer disabled:cursor-not-allowed"
+                      className="text-[#0A6847] hover:text-[#085036] disabled:text-gray-500 font-semibold flex items-center gap-1 transition-colors cursor-pointer disabled:cursor-not-allowed"
                     >
                       <RefreshCw className={`h-3 w-3 ${loading ? "animate-spin" : ""}`} />
                       <span>{cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend code"}</span>
@@ -487,7 +485,7 @@ export default function AdminLoginPage() {
         </div>
 
         {/* Security Footer */}
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 text-center text-[11px] text-gray-400">
+        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 text-center text-[11px] text-gray-600">
           Strictly authorized personnel only. All access attempts are recorded.
         </div>
       </div>

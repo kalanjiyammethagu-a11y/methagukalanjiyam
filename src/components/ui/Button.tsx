@@ -46,7 +46,7 @@ export function getButtonClassName(
     danger:
       "bg-rose-600 hover:bg-rose-700 text-white shadow-sm focus-visible:ring-rose-500",
     accent:
-      "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm focus-visible:ring-emerald-500",
+      "bg-[#0A6847] hover:bg-[#085237] text-white shadow-sm focus-visible:ring-emerald-500",
   };
 
   const sizes: Record<ButtonSize, string> = {

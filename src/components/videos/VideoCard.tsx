@@ -84,10 +84,10 @@ export function VideoCard({
     <article
       ref={cardRef}
       className={cn(
-        "group relative glass-panel rounded-2xl overflow-hidden border transition-all duration-300 flex flex-col h-full bg-white/80",
+        "group relative glass-panel rounded-2xl overflow-hidden border transition-all duration-300 flex flex-col h-full bg-white/85 dark:bg-[#1F1F23]",
         isPlaying
-          ? "border-[#0A6847] shadow-xl ring-2 ring-[#0A6847]/30"
-          : "border-black/10 hover:border-[#0A6847]/40 hover:shadow-lg",
+          ? "border-[#0A6847] dark:border-emerald-500 shadow-xl ring-2 ring-[#0A6847]/30"
+          : "border-black/10 dark:border-white/10 hover:border-[#0A6847]/40 dark:hover:border-emerald-500/40 hover:shadow-lg",
         className
       )}
       data-video-id={video.id}
@@ -212,35 +212,35 @@ export function VideoCard({
       {/* Content Section */}
       <div className="p-4 sm:p-5 flex flex-col justify-between flex-1">
         <div className="space-y-1.5">
-          <h3 className="text-base font-bold text-[#111111] group-hover:text-[#0A6847] transition-colors leading-snug line-clamp-2 font-tamil">
+          <h3 className="text-base font-bold text-[#111111] dark:text-zinc-100 group-hover:text-[#0A6847] dark:group-hover:text-emerald-400 transition-colors leading-snug line-clamp-2 font-tamil">
             {title}
           </h3>
-          <p className="text-xs text-[#555555] leading-relaxed line-clamp-2 font-tamil">
+          <p className="text-xs text-[#555555] dark:text-zinc-300 leading-relaxed line-clamp-2 font-tamil">
             {description}
           </p>
         </div>
 
         {/* Footer Actions */}
-        <div className="pt-3 mt-3 border-t border-black/8 flex items-center justify-between">
+        <div className="pt-3 mt-3 border-t border-black/8 dark:border-white/10 flex items-center justify-between">
           {isPlaying ? (
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={onStop}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold transition-colors min-h-[44px]"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/70 hover:bg-red-100 dark:hover:bg-red-900 text-red-700 dark:text-red-300 text-xs font-bold transition-colors min-h-[44px]"
                 aria-label={isTa ? "காணொளியை நிறுத்துக" : "Stop playing"}
               >
-                <Square className="h-3.5 w-3.5 fill-red-700" />
+                <Square className="h-3.5 w-3.5 fill-current" />
                 <span>{isTa ? "நிறுத்துக" : "Stop"}</span>
               </button>
               {onExpand && (
                 <button
                   type="button"
                   onClick={() => onExpand(video)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/5 hover:bg-black/10 text-[#333333] text-xs font-semibold transition-colors min-h-[44px]"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 text-[#333333] dark:text-zinc-200 text-xs font-semibold transition-colors min-h-[44px]"
                   aria-label={isTa ? "திரைப்படம் வடிவில் காண்க" : "Open in theater modal"}
                 >
-                  <Maximize2 className="h-3.5 w-3.5 text-[#555555]" />
+                  <Maximize2 className="h-3.5 w-3.5 text-[#555555] dark:text-zinc-300" />
                   <span>{isTa ? "பெரிய திரை" : "Theater"}</span>
                 </button>
               )}
@@ -250,9 +250,9 @@ export function VideoCard({
               <button
                 type="button"
                 onClick={handlePlay}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0A6847] hover:underline min-h-[44px]"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0A6847] dark:text-emerald-400 hover:underline min-h-[44px]"
               >
-                <Play className="h-3.5 w-3.5 fill-[#0A6847]" />
+                <Play className="h-3.5 w-3.5 fill-current" />
                 <span>{isTa ? "காணொளியை இயக்குக" : "Play in Feed"}</span>
               </button>
 
@@ -260,7 +260,7 @@ export function VideoCard({
                 <button
                   type="button"
                   onClick={() => onExpand(video)}
-                  className="inline-flex items-center gap-1 text-[11px] font-medium text-[#666666] hover:text-[#111111] hover:underline min-h-[44px] px-1"
+                  className="inline-flex items-center gap-1 text-[11px] font-medium text-[#555555] dark:text-zinc-300 hover:text-[#111111] dark:hover:text-white hover:underline min-h-[44px] px-1"
                   aria-label={isTa ? "திரைப்படம் வடிவில் காண்க" : "Open in theater modal"}
                 >
                   <Maximize2 className="h-3 w-3" />
@@ -271,7 +271,7 @@ export function VideoCard({
           )}
 
           {video.publishedDate && (
-            <span className="text-[11px] text-[#777777] font-medium">
+            <span className="text-[11px] text-[#555555] dark:text-zinc-400 font-medium">
               {video.publishedDate}
             </span>
           )}

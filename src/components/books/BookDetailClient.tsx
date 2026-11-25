@@ -184,7 +184,7 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
               {formatINR(book.discountPrice ?? book.price)}
             </span>
             {book.discountPrice && (
-              <span className="text-lg text-[#999999] dark:text-zinc-500 line-through font-mono">
+              <span className="text-lg text-[#666666] dark:text-zinc-400 line-through font-mono">
                 {formatINR(book.price)}
               </span>
             )}
@@ -248,7 +248,7 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
               <button
                 type="button"
                 onClick={handleBuyNow}
-                className="flex-1 min-h-[48px] px-6 rounded-2xl bg-[#0A6847] hover:bg-[#085237] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md transition-all active:scale-[0.98] font-tamil cursor-pointer"
+                className="flex-1 min-h-[48px] px-6 rounded-2xl bg-[#0A6847] hover:bg-[#085237] dark:bg-[#0D5C3A] dark:hover:bg-[#0A6847] text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md transition-all active:scale-[0.98] font-tamil cursor-pointer"
               >
                 <CreditCard className="h-5 w-5 shrink-0" />
                 <span className="font-tamil">
@@ -260,8 +260,8 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
             </div>
 
             {/* Fast Delivery Timeline Reassurance */}
-            <div className="p-3 rounded-xl bg-black/[0.02] border border-black/8 flex items-center gap-2 text-xs text-zinc-700 font-tamil">
-              <Truck className="h-4 w-4 text-[#0A6847] shrink-0" />
+            <div className="p-3 rounded-xl bg-black/[0.02] dark:bg-white/[0.04] border border-black/8 dark:border-white/10 flex items-center gap-2 text-xs text-zinc-700 dark:text-zinc-200 font-tamil">
+              <Truck className="h-4 w-4 text-[#0A6847] dark:text-emerald-400 shrink-0" />
               <span>
                 {isTa
                   ? "தமிழ்நாடு: 2-3 நாட்களில் ST கூரியர் / விரைவு அஞ்சல் வழி விரைவு வழங்கல்"
@@ -270,17 +270,17 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
             </div>
 
             {/* Trust Signals near Primary CTA */}
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 text-[11px] text-[#555555] font-tamil">
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 text-[11px] text-[#555555] dark:text-zinc-400 font-tamil">
               <Link
                 href="/certificate"
-                className="inline-flex items-center gap-1.5 text-[#0A6847] hover:underline font-semibold"
+                className="inline-flex items-center gap-1.5 text-[#0A6847] dark:text-emerald-400 hover:underline font-semibold"
               >
                 <ArchivalWaxSealIcon className="h-3.5 w-3.5" />
                 <span>{isTa ? "அரசு MSME பதிவு: UDYAM-TN-18-0101323" : "Govt. MSME Verified"}</span>
               </Link>
               <Link
                 href="/supporters"
-                className="inline-flex items-center gap-1 text-[#555555] hover:text-[#111111] hover:underline"
+                className="inline-flex items-center gap-1 text-[#555555] dark:text-zinc-300 hover:text-[#111111] dark:hover:text-white hover:underline"
               >
                 <span>{isTa ? "களஞ்சிய ஆதரவாளர்கள் குழு" : "Archives Patrons"}</span>
               </Link>
@@ -289,8 +289,8 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
         )}
 
         {/* Shipping Fee Notice */}
-        <div className="flex items-center gap-3 pt-3 border-t border-black/5 text-xs text-[#555555] font-medium">
-          <PostalSealIcon className="h-4 w-4 text-[#0A6847] shrink-0" />
+        <div className="flex items-center gap-3 pt-3 border-t border-black/5 dark:border-white/10 text-xs text-[#555555] dark:text-zinc-300 font-medium">
+          <PostalSealIcon className="h-4 w-4 text-[#0A6847] dark:text-emerald-400 shrink-0" />
           <span className="font-tamil">
             {shippingRegion === "other-india"
               ? isTa
@@ -307,10 +307,10 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
         </div>
 
         {/* Purchase Policy Notice: In-Site Purchase & Overseas Support */}
-        <div className="p-2.5 rounded-xl bg-[#0A6847]/5 border border-[#0A6847]/15 flex items-start gap-2 text-xs text-[#0A6847] font-tamil">
-          <ShieldCheck className="h-4 w-4 shrink-0 mt-0.5 text-[#0A6847]" />
-          <div className="leading-snug text-neutral-800">
-            <span className="font-bold text-[#0A6847]">
+        <div className="p-2.5 rounded-xl bg-[#0A6847]/5 dark:bg-emerald-950/60 border border-[#0A6847]/15 dark:border-emerald-700/50 flex items-start gap-2 text-xs text-[#0A6847] dark:text-emerald-300 font-tamil">
+          <ShieldCheck className="h-4 w-4 shrink-0 mt-0.5 text-[#0A6847] dark:text-emerald-400" />
+          <div className="leading-snug text-neutral-800 dark:text-zinc-200">
+            <span className="font-bold text-[#0A6847] dark:text-emerald-300">
               {isTa ? "இணையதள நேரடி கொள்முதல்:" : "On-Site Direct Purchase:"}{" "}
             </span>
             <span>
@@ -318,7 +318,7 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
                 ? "கூடையில் சேர்த்து UPI / Card மூலம் பாதுகாப்பாக வாங்கலாம்."
                 : "Add to cart and purchase directly via UPI or Cards."}{" "}
             </span>
-            <span className="text-neutral-500">
+            <span className="text-neutral-700 dark:text-zinc-300">
               {isTa
                 ? "(உதவி தேவையா? நேரடி உதவி மற்றும் வெளிநாட்டு ஆர்டர்களுக்கு வாட்ஸ்அப் வழியாகவும் தொடர்பு கொள்ளலாம்)."
                 : "(Need help? Domestic and overseas readers can also connect with us via WhatsApp)."}
@@ -343,8 +343,8 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
               className={cn(
                 "min-h-[40px] px-5 py-2 text-xs sm:text-sm font-semibold transition-all rounded-xl cursor-pointer font-tamil active:scale-[0.98]",
                 activeTab === tab
-                  ? "bg-[#0A6847] dark:bg-emerald-600 text-white shadow-xs font-bold"
-                  : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
+                  ? "bg-[#0A6847] dark:bg-[#0D5C3A] text-white shadow-xs font-bold"
+                  : "text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
               )}
             >
               {tab === "description"
@@ -374,7 +374,7 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
                 </div>
               )}
               {book.author.includes("சாந்தி நேசக்கரம்") && (
-                <div className="inline-flex items-center gap-2 p-2 rounded-xl bg-amber-50/80 border border-amber-200/60 mb-2">
+                <div className="inline-flex items-center gap-2 p-2 rounded-xl bg-amber-50/90 dark:bg-amber-950/60 border border-amber-200/70 dark:border-amber-700/50 mb-2">
                   <Image
                     src="https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/saanthi-nesakaram.webp"
                     alt="சாந்தி நேசக்கரம் பதிப்பக முத்திரை"
@@ -382,7 +382,7 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
                     height={28}
                     className="object-contain"
                   />
-                  <span className="text-xs font-tamil font-bold text-amber-900">
+                  <span className="text-xs font-tamil font-bold text-amber-950 dark:text-amber-200">
                     {isTa ? "சாந்தி நேசக்கரம் வரலாற்றுப் பதிப்பகம்" : "Saanthi Nesakaram Archival Publication"}
                   </span>
                 </div>
@@ -486,7 +486,7 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
               type="button"
               onClick={handleBuyNow}
               aria-label={isTa ? "இப்போதே வாங்குக" : "Buy Now"}
-              className="min-h-[44px] px-4 rounded-xl bg-[#0A6847] hover:bg-[#085237] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md active:scale-95 transition-all shrink-0 font-tamil cursor-pointer"
+              className="min-h-[44px] px-4 rounded-xl bg-[#0A6847] hover:bg-[#085237] dark:bg-[#0D5C3A] dark:hover:bg-[#0A6847] text-white font-bold text-xs flex items-center gap-1.5 shadow-md active:scale-95 transition-all shrink-0 font-tamil cursor-pointer"
             >
               <CreditCard className="h-4 w-4 shrink-0" />
               <span>{isTa ? "வாங்க" : "Buy Now"}</span>

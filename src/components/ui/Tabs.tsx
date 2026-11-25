@@ -109,7 +109,7 @@ export function Tabs({
               variant === "pills" && [
                 "rounded-full border",
                 isActive
-                  ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)] font-bold shadow-xs"
+                  ? "bg-[var(--color-accent)] text-[var(--color-accent-fg)] border-[var(--color-accent)] font-bold shadow-xs"
                   : "bg-[var(--color-surface-card)] text-[var(--color-ink-secondary)] border-[var(--color-border-subtle)] hover:border-[var(--color-accent)] hover:text-[var(--color-ink-primary)]",
               ],
               tab.disabled && "opacity-40 cursor-not-allowed pointer-events-none"

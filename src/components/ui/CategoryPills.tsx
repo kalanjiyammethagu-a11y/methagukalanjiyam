@@ -73,8 +73,8 @@ export function CategoryPills({
           className={cn(
             "min-h-[44px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all shrink-0 cursor-pointer font-tamil active:scale-[0.98]",
             selected === "all"
-              ? "bg-[#0A6847] dark:bg-emerald-600 text-white shadow-xs font-bold"
-              : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
+              ? "bg-[#0A6847] dark:bg-[#0D5C3A] text-white shadow-xs font-bold"
+              : "text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
           )}
         >
           {locale === "ta" ? allLabelTa : allLabelEn}
@@ -90,8 +90,8 @@ export function CategoryPills({
             className={cn(
               "min-h-[44px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all shrink-0 cursor-pointer font-tamil active:scale-[0.98]",
               selected === cat.slug
-                ? "bg-[#0A6847] dark:bg-emerald-600 text-white shadow-xs font-bold"
-                : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
+                ? "bg-[#0A6847] dark:bg-[#0D5C3A] text-white shadow-xs font-bold"
+                : "text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
             )}
           >
             {locale === "ta" ? cat.labelTa : cat.labelEn}
@@ -100,8 +100,8 @@ export function CategoryPills({
                 className={cn(
                   "ml-1.5 text-[11px] px-1.5 py-0.5 rounded-full font-mono",
                   selected === cat.slug
-                    ? "bg-white/20 text-white"
-                    : "bg-black/8 dark:bg-white/10 text-zinc-500 dark:text-zinc-300"
+                    ? "bg-black/20 text-white"
+                    : "bg-black/8 dark:bg-white/10 text-zinc-700 dark:text-zinc-200"
                 )}
               >
                 {cat.count}

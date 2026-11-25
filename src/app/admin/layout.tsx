@@ -129,7 +129,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   };
 
   if (pathname === "/admin/login") {
-    return <>{children}</>;
+    return <div data-admin-surface="true">{children}</div>;
   }
 
   const isActive = (href: string, exact = false) => {
@@ -150,7 +150,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-[#F4F5F7] text-[#1A1A1A] flex flex-col font-sans">
+    <div data-admin-surface="true" className="min-h-[100dvh] bg-[#F4F5F7] text-[#1A1A1A] flex flex-col font-sans">
       {/* Top Banner */}
       <div className="bg-[#0A6847] text-white px-4 py-2 text-xs font-semibold flex items-center justify-between z-50 shrink-0">
         <div className="flex items-center gap-2">

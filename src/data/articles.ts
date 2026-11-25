@@ -41,9 +41,9 @@ export const detailedArticles: Record<string, ArticleDetailData> = {
       <h2>2. இந்திய இராணுவக் காலமும் குடும்பத் தியாகமும்</h2>
       <p>இந்திய அமைதிப்படை இலங்கையில் நிலை கொண்டிருந்த காலத்தில், விநாயகத்தைத் தேடி வந்த இராணுவத்தினர் இவரது குடும்பத்தின் மீது கடும் சித்திரவதைகளை மேற்கொண்டனர். இவரது தந்தையைக் கயிற்றால் கட்டி வாகனத்தில் இறக்கி ஏற்றிச் சித்திரவதை செய்து, வீடையும் தீக்கிரையாக்கினர். குடும்பம் எதிர்கொண்ட கொடுமைகளை அறிந்தபோதும், தாய்நாட்டின் விடுதலையைக் கண்ணெனக் கருதி களத்தில் உறுதியோடு பணியாற்றினார்.</p>
 
-      <div class="my-6 p-6 rounded-2xl bg-[#0A6847]/8 border border-[#0A6847]/20 text-[#111111] shadow-2xs">
-        <h3 class="text-base font-bold text-[#0A6847] mb-2 font-tamil">முக்கிய வரலாற்றுச் சம்பவம்: கட்டுநாயக்கா வான்படைத்தளத் தாக்குதல் (2001)</h3>
-        <p class="text-sm leading-relaxed">தளபதி விநாயகத்தின் இராணுவப் புலனாய்வு வாழ்க்கையில் மிக முக்கிய முத்திரையாக அமைந்தது <b>2001 கட்டுநாயக்கா சர்வதேச விமானநிலையம் மற்றும் வான்படைத்தள மீதான தாக்குதலாகும்</b>. சிறிலங்காவின் பொருளாதாரத்தையும் படை பலத்தையும் உலகறிய ஆட்டங்காண வைத்த இத்தாக்குதலுக்கான வேவு நடவடிக்கைகள், திட்டமிடல்கள் மற்றும் தாக்குதல் அணிகளைப் பாதுகாப்பாகக் களமிறக்கும் அதிமுக்கியப் பொறுப்பைத் தளபதி விநாயகமே முன்னின்று நடத்தினார். கண்ணன், முகிலன், கானகன் உள்ளிட்ட 14 கரும்புலிகள் அடங்கிய சிறப்பு அணிக்கு வழிகாட்டி, எதிரியின் கோட்டைக்குள் புகுந்து சாதனையை நிலைநாட்டினார்.</p>
+      <div class="my-6 p-6 rounded-2xl bg-[#0A6847]/8 dark:bg-emerald-950/60 border border-[#0A6847]/20 dark:border-emerald-700/60 text-[#111111] dark:text-zinc-100 shadow-2xs">
+        <h3 class="text-base font-bold text-[#0A6847] dark:text-emerald-300 mb-2 font-tamil">முக்கிய வரலாற்றுச் சம்பவம்: கட்டுநாயக்கா வான்படைத்தளத் தாக்குதல் (2001)</h3>
+        <p class="text-sm leading-relaxed text-[#222222] dark:text-zinc-200">தளபதி விநாயகத்தின் இராணுவப் புலனாய்வு வாழ்க்கையில் மிக முக்கிய முத்திரையாக அமைந்தது <b class="dark:text-white">2001 கட்டுநாயக்கா சர்வதேச விமானநிலையம் மற்றும் வான்படைத்தள மீதான தாக்குதலாகும்</b>. சிறிலங்காவின் பொருளாதாரத்தையும் படை பலத்தையும் உலகறிய ஆட்டங்காண வைத்த இத்தாக்குதலுக்கான வேவு நடவடிக்கைகள், திட்டமிடல்கள் மற்றும் தாக்குதல் அணிகளைப் பாதுகாப்பாகக் களமிறக்கும் அதிமுக்கியப் பொறுப்பைத் தளபதி விநாயகமே முன்னின்று நடத்தினார். கண்ணன், முகிலன், கானகன் உள்ளிட்ட 14 கரும்புலிகள் அடங்கிய சிறப்பு அணிக்கு வழிகாட்டி, எதிரியின் கோட்டைக்குள் புகுந்து சாதனையை நிலைநாட்டினார்.</p>
       </div>
 
       <h2>3. நந்திக்கடலுக்குப் பின்னரான இரகசியப் பயணமும் தப்பியோடுதலும்</h2>
@@ -51,8 +51,8 @@ export const detailedArticles: Record<string, ArticleDetailData> = {
       <p>அங்கிருந்து தப்பிச் செல்ல முயன்ற போது கடற்படையினரின் தாக்குதல்களுக்கு உள்ளாகி, பலமுறை நூலிழையில் உயிர் தப்பினார். இறுதியாக, <b>24.07.2009</b> அன்று (சரியாக 2001 கட்டுநாயக்கா தாக்குதல் நடைபெற்ற அதே ஜூலை 24 திகதியில்) பொய்யான கடவுச்சீட்டு மூலம் கட்டுநாயக்கா விமான நிலையத்தைக் கடந்து வெளிநாட்டிற்குத் தப்பினார். தான் திட்டமிட்டுத் தாக்கிய அதே விமான நிலையத்தின் வழியே எதிரியின் கண்களில் மண்ணைத் தூவி தப்பியது இவரது புலனாய்வுச் சாதுரியத்திற்குச் சான்றாகும்.</p>
 
       <blockquote class="my-6 p-6 rounded-2xl bg-neutral-950 text-white border border-amber-400/30 shadow-md">
-        <h4 class="text-amber-400 font-bold mb-1 font-tamil">பேரம் பேச மறுத்த கொள்கை உறுதி</h4>
-        <p class="italic text-sm leading-relaxed">மன்னாரில் தலைமறைவாக இருந்தபோது, சிறிலங்கா இராணுவப் புலனாய்வாளர்கள் விநாயகத்தின் மனைவி கிருபா மற்றும் குழந்தைகளைப் பிணையாகப் பிடித்துத் தொலைபேசியில் மிரட்டினர்: <i>"குடும்பத்தைக் காப்பாற்ற வேண்டுமானால் சரணடை, இல்லையெனில் சுட்டுக்கொல்வோம்!"</i> அதற்கு விநாயகம் கம்பீரமாகப் பதிலளித்தார்: <b>"எத்தனையோ மாவீரர்களையும் மக்களையும் இழந்துவிட்டேன். அவர்களையெல்லாம் விட என் குடும்பம் பெரிதல்ல... அவர்களைச் சுட்டுக் கொல்லுங்கள்!"</b> என்று கூறித் தொலைபேசி அழைப்பைத் துண்டித்துச் சிம் கார்டை உடைத்தெறிந்தார்.</p>
+        <h4 class="text-amber-300 font-bold mb-1 font-tamil">பேரம் பேச மறுத்த கொள்கை உறுதி</h4>
+        <p class="italic text-sm leading-relaxed text-zinc-100">மன்னாரில் தலைமறைவாக இருந்தபோது, சிறிலங்கா இராணுவப் புலனாய்வாளர்கள் விநாயகத்தின் மனைவி கிருபா மற்றும் குழந்தைகளைப் பிணையாகப் பிடித்துத் தொலைபேசியில் மிரட்டினர்: <i class="text-amber-100">"குடும்பத்தைக் காப்பாற்ற வேண்டுமானால் சரணடை, இல்லையெனில் சுட்டுக்கொல்வோம்!"</i> அதற்கு விநாயகம் கம்பீரமாகப் பதிலளித்தார்: <b class="text-white">"எத்தனையோ மாவீரர்களையும் மக்களையும் இழந்துவிட்டேன். அவர்களையெல்லாம் விட என் குடும்பம் பெரிதல்ல... அவர்களைச் சுட்டுக் கொல்லுங்கள்!"</b> என்று கூறித் தொலைபேசி அழைப்பைத் துண்டித்துச் சிம் கார்டை உடைத்தெறிந்தார்.</p>
       </blockquote>
 
       <h2>4. புலம்பெயர் வாழ்வும் இறுதி மறைவும்</h2>
@@ -70,9 +70,9 @@ export const detailedArticles: Record<string, ArticleDetailData> = {
       <h2>2. The IPKF Period and Family Sacrifices</h2>
       <p>During the Indian Peace Keeping Force intervention, occupation troops hunting for Vinayagam subjected his elderly father to horrific torture and set their family residence ablaze. Knowing the immense trauma endured by his loved ones, Vinayagam remained steadfast on the battlefield, placing the destiny of his homeland above all personal ties.</p>
 
-      <div class="my-6 p-6 rounded-2xl bg-[#0A6847]/8 border border-[#0A6847]/20 text-[#111111] shadow-2xs">
-        <h3 class="text-base font-bold text-[#0A6847] mb-2">Pivotal Historic Milestone: The 2001 Katunayake Air Base Operation</h3>
-        <p class="text-sm leading-relaxed">The defining hallmark of Commander Vinayagam's intelligence career was the <b>historic assault on Katunayake International Airport and military airbase on July 24, 2001</b>. Vinayagam personally oversaw the comprehensive reconnaissance, covert penetration, and safe insertion of the 14-member elite Black Tiger squad led by Kannan, Mukhilan, and Kaanagan, shaking the adversary's state apparatus to its core.</p>
+      <div class="my-6 p-6 rounded-2xl bg-[#0A6847]/8 dark:bg-emerald-950/60 border border-[#0A6847]/20 dark:border-emerald-700/60 text-[#111111] dark:text-zinc-100 shadow-2xs">
+        <h3 class="text-base font-bold text-[#0A6847] dark:text-emerald-300 mb-2">Pivotal Historic Milestone: The 2001 Katunayake Air Base Operation</h3>
+        <p class="text-sm leading-relaxed text-[#222222] dark:text-zinc-200">The defining hallmark of Commander Vinayagam's intelligence career was the <b class="dark:text-white">historic assault on Katunayake International Airport and military airbase on July 24, 2001</b>. Vinayagam personally oversaw the comprehensive reconnaissance, covert penetration, and safe insertion of the 14-member elite Black Tiger squad led by Kannan, Mukhilan, and Kaanagan, shaking the adversary's state apparatus to its core.</p>
       </div>
 
       <h2>3. The Covert Survival After Mullivaikkal (2009)</h2>

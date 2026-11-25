@@ -24,7 +24,7 @@ export function Breadcrumbs({ items, locale = "ta", className }: BreadcrumbsProp
       className={cn("py-4", className)}
     >
       <ol
-        className="flex items-center gap-1.5 text-xs font-medium text-[#555555] flex-wrap"
+        className="flex items-center gap-1.5 text-xs font-medium text-[#555555] dark:text-zinc-400 flex-wrap"
         itemScope
         itemType="https://schema.org/BreadcrumbList"
       >
@@ -37,7 +37,7 @@ export function Breadcrumbs({ items, locale = "ta", className }: BreadcrumbsProp
         >
           <Link
             href="/"
-            className="flex items-center gap-1 hover:text-[#0A6847] transition-colors min-h-[32px] px-1"
+            className="flex items-center gap-1 hover:text-[#0A6847] dark:hover:text-emerald-400 transition-colors min-h-[32px] px-1"
             itemProp="item"
           >
             <Home className="h-3.5 w-3.5" aria-hidden="true" />
@@ -56,11 +56,11 @@ export function Breadcrumbs({ items, locale = "ta", className }: BreadcrumbsProp
             itemScope
             itemType="https://schema.org/ListItem"
           >
-            <ChevronRight className="h-3 w-3 text-black/25 shrink-0" aria-hidden="true" />
+            <ChevronRight className="h-3 w-3 text-black/45 dark:text-white/45 shrink-0" aria-hidden="true" />
             {item.href ? (
               <Link
                 href={item.href}
-                className="hover:text-[#0A6847] transition-colors min-h-[32px] flex items-center px-1 font-tamil"
+                className="hover:text-[#0A6847] dark:hover:text-emerald-400 transition-colors min-h-[32px] flex items-center px-1 font-tamil"
                 itemProp="item"
               >
                 <span itemProp="name">
@@ -69,7 +69,7 @@ export function Breadcrumbs({ items, locale = "ta", className }: BreadcrumbsProp
               </Link>
             ) : (
               <span
-                className="text-[#111111] font-semibold font-tamil px-1"
+                className="text-[#111111] dark:text-zinc-100 font-semibold font-tamil px-1"
                 itemProp="name"
                 aria-current="page"
               >

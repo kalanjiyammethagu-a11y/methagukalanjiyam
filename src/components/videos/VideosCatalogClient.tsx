@@ -123,10 +123,10 @@ export function VideosCatalogClient({ initialVideos }: VideosCatalogClientProps 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-10">
         {/* Header Hero */}
         <div className="text-center max-w-3xl mx-auto space-y-3 pt-2">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#111111] tracking-tight font-tamil leading-tight">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#111111] dark:text-zinc-100 tracking-tight font-tamil leading-tight">
             {isTa ? "காணொளி ஆவணங்கள்" : "Video Documentaries & Previews"}
           </h1>
-          <p className="text-sm sm:text-base text-[#444444] font-tamil max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm sm:text-base text-[#444444] dark:text-zinc-300 font-tamil max-w-2xl mx-auto leading-relaxed">
             {isTa
               ? "மேதகு களஞ்சியத்தின் அரிய வரலாற்று ஆவணங்கள், புத்தக அறிமுகக் காட்சிகள் மற்றும் மாவீரர் நினைவேந்தல் காணொளிகள் நேரடியாக இங்கே காணலாம்."
               : "Rare archival video clips, literary book trailers, and historic documentary footage playable directly in the feed."}
@@ -134,7 +134,7 @@ export function VideosCatalogClient({ initialVideos }: VideosCatalogClientProps 
         </div>
 
         {/* Archival Panorama Banner Frame */}
-        <div className="relative aspect-[21/9] sm:aspect-[2.6/1] w-full rounded-3xl overflow-hidden border border-black/10 shadow-lg bg-black">
+        <div className="relative aspect-[21/9] sm:aspect-[2.6/1] w-full rounded-3xl overflow-hidden border border-black/10 dark:border-white/10 shadow-lg bg-black">
           <Image
             src="/images/brand/banner-video-archive.webp"
             alt={isTa ? "வீடியோ ஆவணங்கள் வரலாற்று பதாகை" : "Archival Video Records Panorama"}
@@ -143,12 +143,12 @@ export function VideosCatalogClient({ initialVideos }: VideosCatalogClientProps 
             className="object-cover"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-6 sm:p-8">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex items-end p-6 sm:p-8">
             <div className="text-white space-y-1">
               <span className="text-[10px] sm:text-xs uppercase tracking-widest text-amber-300 font-bold font-tamil">
                 {isTa ? "வரலாற்று ஒலி-ஒளி காப்பகம்" : "Archival Audio-Visual Repository"}
               </span>
-              <p className="text-xs sm:text-sm font-tamil text-white/90 max-w-xl">
+              <p className="text-xs sm:text-sm font-tamil text-white/95 max-w-xl">
                 {isTa
                   ? "தலைவரின் வரலாற்றுப் பிரகடனங்கள், புத்தக முன்னோட்டங்கள் மற்றும் களத்து நினைவேந்தல் ஆவணங்கள்"
                   : "Preserved speeches, literary monographs, and solemn memorial documentaries from national archives"}
@@ -158,20 +158,20 @@ export function VideosCatalogClient({ initialVideos }: VideosCatalogClientProps 
         </div>
 
         {/* Controls: Search + Categories */}
-        <div className="space-y-4 pt-4 border-t border-black/8">
+        <div className="space-y-4 pt-4 border-t border-black/8 dark:border-white/10">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#0A6847]" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#0A6847] dark:text-emerald-400" />
               <input
                 type="search"
                 value={search}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder={isTa ? "காணொளிகளைத் தேடுக (Search videos)..." : "Search videos..."}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-black/12 bg-white/80 text-base sm:text-sm font-tamil text-[#111111] placeholder:text-[#777777] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/40 focus:border-[#0A6847] transition-all min-h-[44px]"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-black/12 dark:border-white/15 bg-white/80 dark:bg-zinc-900/90 text-base sm:text-sm font-tamil text-[#111111] dark:text-zinc-100 placeholder:text-[#555555] dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/40 focus:border-[#0A6847] transition-all min-h-[44px]"
               />
             </div>
 
-            <span className="text-xs font-semibold text-[#555555] font-tamil self-center sm:self-auto">
+            <span className="text-xs font-semibold text-[#555555] dark:text-zinc-300 font-tamil self-center sm:self-auto">
               {isTa
                 ? `${filteredVideos.length} காணொளிகள் கிடைக்கின்றன`
                 : `${filteredVideos.length} videos available`}
@@ -209,7 +209,7 @@ export function VideosCatalogClient({ initialVideos }: VideosCatalogClientProps 
           </div>
         ) : (
           <EmptyState
-            icon={<Film className="h-10 w-10 text-[#0A6847]" />}
+            icon={<Film className="h-10 w-10 text-[#0A6847] dark:text-emerald-400" />}
             titleTa="காணொளிகள் எதுவும் கிடைக்கவில்லை"
             titleEn="No Videos Found"
             descriptionTa="நீங்கள் தேடிய தலைப்பில் காணொளிகள் இல்லை. மாற்று சொற்களைப் பயன்படுத்தி மீண்டும் தேடவும்."
@@ -231,7 +231,7 @@ export function VideosCatalogClient({ initialVideos }: VideosCatalogClientProps 
           role="dialog"
           aria-modal="true"
           aria-labelledby="video-modal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+          className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
           onClick={() => setModalVideo(null)}
         >
           <div

@@ -97,7 +97,7 @@ export function BottomNav() {
                   type="button"
                   onClick={item.onClick}
                   aria-label={label}
-                  className="flex flex-col items-center justify-center py-1 px-2.5 rounded-2xl min-w-[56px] min-h-[50px] text-gray-500 dark:text-gray-400 hover:text-emerald-700 active:scale-92 transition-all cursor-pointer relative group"
+                  className="flex flex-col items-center justify-center py-1 px-2.5 rounded-2xl min-w-[56px] min-h-[50px] text-gray-600 dark:text-gray-300 hover:text-emerald-700 dark:hover:text-emerald-400 active:scale-92 transition-all cursor-pointer relative group"
                 >
                   <div className="h-9 w-9 rounded-full flex items-center justify-center transition-all group-active:scale-90">
                     <Icon className="h-5 w-5 stroke-[1.8] group-hover:stroke-[2.2]" />
@@ -119,7 +119,7 @@ export function BottomNav() {
                 className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-2xl min-w-[56px] min-h-[50px] transition-all cursor-pointer relative ${
                   active
                     ? "text-[#0A6847] dark:text-emerald-400 font-bold"
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-medium"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium"
                 }`}
               >
                 <div

@@ -270,7 +270,7 @@ export function MobileNav({
                     <div
                       className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${
                         isActive
-                          ? "bg-[var(--color-accent)] text-white"
+                          ? "bg-[var(--color-accent)] text-[var(--color-accent-fg)]"
                           : "bg-[var(--color-surface-subtle)] text-[var(--color-accent)]"
                       }`}
                     >
@@ -295,7 +295,7 @@ export function MobileNav({
                   </div>
 
                   {item.badge ? (
-                    <span className="h-5 min-w-[20px] px-1.5 rounded-full bg-[var(--color-accent)] text-white text-[10px] font-mono font-bold flex items-center justify-center shrink-0">
+                    <span className="h-5 min-w-[20px] px-1.5 rounded-full bg-[var(--color-accent)] text-[var(--color-accent-fg)] text-[10px] font-mono font-bold flex items-center justify-center shrink-0">
                       {item.badge}
                     </span>
                   ) : (
@@ -331,7 +331,7 @@ export function MobileNav({
             )}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full py-2.5 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-xs min-h-[44px] cursor-pointer active:scale-98"
+            className="w-full py-2.5 px-3 rounded-xl bg-[#0A6847] hover:bg-[#085237] text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-xs min-h-[44px] cursor-pointer active:scale-98"
           >
             <MessageCircle className="h-4 w-4 fill-white" />
             <span className={isTa ? "font-tamil" : "font-sans"}>

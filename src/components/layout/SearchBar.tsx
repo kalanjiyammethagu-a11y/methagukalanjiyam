@@ -112,7 +112,7 @@ export function SearchBar({ isOpen, onClose }: SearchBarProps) {
       role="dialog"
       aria-modal="true"
       aria-label={isTa ? "நூல்கள் தேடல்" : "Search Books"}
-      className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4"
+      className="fixed inset-0 z-[var(--z-modal)] flex items-start justify-center pt-16 sm:pt-24 px-4"
     >
       {/* Backdrop */}
       <div
@@ -124,14 +124,14 @@ export function SearchBar({ isOpen, onClose }: SearchBarProps) {
       {/* Spotlight Modal */}
       <div
         ref={modalRef}
-        className="relative w-full max-w-2xl bg-white rounded-2xl border border-black/10 shadow-2xl overflow-hidden z-10 max-h-[85dvh] flex flex-col"
+        className="relative w-full max-w-2xl bg-white dark:bg-[#1F1F23] rounded-2xl border border-black/10 dark:border-white/15 shadow-2xl overflow-hidden z-10 max-h-[85dvh] flex flex-col"
       >
         {/* Search Input Bar */}
-        <form onSubmit={handleSearchSubmit} className="relative flex items-center px-4 border-b border-black/10">
+        <form onSubmit={handleSearchSubmit} className="relative flex items-center px-4 border-b border-black/10 dark:border-white/10">
           <label htmlFor="search-dialog-input" className="sr-only">
             {isTa ? "நூல்களைத் தேடுக (Search books)" : "Search books"}
           </label>
-          <Search className="h-5 w-5 text-[#0A6847] shrink-0" aria-hidden="true" />
+          <Search className="h-5 w-5 text-[#0A6847] dark:text-emerald-400 shrink-0" aria-hidden="true" />
           <input
             id="search-dialog-input"
             ref={inputRef}
@@ -144,7 +144,7 @@ export function SearchBar({ isOpen, onClose }: SearchBarProps) {
                 : "Search book title, author, or keyword..."
             }
             aria-label={isTa ? "நூலின் பெயர் அல்லது ஆசிரியரைத் தேடுக" : "Search books or author"}
-            className={`w-full h-14 px-3 text-base text-[#111111] placeholder:text-[#6E6E6E] bg-transparent focus:outline-none ${
+            className={`w-full h-14 px-3 text-base text-[#111111] dark:text-zinc-100 placeholder:text-[#555555] dark:placeholder:text-zinc-400 bg-transparent focus:outline-none ${
               isTa ? "font-tamil" : "font-sans"
             }`}
           />
@@ -156,12 +156,12 @@ export function SearchBar({ isOpen, onClose }: SearchBarProps) {
                 inputRef.current?.focus();
               }}
               aria-label={isTa ? "தேடலை அழிக்கவும்" : "Clear search query"}
-              className="min-h-[44px] min-w-[44px] h-11 w-11 rounded-xl flex items-center justify-center text-[#555555] hover:text-[#111111] hover:bg-black/5"
+              className="min-h-[44px] min-w-[44px] h-11 w-11 rounded-xl flex items-center justify-center text-[#555555] dark:text-zinc-300 hover:text-[#111111] dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
             >
               <X className="h-5 w-5" />
             </button>
           ) : (
-            <div className="flex items-center gap-1 text-xs text-[#555555] font-mono px-2">
+            <div className="flex items-center gap-1 text-xs text-[#555555] dark:text-zinc-400 font-mono px-2">
               <span>ESC</span>
             </div>
           )}
@@ -170,7 +170,7 @@ export function SearchBar({ isOpen, onClose }: SearchBarProps) {
         {/* Live Search Results or Quick Categories */}
         {query.trim() ? (
           <div className="p-4 space-y-3 max-h-80 overflow-y-auto">
-            <span className={`text-xs font-bold text-[#444444] uppercase tracking-wider block ${isTa ? "font-tamil" : "font-sans"}`}>
+            <span className={`text-xs font-bold text-[#444444] dark:text-zinc-300 uppercase tracking-wider block ${isTa ? "font-tamil" : "font-sans"}`}>
               {isTa ? "பொருத்தமான நூல்கள்" : "Matching Books"} ({matchingBooks.length})
             </span>
             {matchingBooks.length > 0 ? (
@@ -180,10 +180,10 @@ export function SearchBar({ isOpen, onClose }: SearchBarProps) {
                     key={b.id}
                     href={`/books/${b.slug}`}
                     onClick={onClose}
-                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#0A6847]/5 border border-transparent hover:border-[#0A6847]/20 transition-all group min-h-[48px]"
+                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-[#0A6847]/5 dark:hover:bg-emerald-500/10 border border-transparent hover:border-[#0A6847]/20 dark:hover:border-emerald-500/30 transition-all group min-h-[48px]"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="relative w-10 aspect-[3/4] rounded-md overflow-hidden bg-black/5 shrink-0 border border-black/10">
+                      <div className="relative w-10 aspect-[3/4] rounded-md overflow-hidden bg-black/5 dark:bg-white/10 shrink-0 border border-black/10 dark:border-white/15">
                         <Image
                           src={b.image}
                           alt={isTa ? b.title : b.titleEn}
@@ -193,23 +193,23 @@ export function SearchBar({ isOpen, onClose }: SearchBarProps) {
                         />
                       </div>
                       <div className="space-y-0.5">
-                        <h4 className={`text-xs sm:text-sm font-bold text-[#111111] group-hover:text-[#0A6847] transition-colors line-clamp-1 ${isTa ? "font-tamil" : "font-sans"}`}>
+                        <h4 className={`text-xs sm:text-sm font-bold text-[#111111] dark:text-zinc-100 group-hover:text-[#0A6847] dark:group-hover:text-emerald-400 transition-colors line-clamp-1 ${isTa ? "font-tamil" : "font-sans"}`}>
                           {isTa ? b.title : b.titleEn}
                         </h4>
-                        <p className={`text-[11px] text-[#666666] ${isTa ? "font-tamil" : "font-sans"}`}>
+                        <p className={`text-[11px] text-[#555555] dark:text-zinc-400 ${isTa ? "font-tamil" : "font-sans"}`}>
                           {isTa ? b.author : b.authorEn} •{" "}
-                          <span className="font-semibold text-[#0A6847] font-mono">
+                          <span className="font-semibold text-[#0A6847] dark:text-emerald-400 font-mono">
                             {formatINR(b.price)}
                           </span>
                         </p>
                       </div>
                     </div>
-                    <ArrowRight className="h-4 w-4 text-[#888888] group-hover:text-[#0A6847] group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="h-4 w-4 text-[#666666] dark:text-zinc-400 group-hover:text-[#0A6847] dark:group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
                   </Link>
                 ))}
               </div>
             ) : (
-              <div className={`py-6 text-center text-xs text-[#777777] ${isTa ? "font-tamil" : "font-sans"}`}>
+              <div className={`py-6 text-center text-xs text-[#555555] dark:text-zinc-400 ${isTa ? "font-tamil" : "font-sans"}`}>
                 {isTa
                   ? `“${query}” என்ற பெயரில் எந்த நூலும் பொருந்தவில்லை. முழுப் பட்டியலை காண Enter அழுத்தவும்.`
                   : `No books match “${query}”. Press Enter to browse full catalog.`}
@@ -217,8 +217,8 @@ export function SearchBar({ isOpen, onClose }: SearchBarProps) {
             )}
           </div>
         ) : (
-          <div className="p-4 bg-black/[0.02] space-y-3">
-            <span className={`text-xs font-bold text-[#444444] uppercase tracking-wider block ${isTa ? "font-tamil" : "font-sans"}`}>
+          <div className="p-4 bg-black/[0.02] dark:bg-white/[0.03] space-y-3">
+            <span className={`text-xs font-bold text-[#444444] dark:text-zinc-300 uppercase tracking-wider block ${isTa ? "font-tamil" : "font-sans"}`}>
               {isTa ? "விரைவுப் பிரிவுகள்" : "Quick Categories"}
             </span>
             <div className="flex flex-wrap gap-2">
@@ -230,7 +230,7 @@ export function SearchBar({ isOpen, onClose }: SearchBarProps) {
                     router.push(`/books?category=${cat.slug}`);
                     onClose();
                   }}
-                  className={`min-h-[44px] sm:min-h-[38px] px-3.5 py-2 rounded-xl bg-white border border-black/10 hover:border-[#0A6847] hover:text-[#0A6847] text-xs font-semibold text-[#222222] transition-all active:scale-95 motion-reduce:active:scale-100 cursor-pointer shadow-2xs ${
+                  className={`min-h-[44px] sm:min-h-[38px] px-3.5 py-2 rounded-xl bg-white dark:bg-zinc-800 border border-black/10 dark:border-white/15 hover:border-[#0A6847] dark:hover:border-emerald-400 hover:text-[#0A6847] dark:hover:text-emerald-400 text-xs font-semibold text-[#222222] dark:text-zinc-100 transition-all active:scale-95 motion-reduce:active:scale-100 cursor-pointer shadow-2xs ${
                     isTa ? "font-tamil" : "font-sans"
                   }`}
                 >
@@ -242,7 +242,7 @@ export function SearchBar({ isOpen, onClose }: SearchBarProps) {
         )}
 
         {/* Footer Hint */}
-        <div className="px-4 py-3 bg-black/[0.03] border-t border-black/8 flex items-center justify-between text-xs text-[#555555]">
+        <div className="px-4 py-3 bg-black/[0.03] dark:bg-white/[0.04] border-t border-black/8 dark:border-white/10 flex items-center justify-between text-xs text-[#555555] dark:text-zinc-400">
           <span className={isTa ? "font-tamil" : "font-sans"}>
             {isTa ? "முழு நூல்களையும் காண Enter அழுத்தவும்" : "Press Enter to see all catalog results"}
           </span>

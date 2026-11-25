@@ -120,16 +120,16 @@ export function SupportersCatalogClient({
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
         {/* Header Hero Section */}
         <div className="text-center max-w-3xl mx-auto space-y-4 pt-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0A6847]/10 text-[#0A6847] text-xs font-semibold font-tamil">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#0A6847]" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0A6847]/10 dark:bg-emerald-950/90 text-[#0A6847] dark:text-emerald-300 border border-[#0A6847]/20 dark:border-emerald-700/60 text-xs font-semibold font-tamil">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#0A6847] dark:bg-emerald-400" />
             <span>{isTa ? "களஞ்சியக் காவலர்கள்" : "Archival Custodians"}</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#111111] tracking-tight font-tamil leading-tight">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#111111] dark:text-zinc-100 tracking-tight font-tamil leading-tight">
             {isTa ? "களஞ்சியத்தின் ஆதரவாளர்கள்" : "Our Guardians & Contributors"}
           </h1>
 
-          <p className="text-sm sm:text-base text-[#444444] font-tamil max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm sm:text-base text-[#444444] dark:text-zinc-300 font-tamil max-w-2xl mx-auto leading-relaxed">
             {isTa
               ? "தமிழீழ தேசிய ஆவணங்கள் மற்றும் அரிய வரலாற்று நூல்களைக் காத்து, அடுத்த தலைமுறைக்குக் கடத்தும் பணியில் உறுதுணையாக நிற்கும் தோழர்கள்."
               : "Dedicated custodians and contributors committed to preserving authentic Tamil national literature and dispatching archival records worldwide."}
@@ -137,44 +137,44 @@ export function SupportersCatalogClient({
         </div>
 
         {/* Feature Highlights Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border border-black/8 rounded-3xl bg-white/60 divide-y md:divide-y-0 md:divide-x divide-black/8 shadow-xs">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border border-black/8 dark:border-white/10 rounded-3xl bg-white/75 dark:bg-zinc-900/85 divide-y md:divide-y-0 md:divide-x divide-black/8 dark:divide-white/10 shadow-xs">
           <div className="p-6 flex items-start gap-4">
-            <div className="h-10 w-10 rounded-xl bg-[#0A6847]/10 text-[#0A6847] flex items-center justify-center shrink-0">
+            <div className="h-10 w-10 rounded-xl bg-[#0A6847]/10 dark:bg-emerald-500/15 text-[#0A6847] dark:text-emerald-400 flex items-center justify-center shrink-0">
               <ArchivalFolioIcon className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-[#111111] font-tamil">
+              <h2 className="text-sm font-bold text-[#111111] dark:text-zinc-100 font-tamil">
                 {isTa ? "ஆவணப் பாதுகாப்பு" : "Historical Preservation"}
               </h2>
-              <p className="text-xs text-[#555555] font-tamil mt-1 leading-relaxed">
+              <p className="text-xs text-[#555555] dark:text-zinc-300 font-tamil mt-1 leading-relaxed">
                 {isTa ? "அழிந்து போகும் தருவாயில் உள்ள அரிய தமிழ் தேசிய ஆவணங்களை மீட்டெடுத்தல்." : "Safeguarding endangered historical treatises and primary documents."}
               </p>
             </div>
           </div>
 
           <div className="p-6 flex items-start gap-4">
-            <div className="h-10 w-10 rounded-xl bg-[#0A6847]/10 text-[#0A6847] flex items-center justify-center shrink-0">
+            <div className="h-10 w-10 rounded-xl bg-[#0A6847]/10 dark:bg-emerald-500/15 text-[#0A6847] dark:text-emerald-400 flex items-center justify-center shrink-0">
               <ArchivalWaxSealIcon className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-[#111111] font-tamil">
+              <h2 className="text-sm font-bold text-[#111111] dark:text-zinc-100 font-tamil">
                 {isTa ? "கூட்டுழைப்பு நெறி" : "Community Custodianship"}
               </h2>
-              <p className="text-xs text-[#555555] font-tamil mt-1 leading-relaxed">
+              <p className="text-xs text-[#555555] dark:text-zinc-300 font-tamil mt-1 leading-relaxed">
                 {isTa ? "இலாப நோக்கற்ற கூட்டுழைப்பு மற்றும் வாசகர்களின் நேரடிப் பங்களிப்பு." : "Non-profit cultural archival collective powered by reader stewardship."}
               </p>
             </div>
           </div>
 
           <div className="p-6 flex items-start gap-4">
-            <div className="h-10 w-10 rounded-xl bg-[#0A6847]/10 text-[#0A6847] flex items-center justify-center shrink-0">
+            <div className="h-10 w-10 rounded-xl bg-[#0A6847]/10 dark:bg-emerald-500/15 text-[#0A6847] dark:text-emerald-400 flex items-center justify-center shrink-0">
               <PostalSealIcon className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-[#111111] font-tamil">
+              <h2 className="text-sm font-bold text-[#111111] dark:text-zinc-100 font-tamil">
                 {isTa ? "நேர்மையான சேவை" : "Official Dispatch & Registry"}
               </h2>
-              <p className="text-xs text-[#555555] font-tamil mt-1 leading-relaxed">
+              <p className="text-xs text-[#555555] dark:text-zinc-300 font-tamil mt-1 leading-relaxed">
                 {isTa ? "அரசு MSME பதிவுபெற்ற நம்பகமான ஆவண விநியோகம்." : "Government MSME Registered cultural distribution and postal dispatch."}
               </p>
             </div>
@@ -193,16 +193,16 @@ export function SupportersCatalogClient({
         </div>
 
         {/* Join as Supporter Callout Banner (Peak-End Rule) */}
-        <div className="bg-[#FBF9F4] rounded-3xl p-8 sm:p-12 border border-black/8 text-center max-w-3xl mx-auto space-y-5 shadow-xs">
+        <div className="bg-[#FBF9F4] dark:bg-zinc-900 rounded-3xl p-8 sm:p-12 border border-black/8 dark:border-white/10 text-center max-w-3xl mx-auto space-y-5 shadow-xs">
           <div className="h-14 w-14 rounded-2xl bg-[#0A6847] text-white flex items-center justify-center mx-auto shadow-md">
             <ArchivalWaxSealIcon className="h-7 w-7 text-white" />
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-xl sm:text-2xl font-extrabold text-[#111111] font-tamil">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-[#111111] dark:text-zinc-100 font-tamil">
               {isTa ? "நீங்களும் களஞ்சியத்திற்கு ஆதரவளிக்கலாம்" : "Support Our Preservation Mission"}
             </h2>
-            <p className="text-xs sm:text-sm text-[#444444] font-tamil max-w-lg mx-auto leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#444444] dark:text-zinc-300 font-tamil max-w-lg mx-auto leading-relaxed">
               {isTa
                 ? "தமிழீழ வரலாற்று நூல்கள், அரிய புகைப்படங்கள், ஒலி-ஒளி ஆவணங்கள் வைத்திருப்போர் களஞ்சியத்தோடு பகிர்ந்து பாதுகாக்க உதவலாம்."
                 : "If you preserve rare documents, historical manuscripts, or wishes to support our archive logistics, connect with our team directly."}
@@ -222,7 +222,7 @@ export function SupportersCatalogClient({
 
             <Link
               href="/certificate"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-black/12 bg-white/80 hover:bg-black/5 text-[#111111] text-xs font-bold transition-all min-h-[44px]"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-black/12 dark:border-white/15 bg-white/85 dark:bg-zinc-800 hover:bg-black/5 dark:hover:bg-zinc-700 text-[#111111] dark:text-zinc-100 text-xs font-bold transition-all min-h-[44px]"
             >
               <span>{isTa ? "பதிவுச் சான்றிதழ் காண்க" : "View Official Certificate"}</span>
               <ArrowRight className="h-4 w-4" />

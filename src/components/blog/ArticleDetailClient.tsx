@@ -98,7 +98,7 @@ export function ArticleDetailClient({ article }: ArticleDetailClientProps) {
         {/* Back Link */}
         <Link
           href="/blog"
-          className="inline-flex items-center gap-2 text-xs font-bold text-[#555555] hover:text-[#0A6847] transition-colors min-h-[44px]"
+          className="inline-flex items-center gap-2 text-xs font-bold text-[#555555] dark:text-zinc-300 hover:text-[#0A6847] dark:hover:text-emerald-400 transition-colors min-h-[44px]"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>{isTa ? "பதிவுகள் பக்கத்திற்குத் திரும்புக" : "Back to Articles"}</span>
@@ -106,11 +106,11 @@ export function ArticleDetailClient({ article }: ArticleDetailClientProps) {
 
         {/* Article Header (Editorial Hierarchy) */}
         <header className="space-y-4">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#111111] leading-[1.3] font-tamil-serif text-balance">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#111111] dark:text-zinc-100 leading-[1.3] font-tamil-serif text-balance">
             {title}
           </h1>
 
-          <p className="text-base sm:text-lg text-[#3a3a3a] font-tamil leading-[1.75] text-pretty">
+          <p className="text-base sm:text-lg text-[#3a3a3a] dark:text-zinc-200 font-tamil leading-[1.75] text-pretty">
             {subtitle}
           </p>
 
@@ -118,28 +118,28 @@ export function ArticleDetailClient({ article }: ArticleDetailClientProps) {
             <Badge variant="success" size="md" className="font-tamil">
               {category}
             </Badge>
-            <span className="text-xs text-[#666666] flex items-center gap-1.5 font-medium">
-              <Calendar className="h-3.5 w-3.5 text-[#0A6847]" />
+            <span className="text-xs text-[#555555] dark:text-zinc-400 flex items-center gap-1.5 font-medium">
+              <Calendar className="h-3.5 w-3.5 text-[#0A6847] dark:text-emerald-400" />
               {article.publishedAt}
             </span>
-            <span className="text-xs text-[#666666]">•</span>
-            <span className="text-xs text-[#666666] flex items-center gap-1.5 font-medium">
-              <Clock className="h-3.5 w-3.5 text-[#0A6847]" />
+            <span className="text-xs text-[#555555] dark:text-zinc-400" aria-hidden="true">•</span>
+            <span className="text-xs text-[#555555] dark:text-zinc-400 flex items-center gap-1.5 font-medium">
+              <Clock className="h-3.5 w-3.5 text-[#0A6847] dark:text-emerald-400" />
               {article.readingTimeMinutes} {isTa ? "நிமிடம் வாசிப்பு" : "min read"}
             </span>
           </div>
 
           {/* Author & Action Bar */}
-          <div className="pt-4 border-t border-black/8 flex flex-wrap items-center justify-between gap-4">
+          <div className="pt-4 border-t border-black/8 dark:border-white/10 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-[#0A6847]/10 flex items-center justify-center text-[#0A6847] font-bold text-sm">
+              <div className="h-10 w-10 rounded-full bg-[#0A6847]/10 dark:bg-emerald-500/20 flex items-center justify-center text-[#0A6847] dark:text-emerald-300 font-bold text-sm">
                 {author.charAt(0)}
               </div>
               <div>
-                <p className="text-xs text-[#777777] font-medium">
+                <p className="text-xs text-[#666666] dark:text-zinc-400 font-medium">
                   {isTa ? "ஆசிரியர் / தொகுப்பு" : "Author / Archive"}
                 </p>
-                <p className="text-sm font-bold text-[#111111] font-tamil">{author}</p>
+                <p className="text-sm font-bold text-[#111111] dark:text-zinc-100 font-tamil">{author}</p>
               </div>
             </div>
 
@@ -148,11 +148,11 @@ export function ArticleDetailClient({ article }: ArticleDetailClientProps) {
                 type="button"
                 onClick={handleShare}
                 aria-label={isTa ? "பகிர்ந்திடுக" : "Share article"}
-                className="min-h-[44px] px-3.5 rounded-xl border border-black/12 hover:border-[#0A6847] bg-white/80 hover:bg-[#0A6847]/5 text-xs font-bold text-[#222222] hover:text-[#0A6847] flex items-center gap-2 transition-all cursor-pointer"
+                className="min-h-[44px] px-3.5 rounded-xl border border-black/12 dark:border-white/15 hover:border-[#0A6847] dark:hover:border-emerald-400 bg-white/80 dark:bg-zinc-900 hover:bg-[#0A6847]/5 dark:hover:bg-emerald-500/10 text-xs font-bold text-[#222222] dark:text-zinc-100 hover:text-[#0A6847] dark:hover:text-emerald-400 flex items-center gap-2 transition-all cursor-pointer"
               >
                 {copied ? (
                   <>
-                    <Check className="h-4 w-4 text-emerald-600" />
+                    <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                     <span>{isTa ? "இணைப்பு நகலெடுக்கப்பட்டது" : "Copied!"}</span>
                   </>
                 ) : (
@@ -167,7 +167,7 @@ export function ArticleDetailClient({ article }: ArticleDetailClientProps) {
         </header>
 
         {/* Hero Image */}
-        <div className="relative aspect-[16/9] w-full rounded-3xl overflow-hidden shadow-lg border border-black/10 bg-black">
+        <div className="relative aspect-[16/9] w-full rounded-3xl overflow-hidden shadow-lg border border-black/10 dark:border-white/10 bg-black">
           <Image
             src={normalizedCoverSrc}
             alt={coverAlt}
@@ -179,27 +179,28 @@ export function ArticleDetailClient({ article }: ArticleDetailClientProps) {
         </div>
 
         {/* Article Body (Optimized Typography for Tamil & English) */}
-        <div className="glass-panel rounded-3xl p-6 sm:p-10 lg:p-12 border border-black/10 bg-white/95 shadow-sm max-w-4xl mx-auto">
+        <div className="glass-panel rounded-3xl p-6 sm:p-10 lg:p-12 border border-black/10 dark:border-white/10 bg-white/95 dark:bg-[#1F1F23] shadow-sm max-w-4xl mx-auto">
           <div
-            className="prose prose-neutral max-w-none font-tamil text-[#222222] text-base sm:text-lg leading-[1.85] space-y-6
-              [&>h2]:text-xl sm:[&>h2]:text-2xl [&>h2]:font-bold [&>h2]:font-tamil-serif [&>h2]:text-[#111111] [&>h2]:pt-6 [&>h2]:border-b [&>h2]:border-black/8 [&>h2]:pb-2.5 [&>h2]:text-balance
-              [&>p]:leading-[1.85] [&>p]:text-[#2c2c2c] [&>p]:text-pretty
-              [&>b]:text-[#111111] [&>strong]:text-[#111111] [&>strong]:font-semibold"
+            className="prose prose-neutral dark:prose-invert max-w-none font-tamil text-[#222222] dark:text-zinc-200 text-base sm:text-lg leading-[1.85] space-y-6
+              [&>h2]:text-xl sm:[&>h2]:text-2xl [&>h2]:font-bold [&>h2]:font-tamil-serif [&>h2]:text-[#111111] dark:[&>h2]:text-zinc-100 [&>h2]:pt-6 [&>h2]:border-b [&>h2]:border-black/8 dark:[&>h2]:border-white/10 [&>h2]:pb-2.5 [&>h2]:text-balance
+              [&>p]:leading-[1.85] [&>p]:text-[#2c2c2c] dark:[&>p]:text-zinc-200 [&>p]:text-pretty
+              [&>b]:text-[#111111] dark:[&>b]:text-white [&>strong]:text-[#111111] dark:[&>strong]:text-white [&>strong]:font-semibold
+              [&_blockquote_p]:text-zinc-100 [&_blockquote_i]:text-amber-100 [&_blockquote_b]:text-white"
             dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
           />
         </div>
 
         {/* Peak-End Rule: Related Books CTA banner & Interactive Cards */}
-        <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-black/10 bg-gradient-to-br from-emerald-50/70 to-amber-50/50 space-y-6">
+        <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-black/10 dark:border-white/10 bg-gradient-to-br from-emerald-50/70 to-amber-50/50 dark:from-emerald-950/50 dark:to-zinc-900 space-y-6">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-2xl bg-[#0A6847] text-white flex items-center justify-center shrink-0">
               <BookOpen className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-[#111111] font-tamil">
+              <h3 className="text-base sm:text-lg font-bold text-[#111111] dark:text-zinc-100 font-tamil">
                 {isTa ? "தொடர்புடைய வரலாற்று நூல்கள்" : "Related Historical Literature"}
               </h3>
-              <p className="text-xs text-[#555555] font-tamil">
+              <p className="text-xs text-[#555555] dark:text-zinc-300 font-tamil">
                 {isTa
                   ? "இந்த ஆவணம் தொடர்பான மூல நூல்களை மேதகு களஞ்சியத்தில் பெற்று வாசியுங்கள்."
                   : "Order rare authentic books related to this historical topic with safe postal delivery."}
@@ -216,10 +217,10 @@ export function ArticleDetailClient({ article }: ArticleDetailClientProps) {
                 .map((b) => (
                   <div
                     key={b.id}
-                    className="p-4 rounded-2xl bg-white/90 border border-black/8 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+                    className="p-4 rounded-2xl bg-white/95 dark:bg-zinc-900/95 border border-black/8 dark:border-white/10 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="relative w-14 aspect-[3/4] rounded-lg overflow-hidden shrink-0 border border-black/10 shadow-xs">
+                      <div className="relative w-14 aspect-[3/4] rounded-lg overflow-hidden shrink-0 border border-black/10 dark:border-white/15 shadow-xs">
                         <Image
                           src={b.image}
                           alt={isTa ? b.title : b.titleEn}
@@ -229,19 +230,19 @@ export function ArticleDetailClient({ article }: ArticleDetailClientProps) {
                         />
                       </div>
                       <div className="space-y-1">
-                        <h4 className="text-xs font-bold text-[#111111] font-tamil line-clamp-2">
+                        <h4 className="text-xs font-bold text-[#111111] dark:text-zinc-100 font-tamil line-clamp-2">
                           {isTa ? b.title : b.titleEn}
                         </h4>
-                        <p className="text-[11px] font-bold text-[#0A6847]">
+                        <p className="text-[11px] font-bold text-[#0A6847] dark:text-emerald-400">
                           {formatINR(b.price)}
                         </p>
                       </div>
                     </div>
 
-                    <div className="pt-3 mt-3 border-t border-black/6 flex items-center justify-between gap-2">
+                    <div className="pt-3 mt-3 border-t border-black/6 dark:border-white/10 flex items-center justify-between gap-2">
                       <Link
                         href={`/books/${b.slug}`}
-                        className="text-[11px] font-bold text-[#333333] hover:text-[#0A6847] font-tamil"
+                        className="text-[11px] font-bold text-[#333333] dark:text-zinc-200 hover:text-[#0A6847] dark:hover:text-emerald-400 font-tamil"
                       >
                         {isTa ? "விபரம்" : "Details"}
                       </Link>

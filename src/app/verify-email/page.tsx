@@ -200,7 +200,7 @@ function VerifyEmailContent() {
                   value={resendEmail}
                   onChange={(e) => setResendEmail(e.target.value)}
                   placeholder="your-email@example.com"
-                  className="w-full min-h-[44px] h-11 pl-9 pr-3 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#222222] text-base sm:text-sm outline-none focus:border-[#0A6847]"
+                  className="w-full min-h-[44px] h-11 pl-9 pr-3 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#222222] text-[#111111] dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 text-base sm:text-sm outline-none focus:border-[#0A6847]"
                 />
               </div>
 
@@ -231,7 +231,7 @@ function VerifyEmailContent() {
             <div className="pt-2 border-t border-black/10 dark:border-white/10">
               <Link
                 href="/login"
-                className="text-xs text-[#555555] hover:text-[#0A6847] font-semibold underline underline-offset-4"
+                className="text-xs text-[#555555] dark:text-zinc-300 hover:text-[#0A6847] dark:hover:text-emerald-400 font-semibold underline underline-offset-4"
               >
                 உள்நுழைவுப் பக்கத்திற்கு செல்ல (Back to Login)
               </Link>

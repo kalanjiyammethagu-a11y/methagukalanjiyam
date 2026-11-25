@@ -36,7 +36,7 @@ export function FloatingWhatsApp() {
       )}
     >
       {/* Tooltip badge on hover/focus */}
-      <span className="hidden sm:inline-block px-3 py-1.5 rounded-xl bg-white text-emerald-950 font-bold text-xs shadow-lg border border-black/8 opacity-0 group-hover:opacity-100 transition-opacity font-tamil pointer-events-none">
+      <span className="hidden sm:inline-block px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-900 text-emerald-950 dark:text-emerald-100 font-bold text-xs shadow-lg border border-black/8 dark:border-white/15 opacity-0 group-hover:opacity-100 transition-opacity font-tamil pointer-events-none">
         {isTa ? "வெளிநாட்டு ஆர்டர் & உதவி மையம்" : "Overseas Orders & Support"}
       </span>
 
@@ -50,7 +50,7 @@ export function FloatingWhatsApp() {
             ? `வெளிநாட்டு ஆர்டர் மற்றும் உதவி மையம் — +${WHATSAPP_NUMBER}`
             : `Overseas Orders & Support via WhatsApp (+${WHATSAPP_NUMBER})`
         }
-        className="h-14 w-14 rounded-full bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white flex items-center justify-center shadow-2xl shadow-emerald-900/40 border-2 border-white transition-all duration-300 min-h-[48px] min-w-[48px]"
+        className="h-14 w-14 rounded-full bg-[#0A6847] hover:bg-[#085237] active:scale-95 text-white flex items-center justify-center shadow-2xl shadow-emerald-900/40 border-2 border-white dark:border-zinc-800 transition-all duration-300 min-h-[48px] min-w-[48px]"
       >
         <MessageCircle className="h-7 w-7 fill-white" />
       </a>

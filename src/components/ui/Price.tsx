@@ -33,7 +33,7 @@ export function Price({
     return (
       <span
         className={cn(
-          "font-bold text-[#0A6847] whitespace-nowrap font-tamil",
+          "font-bold text-[#0A6847] dark:text-emerald-400 whitespace-nowrap font-tamil",
           className
         )}
       >
@@ -50,7 +50,7 @@ export function Price({
     <div
       className={cn(
         "inline-flex items-baseline gap-1.5 flex-wrap font-mono whitespace-nowrap",
-        isTotal ? "text-[#0A6847]" : "text-[#111111]",
+        isTotal ? "text-[#0A6847] dark:text-emerald-400" : "text-[#111111] dark:text-zinc-100",
         className
       )}
       style={{ fontVariantNumeric: "tabular-nums" }}
@@ -69,7 +69,7 @@ export function Price({
       </span>
 
       {hasDiscount && (
-        <span className="text-xs text-[#666666] line-through font-normal tabular-nums">
+        <span className="text-xs text-[#666666] dark:text-zinc-400 line-through font-normal tabular-nums">
           {formatINR(Number(originalAmount))}
         </span>
       )}

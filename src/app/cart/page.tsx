@@ -55,7 +55,7 @@ function ProgressSteps({ current, locale }: { current: number; locale: "ta" | "e
                   ? "bg-[#0A6847] text-white"
                   : i === current
                     ? "bg-[#0A6847] text-white ring-4 ring-[#0A6847]/15"
-                    : "bg-black/8 text-[#555555]"
+                    : "bg-black/8 dark:bg-white/10 text-[#555555] dark:text-zinc-300"
               )}
             >
               {i < current ? "✓" : i + 1}
@@ -63,7 +63,7 @@ function ProgressSteps({ current, locale }: { current: number; locale: "ta" | "e
             <span
               className={cn(
                 "text-xs font-semibold font-tamil hidden sm:inline",
-                i <= current ? "text-[#111111]" : "text-[#555555]"
+                i <= current ? "text-[#111111] dark:text-zinc-100" : "text-[#555555] dark:text-zinc-400"
               )}
             >
               {locale === "ta" ? step.labelTa : step.labelEn}
@@ -73,7 +73,7 @@ function ProgressSteps({ current, locale }: { current: number; locale: "ta" | "e
             <div
               className={cn(
                 "w-12 sm:w-20 h-0.5 mx-2 rounded-full transition-colors",
-                i < current ? "bg-[#0A6847]" : "bg-black/10"
+                i < current ? "bg-[#0A6847]" : "bg-black/10 dark:bg-white/15"
               )}
             />
           )}
@@ -352,11 +352,11 @@ export default function CartPage() {
         {/* Page Header */}
         <div className="pb-6 sm:pb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#111111] font-tamil tracking-tight">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#111111] dark:text-zinc-100 font-tamil tracking-tight">
               {isTa ? "உங்கள் கூடை" : "Your Cart"}
             </h1>
             {!isEmpty && (
-              <p className="text-sm text-[#555555] font-medium font-tamil mt-1">
+              <p className="text-sm text-[#555555] dark:text-zinc-300 font-medium font-tamil mt-1">
                 {isTa
                   ? `${totalItems} புத்தகங்கள்`
                   : `${totalItems} item${totalItems !== 1 ? "s" : ""}`}
@@ -366,7 +366,7 @@ export default function CartPage() {
           {!isEmpty && (
             <Link
               href="/books"
-              className="text-xs sm:text-sm font-bold text-[#0A6847] hover:underline font-tamil min-h-[44px] flex items-center"
+              className="text-xs sm:text-sm font-bold text-[#0A6847] dark:text-emerald-400 hover:underline font-tamil min-h-[44px] flex items-center"
             >
               {isTa ? "நூல்களைத் தொடர்க" : "Continue Shopping"}
             </Link>
@@ -374,14 +374,14 @@ export default function CartPage() {
         </div>
 
         {paymentSuccess ? (
-          <GlassPanel className="max-w-lg mx-auto p-8 sm:p-10 rounded-3xl text-center space-y-5 bg-white/95 border border-emerald-500/30 shadow-xl my-8">
-            <div className="mx-auto h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+          <GlassPanel className="max-w-lg mx-auto p-8 sm:p-10 rounded-3xl text-center space-y-5 bg-white/95 dark:bg-[#1F1F23] border border-emerald-500/30 shadow-xl my-8">
+            <div className="mx-auto h-16 w-16 rounded-full bg-emerald-100 dark:bg-emerald-950/80 flex items-center justify-center text-emerald-700 dark:text-emerald-300">
               <CheckCircle2 className="h-9 w-9" />
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-[#111111] font-tamil">
+            <h2 className="text-xl sm:text-2xl font-bold text-[#111111] dark:text-zinc-100 font-tamil">
               {isTa ? "ஆர்டர் வெற்றிகரமாக பதிவு செய்யப்பட்டது!" : "Order Confirmed!"}
             </h2>
-            <p className="text-xs sm:text-sm text-[#444444] font-tamil leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#444444] dark:text-zinc-300 font-tamil leading-relaxed">
               {isTa
                 ? "உங்கள் கட்டணம் பெறப்பட்டு பார்சல் தயாரிப்புக்கு அனுப்பப்பட்டுள்ளது. SMS & WhatsApp வழியாக நேரடி டிராக்கிங் எண் விரைவில் அனுப்பப்படும்."
                 : "Your payment has been verified and your package is being prepared for postal dispatch. A tracking number will be sent via SMS/WhatsApp."}
@@ -410,16 +410,16 @@ export default function CartPage() {
             />
 
             {/* Recommended Archival Books when empty — Zero Dead Ends */}
-            <div className="pt-8 border-t border-black/8 space-y-4">
+            <div className="pt-8 border-t border-black/8 dark:border-white/10 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-base sm:text-lg font-bold text-[#111111] font-tamil">
+                <h3 className="text-base sm:text-lg font-bold text-[#111111] dark:text-zinc-100 font-tamil">
                   {isTa
                     ? "பரிந்துரைக்கப்படும் வரலாற்று நூல்கள்"
                     : "Recommended Historical Publications"}
                 </h3>
                 <Link
                   href="/books"
-                  className="text-xs sm:text-sm font-bold text-[#0A6847] hover:underline font-tamil min-h-[44px] flex items-center"
+                  className="text-xs sm:text-sm font-bold text-[#0A6847] dark:text-emerald-400 hover:underline font-tamil min-h-[44px] flex items-center"
                 >
                   {isTa ? "அனைத்தையும் காண்க" : "View All"}
                 </Link>
@@ -442,7 +442,7 @@ export default function CartPage() {
             <div className="lg:col-span-8 space-y-6">
               {/* Cart Items List */}
               <div className="space-y-4">
-                <h2 className="text-base sm:text-lg font-bold text-[#111111] font-tamil">
+                <h2 className="text-base sm:text-lg font-bold text-[#111111] dark:text-zinc-100 font-tamil">
                   {isTa ? "தேர்ந்தெடுக்கப்பட்ட நூல்கள்" : "Selected Publications"}
                 </h2>
 
@@ -556,16 +556,16 @@ export default function CartPage() {
               )}
 
               {!isCheckingAuth && userSession?.authenticated && (
-                <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-between text-xs font-tamil">
+                <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/60 flex items-center justify-between text-xs font-tamil">
                   <div className="flex items-center gap-2 text-emerald-900 dark:text-emerald-200">
-                    <CheckCircle2 className="h-4 w-4 text-[#0A6847]" />
+                    <CheckCircle2 className="h-4 w-4 text-[#0A6847] dark:text-emerald-400" />
                     <span>
                       {isTa
                         ? `உள்நுழைந்துள்ளீர்கள்: ${userSession.user?.fullName || userSession.user?.email}`
                         : `Signed in as: ${userSession.user?.fullName || userSession.user?.email}`}
                     </span>
                   </div>
-                  <Link href="/account" className="text-[#0A6847] font-bold hover:underline">
+                  <Link href="/account" className="text-[#0A6847] dark:text-emerald-300 font-bold hover:underline">
                     {isTa ? "என் கணக்கு" : "My Account"}
                   </Link>
                 </div>
@@ -573,16 +573,16 @@ export default function CartPage() {
 
               {/* Inline Delivery Address Form */}
               <GlassPanel id="delivery-address-section" className="p-5 sm:p-6 rounded-2xl space-y-5 scroll-mt-24">
-                <div className="flex items-center justify-between border-b border-black/8 pb-3">
+                <div className="flex items-center justify-between border-b border-black/8 dark:border-white/10 pb-3">
                   <div className="flex items-center gap-2.5">
-                    <div className="h-9 w-9 rounded-xl bg-[#0A6847]/10 flex items-center justify-center text-[#0A6847]">
+                    <div className="h-9 w-9 rounded-xl bg-[#0A6847]/10 dark:bg-emerald-500/15 flex items-center justify-center text-[#0A6847] dark:text-emerald-400">
                       <MapPin className="h-5 w-5" />
                     </div>
                     <div>
-                      <h2 className="text-base font-bold text-[#111111] font-tamil">
+                      <h2 className="text-base font-bold text-[#111111] dark:text-zinc-100 font-tamil">
                         {isTa ? "அஞ்சல் முகவரி" : "Postal Delivery Address"}
                       </h2>
-                      <p className="text-xs text-[#666666] font-tamil">
+                      <p className="text-xs text-[#666666] dark:text-zinc-400 font-tamil">
                         {isTa
                           ? "நூல்கள் பாதுகாப்பாக அனுப்பப்பட வேண்டிய அஞ்சல் முகவரியை உள்ளிடுக"
                           : "Enter destination address for secure postal dispatch"}
@@ -590,7 +590,7 @@ export default function CartPage() {
                     </div>
                   </div>
                   {isAddressFilled && (
-                    <span className="text-xs font-bold text-[#0A6847] flex items-center gap-1 font-tamil">
+                    <span className="text-xs font-bold text-[#0A6847] dark:text-emerald-400 flex items-center gap-1 font-tamil">
                       <CheckCircle2 className="h-4 w-4" />
                       <span>{isTa ? "பூர்த்தி செய்யப்பட்டது" : "Completed"}</span>
                     </span>
@@ -600,7 +600,7 @@ export default function CartPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Full Name */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-[#222222] font-tamil block">
+                    <label className="text-xs font-bold text-[#222222] dark:text-zinc-200 font-tamil block">
                       {isTa ? "பெறுநர் பெயர் (Full Name) *" : "Full Name *"}
                     </label>
                     <input
@@ -614,14 +614,14 @@ export default function CartPage() {
                       aria-invalid={Boolean(touched.fullName && errors.fullName)}
                       placeholder={isTa ? "எ.கா. வே. தமிழரசன்" : "e.g. Tamilarasan"}
                       className={cn(
-                        "w-full px-3.5 py-2 rounded-xl border bg-white text-base sm:text-sm font-tamil text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
+                        "w-full px-3.5 py-2 rounded-xl border bg-white dark:bg-zinc-900 text-base sm:text-sm font-tamil text-[#111111] dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
                         touched.fullName && errors.fullName
                           ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
-                          : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
+                          : "border-black/12 dark:border-white/15 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
                       )}
                     />
                     {touched.fullName && errors.fullName && (
-                      <p className="text-xs text-rose-600 font-tamil flex items-center gap-1 mt-1">
+                      <p className="text-xs text-rose-600 dark:text-rose-400 font-tamil flex items-center gap-1 mt-1">
                         <AlertCircle className="h-3 w-3 shrink-0" />
                         <span>{errors.fullName}</span>
                       </p>
@@ -630,7 +630,7 @@ export default function CartPage() {
 
                   {/* Phone Number */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-[#222222] font-tamil block">
+                    <label className="text-xs font-bold text-[#222222] dark:text-zinc-200 font-tamil block">
                       {isTa ? "கைபேசி எண் (Mobile Phone) *" : "Phone Number *"}
                     </label>
                     <input
@@ -646,14 +646,14 @@ export default function CartPage() {
                       aria-invalid={Boolean(touched.phone && errors.phone)}
                       placeholder="82486 54946"
                       className={cn(
-                        "w-full px-3.5 py-2 rounded-xl border bg-white text-base sm:text-sm font-mono text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
+                        "w-full px-3.5 py-2 rounded-xl border bg-white dark:bg-zinc-900 text-base sm:text-sm font-mono text-[#111111] dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
                         touched.phone && errors.phone
                           ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
-                          : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
+                          : "border-black/12 dark:border-white/15 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
                       )}
                     />
                     {touched.phone && errors.phone && (
-                      <p className="text-xs text-rose-600 font-tamil flex items-center gap-1 mt-1">
+                      <p className="text-xs text-rose-600 dark:text-rose-400 font-tamil flex items-center gap-1 mt-1">
                         <AlertCircle className="h-3 w-3 shrink-0" />
                         <span>{errors.phone}</span>
                       </p>
@@ -662,7 +662,7 @@ export default function CartPage() {
 
                   {/* Door / Street */}
                   <div className="sm:col-span-2 space-y-1.5">
-                    <label className="text-xs font-bold text-[#222222] font-tamil block">
+                    <label className="text-xs font-bold text-[#222222] dark:text-zinc-200 font-tamil block">
                       {isTa ? "கதவு எண், தெரு / குடியிருப்பு முகவரி *" : "Door No, Street & Area *"}
                     </label>
                     <input
@@ -676,14 +676,14 @@ export default function CartPage() {
                       aria-invalid={Boolean(touched.doorStreet && errors.doorStreet)}
                       placeholder={isTa ? "எ.கா. 12/4, பாரதி தெரு, கானார்பட்டி" : "e.g. 12/4, Bharathi Street"}
                       className={cn(
-                        "w-full px-3.5 py-2 rounded-xl border bg-white text-base sm:text-sm font-tamil text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
+                        "w-full px-3.5 py-2 rounded-xl border bg-white dark:bg-zinc-900 text-base sm:text-sm font-tamil text-[#111111] dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
                         touched.doorStreet && errors.doorStreet
                           ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
-                          : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
+                          : "border-black/12 dark:border-white/15 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
                       )}
                     />
                     {touched.doorStreet && errors.doorStreet && (
-                      <p className="text-xs text-rose-600 font-tamil flex items-center gap-1 mt-1">
+                      <p className="text-xs text-rose-600 dark:text-rose-400 font-tamil flex items-center gap-1 mt-1">
                         <AlertCircle className="h-3 w-3 shrink-0" />
                         <span>{errors.doorStreet}</span>
                       </p>
@@ -692,7 +692,7 @@ export default function CartPage() {
 
                   {/* City / Area */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-[#222222] font-tamil block">
+                    <label className="text-xs font-bold text-[#222222] dark:text-zinc-200 font-tamil block">
                       {isTa ? "ஊர் / நகரம் (City / Town) *" : "City / Town *"}
                     </label>
                     <input
@@ -706,14 +706,14 @@ export default function CartPage() {
                       aria-invalid={Boolean(touched.cityArea && errors.cityArea)}
                       placeholder={isTa ? "திருநெல்வேலி / சென்னை" : "Tirunelveli / Chennai"}
                       className={cn(
-                        "w-full px-3.5 py-2 rounded-xl border bg-white text-base sm:text-sm font-tamil text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
+                        "w-full px-3.5 py-2 rounded-xl border bg-white dark:bg-zinc-900 text-base sm:text-sm font-tamil text-[#111111] dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
                         touched.cityArea && errors.cityArea
                           ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
-                          : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
+                          : "border-black/12 dark:border-white/15 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
                       )}
                     />
                     {touched.cityArea && errors.cityArea && (
-                      <p className="text-xs text-rose-600 font-tamil flex items-center gap-1 mt-1">
+                      <p className="text-xs text-rose-600 dark:text-rose-400 font-tamil flex items-center gap-1 mt-1">
                         <AlertCircle className="h-3 w-3 shrink-0" />
                         <span>{errors.cityArea}</span>
                       </p>
@@ -722,7 +722,7 @@ export default function CartPage() {
 
                   {/* Pincode */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-[#222222] font-tamil block">
+                    <label className="text-xs font-bold text-[#222222] dark:text-zinc-200 font-tamil block">
                       {isTa ? "அஞ்சல் குறியீட்டு எண் (Postal Pincode) *" : "Pincode *"}
                     </label>
                     <input
@@ -738,14 +738,14 @@ export default function CartPage() {
                       aria-invalid={Boolean(touched.pincode && errors.pincode)}
                       placeholder="627201"
                       className={cn(
-                        "w-full px-3.5 py-2 rounded-xl border bg-white text-base sm:text-sm font-mono text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
+                        "w-full px-3.5 py-2 rounded-xl border bg-white dark:bg-zinc-900 text-base sm:text-sm font-mono text-[#111111] dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
                         touched.pincode && errors.pincode
                           ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
-                          : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
+                          : "border-black/12 dark:border-white/15 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
                       )}
                     />
                     {touched.pincode && errors.pincode && (
-                      <p className="text-xs text-rose-600 font-tamil flex items-center gap-1 mt-1">
+                      <p className="text-xs text-rose-600 dark:text-rose-400 font-tamil flex items-center gap-1 mt-1">
                         <AlertCircle className="h-3 w-3 shrink-0" />
                         <span>{errors.pincode}</span>
                       </p>
@@ -759,13 +759,13 @@ export default function CartPage() {
             <div id="order-summary-section" className="lg:col-span-4 scroll-mt-24">
               <div className="sticky top-24 space-y-4">
                 <GlassPanel className="p-5 sm:p-6 rounded-2xl space-y-5">
-                  <h2 className="text-lg font-bold text-[#111111] font-tamil">
+                  <h2 className="text-lg font-bold text-[#111111] dark:text-zinc-100 font-tamil">
                     {isTa ? "ஆர்டர் சுருக்கம்" : "Order Summary"}
                   </h2>
 
                   {/* Shipping Region Selection */}
-                  <div className="space-y-2 pt-1 border-t border-black/6">
-                    <label className="text-xs font-bold text-[#222222] font-tamil block">
+                  <div className="space-y-2 pt-1 border-t border-black/6 dark:border-white/10">
+                    <label className="text-xs font-bold text-[#222222] dark:text-zinc-200 font-tamil block">
                       {isTa ? "தபால் விநியோக மண்டலம் (Shipping Region):" : "Shipping Destination:"}
                     </label>
                     <div className="grid grid-cols-1 gap-1.5" role="radiogroup" aria-label="Shipping region">
@@ -803,17 +803,17 @@ export default function CartPage() {
                             className={cn(
                               "p-2.5 rounded-xl border text-left text-xs transition-all flex items-center justify-between cursor-pointer font-tamil min-h-[44px] touch-manipulation",
                               isSelected
-                                ? "border-[#0A6847] bg-[#0A6847]/8 shadow-2xs ring-1 ring-[#0A6847]/20"
-                                : "border-black/10 bg-white/70 hover:bg-white"
+                                ? "border-[#0A6847] dark:border-emerald-500 bg-[#0A6847]/8 dark:bg-emerald-950/60 shadow-2xs ring-1 ring-[#0A6847]/20"
+                                : "border-black/10 dark:border-white/15 bg-white/75 dark:bg-zinc-900/90 hover:bg-white dark:hover:bg-zinc-800"
                             )}
                           >
                             <div>
-                              <div className="font-bold text-[#111111]">
+                              <div className="font-bold text-[#111111] dark:text-zinc-100">
                                 {isTa ? reg.titleTa : reg.titleEn}
                               </div>
-                              <div className="text-[10px] text-[#555555]">{reg.courier}</div>
+                              <div className="text-[10px] text-[#555555] dark:text-zinc-400">{reg.courier}</div>
                             </div>
-                            <div className="font-mono font-bold text-[#0A6847]">
+                            <div className="font-mono font-bold text-[#0A6847] dark:text-emerald-400">
                               {reg.feeText}
                             </div>
                           </button>
@@ -823,20 +823,20 @@ export default function CartPage() {
                   </div>
 
                   {/* Price Breakdown */}
-                  <div className="space-y-3 text-sm pt-2 border-t border-black/8">
-                    <div className="flex justify-between text-[#333333] font-medium">
+                  <div className="space-y-3 text-sm pt-2 border-t border-black/8 dark:border-white/10">
+                    <div className="flex justify-between text-[#333333] dark:text-zinc-200 font-medium">
                       <span className="font-tamil">
                         {isTa ? "உட்கூட்டு" : "Subtotal"}
                       </span>
                       <Price amount={subtotal} />
                     </div>
 
-                    <div className="flex justify-between text-[#333333] font-medium">
+                    <div className="flex justify-between text-[#333333] dark:text-zinc-200 font-medium">
                       <span className="font-tamil">
                         {isTa ? "தபால் கட்டணம்" : "Shipping"}
                       </span>
                       {isDiaspora ? (
-                        <span className="font-mono text-xs font-semibold text-[#0A6847]">
+                        <span className="font-mono text-xs font-semibold text-[#0A6847] dark:text-emerald-400">
                           {isTa ? "எடைக்கேற்ப" : "By Weight"}
                         </span>
                       ) : shipping === 0 ? (
@@ -847,7 +847,7 @@ export default function CartPage() {
                     </div>
 
                     <div
-                      className="pt-3 border-t border-black/8 flex justify-between items-baseline text-[#111111] font-bold text-base"
+                      className="pt-3 border-t border-black/8 dark:border-white/10 flex justify-between items-baseline text-[#111111] dark:text-zinc-100 font-bold text-base"
                       aria-live="polite"
                       aria-atomic="true"
                     >
@@ -855,14 +855,14 @@ export default function CartPage() {
                         {isTa ? "மொத்தம்" : "Total"}
                       </span>
                       {isDiaspora ? (
-                        <span className="text-lg font-mono text-[#0A6847]">
-                          <Price amount={subtotal} size="lg" className="text-[#0A6847]" />{" "}
-                          <span className="text-xs font-normal text-[#555555]">
+                        <span className="text-lg font-mono text-[#0A6847] dark:text-emerald-400">
+                          <Price amount={subtotal} size="lg" className="text-[#0A6847] dark:text-emerald-400" />{" "}
+                          <span className="text-xs font-normal text-[#555555] dark:text-zinc-400">
                             {isTa ? "+ அஞ்சல்" : "+ Shipping"}
                           </span>
                         </span>
                       ) : (
-                        <Price amount={total} size="xl" className="text-[#0A6847]" />
+                        <Price amount={total} size="xl" className="text-[#0A6847] dark:text-emerald-400" />
                       )}
                     </div>
                   </div>
@@ -870,8 +870,8 @@ export default function CartPage() {
                   {/* Checkout Action: Overseas WhatsApp OR Domestic In-Site Payment */}
                   <div className="space-y-3 pt-2">
                     {orderError && (
-                      <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+                      <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 text-xs flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
                         <span className="font-tamil">{orderError}</span>
                       </div>
                     )}
@@ -879,16 +879,16 @@ export default function CartPage() {
                     {isDiaspora ? (
                       /* OVERSEAS DIASPORA: WhatsApp Inquire & Order */
                       <div className="space-y-3">
-                        <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-950 text-xs font-tamil space-y-1.5">
-                          <div className="flex items-center gap-2 font-bold text-amber-950">
-                            <Globe className="h-4 w-4 text-amber-700 shrink-0" />
+                        <div className="p-3.5 rounded-2xl bg-amber-500/10 dark:bg-amber-950/50 border border-amber-500/25 dark:border-amber-700/60 text-amber-950 dark:text-amber-100 text-xs font-tamil space-y-1.5">
+                          <div className="flex items-center gap-2 font-bold text-amber-950 dark:text-amber-100">
+                            <Globe className="h-4 w-4 text-amber-700 dark:text-amber-300 shrink-0" />
                             <span>
                               {isTa
                                 ? "வெளிநாட்டு வாசகர்கள் கவனத்திற்கு (Overseas Orders)"
                                 : "Overseas / International Diaspora Orders"}
                             </span>
                           </div>
-                          <p className="text-amber-900 leading-relaxed text-[11px] sm:text-xs">
+                          <p className="text-amber-900 dark:text-amber-200 leading-relaxed text-[11px] sm:text-xs">
                             {isTa
                               ? "வெளிநாட்டு அஞ்சல் சேவைக்கு (DHL / International Post) பார்சல் எடை மற்றும் நாட்டின் அடிப்படையில் தபால் கட்டணம் நிர்ணயிக்கப்படும். உங்கள் கூடைப் புத்தகங்களுடன் எங்களின் அதிகாரப்பூர்வ WhatsApp மூலம் தொடர்பு கொள்ளவும்."
                               : "For international orders, shipping charges are calculated based on parcel weight and destination country (via DHL / India Post). Please proceed via WhatsApp with your cart items."}
@@ -912,8 +912,8 @@ export default function CartPage() {
                     ) : (
                       /* DOMESTIC: Strictly In-Site Online Payment */
                       <>
-                        <div className="flex items-center gap-2 text-xs font-semibold text-[#0A6847] bg-[#0A6847]/8 border border-[#0A6847]/20 px-3 py-2 rounded-xl font-tamil">
-                          <ShieldCheck className="h-4 w-4 shrink-0 text-[#0A6847]" />
+                        <div className="flex items-center gap-2 text-xs font-semibold text-[#0A6847] dark:text-emerald-300 bg-[#0A6847]/8 dark:bg-emerald-950/60 border border-[#0A6847]/20 dark:border-emerald-700/60 px-3 py-2 rounded-xl font-tamil">
+                          <ShieldCheck className="h-4 w-4 shrink-0 text-[#0A6847] dark:text-emerald-400" />
                           <span>
                             {isTa
                               ? "பாதுகாப்பான இணையதள நேரடி கட்டணம் (UPI / GPay / Card)"
@@ -992,8 +992,8 @@ export default function CartPage() {
                         )}
 
                         {/* Supported Payment Channels (Dumb user clarity) */}
-                        <div className="pt-2 flex flex-wrap items-center justify-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-zinc-600 dark:text-zinc-400">
-                          <span className="px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/10 font-mono font-bold text-[#0A6847]">UPI</span>
+                        <div className="pt-2 flex flex-wrap items-center justify-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-zinc-700 dark:text-zinc-300">
+                          <span className="px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/10 font-mono font-bold text-[#0A6847] dark:text-emerald-400">UPI</span>
                           <span className="px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/10 font-medium">Google Pay</span>
                           <span className="px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/10 font-medium">PhonePe</span>
                           <span className="px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/10 font-medium">Paytm</span>
@@ -1008,7 +1008,7 @@ export default function CartPage() {
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 text-xs text-emerald-800 dark:text-emerald-300 font-bold font-tamil hover:underline"
                           >
-                            <MessageCircle className="h-3.5 w-3.5 text-emerald-600" />
+                            <MessageCircle className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                             <span>{isTa ? "ஆர்டர் செய்வதில் உதவி தேவையா? WhatsApp-ல் கேளுங்கள்" : "Need help ordering? Chat on WhatsApp"}</span>
                           </a>
                         </div>
@@ -1017,20 +1017,20 @@ export default function CartPage() {
                   </div>
 
                   {/* Trust Signals */}
-                  <div className="space-y-2.5 pt-3 border-t border-black/5 text-xs">
+                  <div className="space-y-2.5 pt-3 border-t border-black/5 dark:border-white/10 text-xs">
                     <Link
                       href="/certificate"
-                      className="flex items-center gap-2 text-[#0A6847] hover:underline font-medium"
+                      className="flex items-center gap-2 text-[#0A6847] dark:text-emerald-400 hover:underline font-medium"
                     >
-                      <ArchivalWaxSealIcon className="h-4 w-4 text-[#0A6847] shrink-0" />
+                      <ArchivalWaxSealIcon className="h-4 w-4 text-[#0A6847] dark:text-emerald-400 shrink-0" />
                       <span className="font-tamil">
                         {isTa
                           ? "அரசு MSME பதிவு: UDYAM-TN-18-0101323"
                           : "Govt. MSME Verified: UDYAM-TN-18-0101323"}
                       </span>
                     </Link>
-                    <div className="flex items-center gap-2 text-[#555555] font-medium">
-                      <PostalSealIcon className="h-4 w-4 text-[#0A6847] shrink-0" />
+                    <div className="flex items-center gap-2 text-[#555555] dark:text-zinc-300 font-medium">
+                      <PostalSealIcon className="h-4 w-4 text-[#0A6847] dark:text-emerald-400 shrink-0" />
                       <span className="font-tamil">
                         {shippingRegion === "other-india"
                           ? isTa
@@ -1083,7 +1083,7 @@ export default function CartPage() {
                     href={getOverseasWhatsAppUrl()}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="min-h-[44px] px-4 py-2 rounded-xl bg-[#0A6847] hover:bg-[#085036] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-md active:scale-95 transition-all font-tamil touch-manipulation cursor-pointer"
+                    className="min-h-[44px] px-4 py-2 rounded-xl bg-[#0A6847] hover:bg-[#085036] dark:bg-[#0D5C3A] dark:hover:bg-[#0A6847] text-white font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-md active:scale-95 transition-all font-tamil touch-manipulation cursor-pointer"
                   >
                     <MessageCircle className="h-4 w-4 shrink-0" />
                     <span>{isTa ? "WhatsApp ஆர்டர்" : "WhatsApp"}</span>

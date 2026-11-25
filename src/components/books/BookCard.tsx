@@ -275,7 +275,7 @@ export function BookCard({
               {formatINR(book.discountPrice ?? book.price)}
             </span>
             {book.discountPrice && (
-              <span className="text-xs text-[#665F57] dark:text-zinc-500 line-through tabular-nums">
+              <span className="text-xs text-[#665F57] dark:text-zinc-400 line-through tabular-nums">
                 {formatINR(book.price)}
               </span>
             )}
@@ -316,13 +316,13 @@ export function BookCard({
                     ? `${book.title} — இப்போதே வாங்குக`
                     : `Buy ${book.titleEn} now`
                 }
-                className="flex-1 sm:flex-none min-h-[44px] px-3.5 py-2 rounded-lg bg-[#0D5C3A] hover:bg-[#08442A] dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white flex items-center justify-center text-xs font-bold transition-colors font-tamil cursor-pointer active:bg-[#063320] shadow-xs"
+                className="flex-1 sm:flex-none min-h-[44px] px-3.5 py-2 rounded-lg bg-[#0D5C3A] hover:bg-[#08442A] dark:bg-[#0D5C3A] dark:hover:bg-[#0A6847] text-white flex items-center justify-center text-xs font-bold transition-colors font-tamil cursor-pointer active:bg-[#063320] shadow-xs"
               >
                 <span>{locale === "ta" ? "வாங்க" : "Buy Now"}</span>
               </button>
             </div>
           ) : (
-            <span className="text-xs text-[#665F57] dark:text-zinc-500 font-semibold">
+            <span className="text-xs text-[#665F57] dark:text-zinc-400 font-semibold">
               {locale === "ta" ? "கையிருப்பில் இல்லை" : "Out of Stock"}
             </span>
           )}

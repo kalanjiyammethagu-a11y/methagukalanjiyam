@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { usePathname } from "next/navigation";
 import { type Locale, type TranslationKey, getTranslation } from "@/lib/translations";
 import { Toast, type ToastData } from "@/components/ui/Toast";
 
@@ -91,6 +92,8 @@ const LanguageContext = React.createContext<LanguageContextType>({
 });
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const isAdminRoute = Boolean(pathname?.startsWith("/admin"));
   const [locale, setLocaleState] = React.useState<Locale>("ta");
   const [fontSize, setFontSizeState] = React.useState<FontSize>("normal");
   const [readingTheme, setReadingThemeState] = React.useState<ReadingTheme>("parchment");
@@ -144,12 +147,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       const root = document.documentElement;
       root.lang = locale === "ta" ? "ta" : "en";
       root.setAttribute("data-font-size", fontSize);
-      root.setAttribute("data-theme", readingTheme);
-      root.classList.toggle("dark", readingTheme === "night");
+      const effectiveTheme = isAdminRoute ? "white" : readingTheme;
+      root.setAttribute("data-theme", effectiveTheme);
+      root.classList.toggle("dark", !isAdminRoute && effectiveTheme === "night");
     } catch {
       // Ignore
     }
-  }, [locale, fontSize, readingTheme]);
+  }, [locale, fontSize, readingTheme, isAdminRoute]);
 
   const setLocale = React.useCallback((newLocale: Locale) => {
     setLocaleState(newLocale);

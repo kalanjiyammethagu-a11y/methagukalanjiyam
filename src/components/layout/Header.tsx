@@ -268,15 +268,15 @@ export function Header({ onOpenSearch }: HeaderProps) {
                     ? `கூடை (${cartCount} நூல்கள்)`
                     : `Shopping Cart (${cartCount} items)`
                 }
-                className="relative hidden md:flex min-h-[44px] h-10 px-3.5 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white items-center justify-center gap-2 text-xs font-bold transition-all shadow-sm shadow-[var(--color-accent)]/20 cursor-pointer active:scale-95 shrink-0"
+                className="relative hidden md:flex min-h-[44px] h-10 px-3.5 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-[var(--color-accent-fg)] items-center justify-center gap-2 text-xs font-bold transition-all shadow-sm shadow-[var(--color-accent)]/20 cursor-pointer active:scale-95 shrink-0"
                 title={isTa ? "கூடை" : "Cart"}
               >
-                <ShoppingBag className="h-4 w-4 text-white shrink-0" />
+                <ShoppingBag className="h-4 w-4 shrink-0" />
                 <span className={`hidden sm:inline ${isTa ? "font-tamil font-bold" : "font-sans font-bold"}`}>
                   {isTa ? "கூடை" : "Cart"}
                 </span>
                 {cartCount > 0 && (
-                  <span className="h-5 min-w-[20px] px-1.5 rounded-full bg-white text-[var(--color-accent)] text-[11px] font-mono font-extrabold flex items-center justify-center shadow-2xs">
+                  <span className="h-5 min-w-[20px] px-1.5 rounded-full bg-[var(--color-accent-fg)] text-[var(--color-accent)] text-[11px] font-mono font-extrabold flex items-center justify-center shadow-2xs">
                     {cartCount}
                   </span>
                 )}

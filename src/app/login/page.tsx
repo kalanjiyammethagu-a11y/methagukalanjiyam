@@ -59,9 +59,9 @@ function LoginForm() {
       const data = await res.json().catch(() => ({}));
       setServerSuccess(
         data.message ||
-          (isTa
-            ? "சரிபார்ப்பு இணைப்பு உங்கள் மின்னஞ்சலுக்கு அனுப்பப்பட்டுள்ளது."
-            : "A verification link has been sent to your inbox.")
+        (isTa
+          ? "சரிபார்ப்பு இணைப்பு உங்கள் மின்னஞ்சலுக்கு அனுப்பப்பட்டுள்ளது."
+          : "A verification link has been sent to your inbox.")
       );
       setResendCooldown(60);
     } catch {
@@ -176,9 +176,9 @@ function LoginForm() {
         if (!res.ok) {
           setServerError(
             data.error ||
-              (isTa
-                ? "கணக்கு உருவாக்குவதில் சிக்கல் ஏற்பட்டது. தயவுசெய்து மீண்டும் முயற்சிக்கவும்."
-                : "Registration failed. Please try again.")
+            (isTa
+              ? "கணக்கு உருவாக்குவதில் சிக்கல் ஏற்பட்டது. தயவுசெய்து மீண்டும் முயற்சிக்கவும்."
+              : "Registration failed. Please try again.")
           );
           setLoading(false);
           return;
@@ -219,7 +219,7 @@ function LoginForm() {
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
           {/* Brand Story & Trust Reassurance (Order 2 on mobile to keep login form above fold) */}
-          <div className="order-2 lg:order-1 lg:col-span-5 glass-panel rounded-3xl p-6 sm:p-8 border border-black/10 bg-gradient-to-br from-emerald-900 via-[#0A6847] to-neutral-900 text-white flex flex-col justify-between space-y-8 shadow-xl">
+          <div className="order-2 lg:order-1 lg:col-span-5 rounded-3xl p-6 sm:p-8 border border-black/10 dark:border-white/10 bg-[#0A5339] bg-gradient-to-br from-emerald-900 via-[#0A6847] to-neutral-900 text-white flex flex-col justify-between space-y-8 shadow-xl">
             <div className="space-y-6">
               <div className="flex items-center gap-3">
                 <div className="relative h-12 w-12 rounded-full overflow-hidden border-2 border-white/30 bg-white shrink-0 shadow-md">
@@ -271,7 +271,7 @@ function LoginForm() {
               </div>
             </div>
 
-            <div className="pt-6 border-t border-white/10 flex items-center justify-between text-xs text-emerald-200/70 font-tamil">
+            <div className="pt-6 border-t border-white/10 flex items-center justify-between text-xs text-emerald-100/90 font-tamil">
               <span>{isTa ? "© 2026 மேதகு களஞ்சியம்" : "© 2026 Methagu Kalanjiyam"}</span>
               <span className="flex items-center gap-1">
                 <ArchivalWaxSealIcon className="h-4 w-4 text-amber-400" />
@@ -311,11 +311,10 @@ function LoginForm() {
                     setServerError(null);
                     setServerSuccess(null);
                   }}
-                  className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold font-tamil transition-all cursor-pointer min-h-[44px] ${
-                    tab === "login"
-                      ? "bg-white dark:bg-zinc-800 text-[#0A6847] dark:text-emerald-400 shadow-sm"
-                      : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white"
-                  }`}
+                  className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold font-tamil transition-all cursor-pointer min-h-[44px] ${tab === "login"
+                    ? "bg-white dark:bg-zinc-800 text-[#0A6847] dark:text-emerald-400 shadow-sm"
+                    : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white"
+                    }`}
                 >
                   {isTa ? "உள்நுழைவு (Sign In)" : "Sign In"}
                 </button>
@@ -326,11 +325,10 @@ function LoginForm() {
                     setServerError(null);
                     setServerSuccess(null);
                   }}
-                  className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold font-tamil transition-all cursor-pointer min-h-[44px] ${
-                    tab === "register"
-                      ? "bg-white dark:bg-zinc-800 text-[#0A6847] dark:text-emerald-400 shadow-sm"
-                      : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white"
-                  }`}
+                  className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold font-tamil transition-all cursor-pointer min-h-[44px] ${tab === "register"
+                    ? "bg-white dark:bg-zinc-800 text-[#0A6847] dark:text-emerald-400 shadow-sm"
+                    : "text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white"
+                    }`}
                 >
                   {isTa ? "புதிய பதிவு (Register)" : "Create Account"}
                 </button>
@@ -347,7 +345,7 @@ function LoginForm() {
                       ? "புதிய வாசகர் பதிவு"
                       : "New Reader Registration"}
                 </h1>
-                <p className="text-xs sm:text-sm text-[#555555] font-tamil mt-1">
+                <p className="text-xs sm:text-sm text-[#555555] dark:text-zinc-300 font-tamil mt-1">
                   {tab === "login"
                     ? isTa
                       ? "உங்கள் நூலகம் மற்றும் முந்தைய ஆர்டர்களைப் பார்க்க உள்நுழையவும்."
@@ -360,9 +358,9 @@ function LoginForm() {
 
               {/* Server-side Alert Feedback */}
               {serverError && (
-                <div className="mb-4 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-tamil space-y-2.5">
+                <div className="mb-4 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 text-xs sm:text-sm font-tamil space-y-2.5">
                   <div className="flex items-start gap-2.5">
-                    <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                    <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
                     <span>{serverError}</span>
                   </div>
                   {showResendVerification && (
@@ -370,7 +368,7 @@ function LoginForm() {
                       type="button"
                       disabled={resendCooldown > 0 || resendingEmail}
                       onClick={handleResendVerification}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-rose-300 text-rose-900 text-xs font-bold hover:bg-rose-100/60 disabled:opacity-60 cursor-pointer min-h-[36px]"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-rose-300 dark:border-rose-700 text-rose-900 dark:text-rose-200 text-xs font-bold hover:bg-rose-100/60 dark:hover:bg-rose-900/50 disabled:opacity-60 cursor-pointer min-h-[36px]"
                     >
                       <span>
                         {resendCooldown > 0
@@ -387,9 +385,9 @@ function LoginForm() {
               )}
 
               {serverSuccess && (
-                <div className="mb-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-tamil space-y-2.5">
+                <div className="mb-4 p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs sm:text-sm font-tamil space-y-2.5">
                   <div className="flex items-start gap-2.5">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                     <span>{serverSuccess}</span>
                   </div>
                   {showResendVerification && (
@@ -397,7 +395,7 @@ function LoginForm() {
                       type="button"
                       disabled={resendCooldown > 0 || resendingEmail}
                       onClick={handleResendVerification}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-emerald-300 text-emerald-900 text-xs font-bold hover:bg-emerald-100/60 disabled:opacity-60 cursor-pointer min-h-[36px]"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200 text-xs font-bold hover:bg-emerald-100/60 dark:hover:bg-emerald-900/50 disabled:opacity-60 cursor-pointer min-h-[36px]"
                     >
                       <span>
                         {resendCooldown > 0
@@ -418,7 +416,7 @@ function LoginForm() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {tab === "register" && (
                 <div className="space-y-1.5">
-                  <label htmlFor="login-fullName" className="text-xs font-bold text-[#222222] font-tamil block">
+                  <label htmlFor="login-fullName" className="text-xs font-bold text-[#222222] dark:text-zinc-200 font-tamil block">
                     {isTa ? "முழுப் பெயர் (Full Name)" : "Full Name"}
                   </label>
                   <input
@@ -439,14 +437,14 @@ function LoginForm() {
                     aria-invalid={Boolean(touched.fullName && errors.fullName)}
                     placeholder={isTa ? "எ.கா. க. தமிழரசன்" : "e.g. Tamilarasan"}
                     className={cn(
-                      "w-full px-4 py-2.5 rounded-xl border bg-white text-base sm:text-sm font-tamil text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 transition-all min-h-[44px]",
+                      "w-full px-4 py-2.5 rounded-xl border bg-white dark:bg-zinc-900 text-base sm:text-sm font-tamil text-[#111111] dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 transition-all min-h-[44px]",
                       touched.fullName && errors.fullName
                         ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
-                        : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
+                        : "border-black/12 dark:border-white/15 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
                     )}
                   />
                   {touched.fullName && errors.fullName && (
-                    <p className="text-xs text-rose-600 font-tamil flex items-center gap-1 mt-1">
+                    <p className="text-xs text-rose-600 dark:text-rose-400 font-tamil flex items-center gap-1 mt-1">
                       <AlertCircle className="h-3 w-3 shrink-0" />
                       <span>{errors.fullName}</span>
                     </p>
@@ -455,7 +453,7 @@ function LoginForm() {
               )}
 
               <div className="space-y-1.5">
-                <label htmlFor="login-email" className="text-xs font-bold text-[#222222] font-tamil block">
+                <label htmlFor="login-email" className="text-xs font-bold text-[#222222] dark:text-zinc-200 font-tamil block">
                   {isTa ? "மின்னஞ்சல் (Email Address)" : "Email Address"}
                 </label>
                 <input
@@ -476,14 +474,14 @@ function LoginForm() {
                   aria-invalid={Boolean(touched.email && errors.email)}
                   placeholder="name@example.com"
                   className={cn(
-                    "w-full px-4 py-2.5 rounded-xl border bg-white text-base sm:text-sm text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 transition-all min-h-[44px]",
+                    "w-full px-4 py-2.5 rounded-xl border bg-white dark:bg-zinc-900 text-base sm:text-sm text-[#111111] dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 transition-all min-h-[44px]",
                     touched.email && errors.email
                       ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
-                      : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
+                      : "border-black/12 dark:border-white/15 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
                   )}
                 />
                 {touched.email && errors.email && (
-                  <p className="text-xs text-rose-600 font-tamil flex items-center gap-1 mt-1">
+                  <p className="text-xs text-rose-600 dark:text-rose-400 font-tamil flex items-center gap-1 mt-1">
                     <AlertCircle className="h-3 w-3 shrink-0" />
                     <span>{errors.email}</span>
                   </p>
@@ -491,7 +489,7 @@ function LoginForm() {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="login-password" className="text-xs font-bold text-[#222222] font-tamil block">
+                <label htmlFor="login-password" className="text-xs font-bold text-[#222222] dark:text-zinc-200 font-tamil block">
                   {isTa ? "கடவுச்சொல் (Password)" : "Password"}
                 </label>
                 <input
@@ -512,14 +510,14 @@ function LoginForm() {
                   aria-invalid={Boolean(touched.password && errors.password)}
                   placeholder="••••••••"
                   className={cn(
-                    "w-full px-4 py-2.5 rounded-xl border bg-white text-base sm:text-sm text-[#111111] placeholder:text-zinc-400 focus:outline-none focus:ring-2 transition-all min-h-[44px]",
+                    "w-full px-4 py-2.5 rounded-xl border bg-white dark:bg-zinc-900 text-base sm:text-sm text-[#111111] dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 transition-all min-h-[44px]",
                     touched.password && errors.password
                       ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
-                      : "border-black/12 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
+                      : "border-black/12 dark:border-white/15 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
                   )}
                 />
                 {touched.password && errors.password && (
-                  <p className="text-xs text-rose-600 font-tamil flex items-center gap-1 mt-1">
+                  <p className="text-xs text-rose-600 dark:text-rose-400 font-tamil flex items-center gap-1 mt-1">
                     <AlertCircle className="h-3 w-3 shrink-0" />
                     <span>{errors.password}</span>
                   </p>
@@ -557,8 +555,8 @@ function LoginForm() {
             </form>
 
             {/* Quick Navigation Footer */}
-            <div className="pt-4 border-t border-black/8 text-center space-y-2">
-              <p className="text-xs text-[#555555] font-tamil">
+            <div className="pt-4 border-t border-black/8 dark:border-white/10 text-center space-y-2">
+              <p className="text-xs text-[#555555] dark:text-zinc-400 font-tamil">
                 {isTa
                   ? "கணக்கு இல்லாமலும் நீங்கள் தொடரலாம்:"
                   : "Quick navigation without password:"}
@@ -566,15 +564,15 @@ function LoginForm() {
               <div className="flex flex-wrap items-center justify-center gap-3">
                 <Link
                   href="/books"
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#555555] hover:text-[#111111] hover:underline min-h-[44px] px-2"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#555555] dark:text-zinc-300 hover:text-[#111111] dark:hover:text-white hover:underline min-h-[44px] px-2"
                 >
                   <BookOpen className="h-3.5 w-3.5" />
                   <span>{isTa ? "நூல்களின் பட்டியல்" : "Browse Books"}</span>
                 </Link>
-                <span className="text-[#999999]">•</span>
+                <span className="text-[#666666] dark:text-zinc-400" aria-hidden="true">•</span>
                 <Link
                   href="/cart"
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0A6847] hover:underline min-h-[44px] px-2"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0A6847] dark:text-emerald-400 hover:underline min-h-[44px] px-2"
                 >
                   <User className="h-3.5 w-3.5" />
                   <span>{isTa ? "கூடை & செக்அவுட்" : "Cart & Checkout"}</span>

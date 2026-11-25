@@ -200,7 +200,7 @@ export default async function BookDetailPage({ params }: BookPageProps) {
                 <Badge variant="category" className="text-xs">
                   {book.categoryTa}
                 </Badge>
-                <span className="text-xs text-black/20 dark:text-white/20" aria-hidden="true">
+                <span className="text-xs text-[#665F57] dark:text-zinc-400" aria-hidden="true">
                   •
                 </span>
                 <p className="text-sm sm:text-base text-[#0A6847] dark:text-emerald-400 font-bold font-tamil">
