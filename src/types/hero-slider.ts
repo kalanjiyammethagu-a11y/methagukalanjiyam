@@ -2,6 +2,7 @@ export interface HeroSlideData {
   id: string;
   bannerImage: string;
   mobileBannerImage?: string;
+  objectPositionMobile?: string;
   bookImage?: string;
   slug: string;
   year?: string;
@@ -29,4 +30,3 @@ export interface HeroSliderProps {
   className?: string;
   priorityIndex?: number;
 }
-

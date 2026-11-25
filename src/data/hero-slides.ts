@@ -5,6 +5,7 @@ export const defaultHeroSlides: HeroSlideData[] = [
     id: "flagship-archives",
     bannerImage: "/images/brand/banner-1600.webp",
     mobileBannerImage: "/images/brand/banner-800.webp",
+    objectPositionMobile: "object-[18%_25%] sm:object-center",
     bookImage: "/images/hero/book-07.webp",
     slug: "purananooru-veeran",
     year: "2005",
@@ -30,6 +31,7 @@ export const defaultHeroSlides: HeroSlideData[] = [
   {
     id: "thileepan-satyagraha",
     bannerImage: "/images/hero/deelipan-widescreen.webp",
+    objectPositionMobile: "object-[70%_18%] sm:object-center",
     bookImage: "/images/hero/book-02.webp",
     slug: "thileepanudan-12-naatkal",
     year: "1987",
@@ -55,6 +57,7 @@ export const defaultHeroSlides: HeroSlideData[] = [
   {
     id: "katunayake-victory",
     bannerImage: "/images/hero/saanthi-nesakaram-banner-1.webp",
+    objectPositionMobile: "object-[74%_20%] sm:object-center",
     bookImage: "/images/hero/book-20.webp",
     slug: "katunayake-attack-victory",
     year: "2001",
@@ -80,6 +83,7 @@ export const defaultHeroSlides: HeroSlideData[] = [
   {
     id: "leader-thoughts",
     bannerImage: "/images/hero/prabakaran-dad-banner.webp",
+    objectPositionMobile: "object-[24%_18%] sm:object-center",
     bookImage: "/images/hero/prabakaran-dad.webp",
     slug: "leader-thoughts",
     year: "2005",

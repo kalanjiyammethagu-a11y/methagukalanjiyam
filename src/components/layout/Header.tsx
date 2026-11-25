@@ -106,7 +106,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
             {/* Left: Brand Logo & Editorial Wordmark */}
             <Link
               href="/"
-              className="flex items-center gap-2 sm:gap-3 group transition-transform active:scale-98 motion-reduce:active:scale-100 min-h-[44px] shrink-0"
+              className="flex items-center gap-2 sm:gap-3 group transition-transform active:scale-98 motion-reduce:active:scale-100 min-h-[44px] min-w-0 shrink"
               aria-label={isTa ? "மேதகு களஞ்சியம் — முகப்பு" : "Methagu Kalanjiyam — Home"}
             >
               <div className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full overflow-hidden border border-[var(--color-border-strong)] ring-2 ring-[var(--color-accent)]/15 shadow-2xs bg-white shrink-0 group-hover:scale-105 motion-reduce:group-hover:scale-100 transition-transform">
@@ -119,9 +119,9 @@ export function Header({ onOpenSearch }: HeaderProps) {
                   priority
                 />
               </div>
-              <div className="flex flex-col text-left">
+              <div className="flex flex-col text-left min-w-0">
                 <span
-                  className={`font-bold text-xs xs:text-sm sm:text-base lg:text-lg tracking-tight text-[var(--color-ink-primary)] leading-tight transition-colors group-hover:text-[var(--color-accent)] whitespace-nowrap ${isTa ? "font-tamil font-bold" : "font-sans font-extrabold"
+                  className={`font-bold text-xs xs:text-sm sm:text-base lg:text-lg tracking-tight text-[var(--color-ink-primary)] leading-snug transition-colors group-hover:text-[var(--color-accent)] truncate sm:whitespace-nowrap ${isTa ? "font-tamil font-bold" : "font-sans font-extrabold"
                     }`}
                 >
                   {isTa ? "மேதகு களஞ்சியம்" : "Methagu Kalanjiyam"}
@@ -181,11 +181,11 @@ export function Header({ onOpenSearch }: HeaderProps) {
                 </kbd>
               </button>
 
-              {/* 2. Micro-Segmented Language Switcher (Desktop / Tablet) */}
+              {/* 2. Micro-Segmented Language Switcher (Tablet >= md / Desktop) */}
               <div
                 role="group"
                 aria-label={isTa ? "மொழித் தேர்வு" : "Language Selector"}
-                className="hidden sm:flex h-10 p-0.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.08] dark:border-white/[0.1] items-center gap-0.5 shrink-0 shadow-2xs"
+                className="hidden md:flex h-10 p-0.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.08] dark:border-white/[0.1] items-center gap-0.5 shrink-0 shadow-2xs"
               >
                 <button
                   type="button"
@@ -214,15 +214,15 @@ export function Header({ onOpenSearch }: HeaderProps) {
                 </button>
               </div>
 
-              {/* 2b. Mobile Instant Language Toggle (Visible on Mobile < 640px) */}
+              {/* 2b. Mobile & Narrow Landscape Instant Language Toggle (< 768px) */}
               <button
                 type="button"
                 onClick={() => setLocale(isTa ? "en" : "ta")}
                 aria-label={isTa ? "Switch language to English" : "தமிழுக்கு மாற்றுக"}
-                className="sm:hidden min-h-[44px] min-w-[44px] h-10 px-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.08] dark:border-white/[0.1] text-xs font-bold text-[var(--color-ink-primary)] flex items-center justify-center gap-1 active:scale-95 transition-all shadow-2xs font-tamil cursor-pointer"
+                className="md:hidden min-h-[44px] min-w-[44px] h-10 px-2 sm:px-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.08] dark:border-white/[0.1] text-xs font-bold text-[var(--color-ink-primary)] flex items-center justify-center gap-1 active:scale-95 transition-all shadow-2xs font-tamil cursor-pointer shrink-0"
               >
                 <span className="text-[var(--color-accent)] font-extrabold">{isTa ? "EN" : "அ"}</span>
-                <span className="text-[11px] font-semibold">{isTa ? "English" : "தமிழ்"}</span>
+                <span className="hidden min-[380px]:inline text-[11px] font-semibold">{isTa ? "English" : "தமிழ்"}</span>
               </button>
 
               {/* 3. Ghost Settings Icon Button (Available in Mobile Drawer on mobile viewports) */}
@@ -230,7 +230,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
                 type="button"
                 onClick={openSettings}
                 aria-label={isTa ? "தள & வாசிப்பு அமைப்புகள்" : "Reading & Display Settings"}
-                className="hidden sm:flex min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl text-[var(--color-ink-secondary)] hover:text-[var(--color-accent)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] items-center justify-center transition-colors cursor-pointer"
+                className="hidden md:flex min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl text-[var(--color-ink-secondary)] hover:text-[var(--color-accent)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] items-center justify-center transition-colors cursor-pointer"
                 title={isTa ? "வாசிப்பு அமைப்புகள்" : "Reading Settings"}
               >
                 <Sliders className="h-4 w-4" />
@@ -245,7 +245,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
                     : `Wishlist (${wishlistCount} items)`
                 }
                 className={cn(
-                  "relative hidden sm:flex min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl items-center justify-center transition-colors cursor-pointer shrink-0",
+                  "relative hidden md:flex min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl items-center justify-center transition-colors cursor-pointer shrink-0",
                   wishlistCount > 0
                     ? "text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
                     : "text-[var(--color-ink-secondary)] hover:text-[var(--color-accent)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
@@ -268,7 +268,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
                     ? `கூடை (${cartCount} நூல்கள்)`
                     : `Shopping Cart (${cartCount} items)`
                 }
-                className="relative hidden sm:flex min-h-[44px] h-10 px-3.5 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white items-center justify-center gap-2 text-xs font-bold transition-all shadow-sm shadow-[var(--color-accent)]/20 cursor-pointer active:scale-95 shrink-0"
+                className="relative hidden md:flex min-h-[44px] h-10 px-3.5 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white items-center justify-center gap-2 text-xs font-bold transition-all shadow-sm shadow-[var(--color-accent)]/20 cursor-pointer active:scale-95 shrink-0"
                 title={isTa ? "கூடை" : "Cart"}
               >
                 <ShoppingBag className="h-4 w-4 text-white shrink-0" />

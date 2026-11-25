@@ -22,8 +22,11 @@ export function HeroSlider({
   const isTa = locale === "ta";
 
   const [selectedIndex, setSelectedIndex] = React.useState(0);
-  const [isPlaying, setIsPlaying] = React.useState(true);
+  const [isUserPaused, setIsUserPaused] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
+  const [isFocused, setIsFocused] = React.useState(false);
+  const [isTouching, setIsTouching] = React.useState(false);
+  const [isTabHidden, setIsTabHidden] = React.useState(false);
   const [isReducedMotion, setIsReducedMotion] = React.useState(false);
   const [progressKey, setProgressKey] = React.useState(0);
 
@@ -53,25 +56,45 @@ export function HeroSlider({
     if (typeof window === "undefined") return;
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setIsReducedMotion(mediaQuery.matches);
-    if (mediaQuery.matches) {
-      setIsPlaying(false);
-      autoplay.current?.stop();
-    }
 
     const handleChange = (e: MediaQueryListEvent) => {
       setIsReducedMotion(e.matches);
-      if (e.matches) {
-        setIsPlaying(false);
-        autoplay.current?.stop();
-      } else {
-        setIsPlaying(true);
-        autoplay.current?.play();
-      }
     };
 
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
+
+  // Track tab visibility
+  React.useEffect(() => {
+    if (typeof document === "undefined") return;
+    setIsTabHidden(document.visibilityState === "hidden");
+
+    const handleVisibilityChange = () => {
+      setIsTabHidden(document.visibilityState === "hidden");
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
+
+  // Central autoplay controller: pause on user pause, hover, touch, focus, hidden tab, or reduced motion
+  const shouldPause =
+    isUserPaused || isHovered || isFocused || isTouching || isTabHidden || isReducedMotion;
+
+  React.useEffect(() => {
+    const plugin = autoplay.current;
+    if (!plugin || !emblaApi) return;
+    try {
+      if (shouldPause) {
+        plugin.stop();
+      } else {
+        plugin.play();
+      }
+    } catch {
+      // Ignore if plugin not yet mounted
+    }
+  }, [shouldPause, emblaApi]);
 
   // Deep-link / query param support (?slide=0..3)
   React.useEffect(() => {
@@ -103,90 +126,51 @@ export function HeroSlider({
     emblaApi.on("select", onSelect);
     emblaApi.on("reInit", onSelect);
 
-    const onPlay = () => setIsPlaying(true);
-    const onStop = () => setIsPlaying(false);
-
-    emblaApi.on("autoplay:play", onPlay);
-    emblaApi.on("autoplay:stop", onStop);
-
     return () => {
       emblaApi.off("select", onSelect);
       emblaApi.off("reInit", onSelect);
-      emblaApi.off("autoplay:play", onPlay);
-      emblaApi.off("autoplay:stop", onStop);
     };
   }, [emblaApi, onSelect]);
 
-  // Pause when browser tab is inactive / hidden
-  React.useEffect(() => {
-    if (typeof document === "undefined") return;
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        autoplay.current?.stop();
-      } else if (!isReducedMotion && isPlaying && !isHovered) {
-        autoplay.current?.play();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [isReducedMotion, isPlaying, isHovered]);
-
-  // Keyboard navigation support
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
+  // Keyboard navigation support when carousel has focus
+  const handleCarouselKeyDown = React.useCallback(
+    (e: React.KeyboardEvent) => {
       if (e.key === "ArrowLeft") {
+        e.preventDefault();
         emblaApi?.scrollPrev();
       } else if (e.key === "ArrowRight") {
+        e.preventDefault();
         emblaApi?.scrollNext();
       }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [emblaApi]);
+    },
+    [emblaApi]
+  );
 
   const scrollPrev = React.useCallback(() => {
-    if (!emblaApi) return;
-    emblaApi.scrollPrev();
+    emblaApi?.scrollPrev();
   }, [emblaApi]);
 
   const scrollNext = React.useCallback(() => {
-    if (!emblaApi) return;
-    emblaApi.scrollNext();
+    emblaApi?.scrollNext();
   }, [emblaApi]);
 
   const scrollTo = React.useCallback(
     (index: number) => {
-      if (!emblaApi) return;
-      emblaApi.scrollTo(index);
+      emblaApi?.scrollTo(index);
     },
     [emblaApi]
   );
 
   const togglePlayPause = React.useCallback(() => {
-    if (!autoplay.current) return;
-    if (isPlaying) {
-      autoplay.current.stop();
-      setIsPlaying(false);
-    } else {
-      autoplay.current.play();
-      setIsPlaying(true);
-    }
-  }, [isPlaying]);
+    setIsUserPaused((prev) => !prev);
+  }, []);
 
-  const isPaused = !isPlaying || isHovered || isReducedMotion;
+  const isPlayingUI = !isUserPaused && !isReducedMotion;
 
   return (
     <section
       className={cn(
-        "relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6",
+        "relative w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2.5 sm:pt-5 overflow-hidden",
         className
       )}
       aria-roledescription="carousel"
@@ -194,15 +178,38 @@ export function HeroSlider({
       aria-live="off"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onFocusCapture={() => setIsFocused(true)}
+      onBlurCapture={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+          setIsFocused(false);
+        }
+      }}
+      onTouchStart={() => setIsTouching(true)}
+      onTouchEnd={() => setIsTouching(false)}
+      onTouchCancel={() => setIsTouching(false)}
+      onKeyDown={handleCarouselKeyDown}
     >
-      {/* Main Viewport Card */}
-      <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-[#121312] border border-black/10 shadow-2xl min-h-[440px] sm:min-h-[520px] lg:min-h-[580px] flex items-end">
-        {/* Embla Viewport */}
-        <div className="overflow-hidden absolute inset-0 w-full h-full" ref={emblaRef}>
-          <div className="flex h-full w-full">
+      {/* Main Viewport Card: Fluid clamp() + dvh height + compact landscape rule to avoid cropping or jumping */}
+      <div
+        className={cn(
+          "relative w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-[#121312] border border-black/10 dark:border-white/10 shadow-2xl flex items-end",
+          "h-[clamp(330px,82vw,440px)] max-h-[75dvh]",
+          "sm:h-[clamp(420px,54vw,520px)] sm:max-h-[78dvh]",
+          "lg:h-[clamp(460px,40vw,580px)] lg:max-h-[82dvh]",
+          "[@media(max-height:500px)]:h-[clamp(250px,70dvh,285px)] [@media(max-height:500px)]:max-h-[75dvh]"
+        )}
+      >
+        {/* Embla Viewport (touch-action: pan-y prevents vertical page scroll hijacking) */}
+        <div
+          className="overflow-hidden absolute inset-0 w-full h-full select-none"
+          ref={emblaRef}
+          style={{ touchAction: "pan-y" }}
+        >
+          <div className="flex h-full w-full" style={{ touchAction: "pan-y" }}>
             {slides.map((slide, index) => {
               const isActive = index === selectedIndex;
               const isEager = index === priorityIndex;
+              const imgSrc = slide.bannerImage;
 
               return (
                 <div
@@ -213,50 +220,46 @@ export function HeroSlider({
                   aria-label={`${index + 1} of ${slides.length}`}
                   aria-hidden={!isActive}
                 >
-                  {/* Background Artwork with Soft Cinematic Ken Burns Scale */}
+                  {/* Background Artwork */}
                   <div className="absolute inset-0 w-full h-full bg-[#161817] overflow-hidden">
-                    <picture className="absolute inset-0 w-full h-full">
-                      {slide.mobileBannerImage && (
-                        <source media="(max-width: 640px)" srcSet={slide.mobileBannerImage} />
+                    <Image
+                      src={imgSrc}
+                      alt={isTa ? slide.titleTa : slide.titleEn}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1280px) 94vw, 1216px"
+                      priority={isEager}
+                      loading={isEager ? "eager" : "lazy"}
+                      className={cn(
+                        "object-cover w-full h-full brightness-[0.98] contrast-[1.03] transition-transform duration-[7000ms] ease-out will-change-transform",
+                        slide.objectPositionMobile || "object-center",
+                        isActive && !isReducedMotion ? "scale-100" : "scale-[1.03]",
+                        isReducedMotion && "transform-none transition-none"
                       )}
-                      <Image
-                        src={slide.bannerImage}
-                        alt={isTa ? slide.titleTa : slide.titleEn}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1280px) 90vw, 1280px"
-                        priority={isEager}
-                        loading={isEager ? "eager" : "lazy"}
-                        className={cn(
-                          "object-cover object-center w-full h-full brightness-[1.03] contrast-[1.02] transition-transform duration-[7000ms] ease-out will-change-transform",
-                          isActive && !isReducedMotion ? "scale-100" : "scale-[1.03]",
-                          isReducedMotion && "transform-none transition-none"
-                        )}
-                      />
-                    </picture>
+                    />
 
-                    {/* Directional Soft Gradient Scrims: Vivid Artwork + Crystal Clear Legibility */}
-                    <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.88)_0%,rgba(0,0,0,0.5)_50%,rgba(0,0,0,0.2)_100%)] pointer-events-none" />
-                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.72)_0%,rgba(0,0,0,0.25)_50%,transparent_80%)] pointer-events-none" />
+                    {/* Multi-stop Directional Gradient Scrims for WCAG AAA Text Legibility */}
+                    <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.95)_0%,rgba(0,0,0,0.78)_48%,rgba(0,0,0,0.38)_82%,rgba(0,0,0,0.18)_100%)] pointer-events-none" />
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.85)_0%,rgba(0,0,0,0.48)_62%,transparent_94%)] pointer-events-none" />
                   </div>
 
                   {/* Editorial Left-Aligned Caption Block */}
-                  <div className="absolute inset-0 z-10 flex flex-col justify-end p-5 sm:p-8 lg:p-14 xl:p-16 !text-white pointer-events-none">
-                    <div className="pointer-events-auto max-w-3xl space-y-2 sm:space-y-3.5 pb-6 sm:pb-0">
-                      {/* Eyebrow Label with Hairline Rule */}
+                  <div className="relative z-10 w-full h-full flex flex-col justify-end p-4 pt-14 pb-16 sm:p-8 sm:pt-16 sm:pb-20 lg:pb-12 lg:pr-80 xl:p-16 xl:pr-80 [@media(max-height:500px)]:p-4 [@media(max-height:500px)]:pt-3 [@media(max-height:500px)]:pb-14 !text-white pointer-events-none">
+                    <div className="pointer-events-auto max-w-2xl space-y-1.5 sm:space-y-2.5 [@media(max-height:500px)]:space-y-1">
+                      {/* Eyebrow Label */}
                       <div
                         className={cn(
-                          "flex items-center gap-2 transition-all duration-700 ease-out",
+                          "flex items-start sm:items-center gap-1.5 sm:gap-2 transition-all duration-700 ease-out pr-24 sm:pr-32 lg:pr-0",
                           isActive
                             ? "opacity-100 translate-y-0"
                             : "opacity-0 translate-y-3 pointer-events-none",
                           isReducedMotion && "transition-none translate-y-0 opacity-100"
                         )}
                       >
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse shadow-xs" />
+                        <span className="h-1.5 w-1.5 mt-1 sm:mt-0 rounded-full bg-emerald-400 animate-pulse shadow-xs shrink-0" />
                         <span
                           className={cn(
-                            "text-[11px] sm:text-xs font-bold text-emerald-300 drop-shadow-md",
-                            isTa ? "font-tamil normal-case tracking-normal" : "font-mono uppercase tracking-[0.14em]"
+                            "text-[clamp(0.65rem,2.1vw,0.75rem)] leading-[1.4] font-bold text-emerald-300 drop-shadow-md",
+                            isTa ? "font-tamil normal-case tracking-normal" : "font-mono uppercase tracking-[0.12em]"
                           )}
                         >
                           {isTa ? slide.eyebrowTa : slide.eyebrowEn}
@@ -267,7 +270,7 @@ export function HeroSlider({
                       {index === 0 ? (
                         <h1
                           className={cn(
-                            "text-xl sm:text-3xl lg:text-4xl leading-snug sm:leading-tight font-bold font-serif font-tamil-serif !text-white tracking-normal drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] transition-all duration-700 delay-[80ms] ease-out text-balance",
+                            "text-[clamp(1.0625rem,3.6vw,2.15rem)] leading-[1.35] [@media(max-height:500px)]:text-[clamp(0.95rem,2.6vw,1.3rem)] font-bold font-serif font-tamil-serif !text-white tracking-normal drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] transition-all duration-700 delay-[80ms] ease-out py-0.5 text-balance",
                             isActive
                               ? "opacity-100 translate-y-0"
                               : "opacity-0 translate-y-3 pointer-events-none",
@@ -279,7 +282,7 @@ export function HeroSlider({
                       ) : (
                         <h2
                           className={cn(
-                            "text-xl sm:text-3xl lg:text-4xl leading-snug sm:leading-tight font-bold font-serif font-tamil-serif !text-white tracking-normal drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] transition-all duration-700 delay-[80ms] ease-out text-balance",
+                            "text-[clamp(1.0625rem,3.6vw,2.15rem)] leading-[1.35] [@media(max-height:500px)]:text-[clamp(0.95rem,2.6vw,1.3rem)] font-bold font-serif font-tamil-serif !text-white tracking-normal drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] transition-all duration-700 delay-[80ms] ease-out py-0.5 text-balance",
                             isActive
                               ? "opacity-100 translate-y-0"
                               : "opacity-0 translate-y-3 pointer-events-none",
@@ -293,7 +296,7 @@ export function HeroSlider({
                       {/* Subtitle / Narrative Description */}
                       <p
                         className={cn(
-                          "text-xs sm:text-base !text-white/95 font-medium leading-relaxed max-w-2xl font-tamil drop-shadow-[0_1px_5px_rgba(0,0,0,0.9)] transition-all duration-700 delay-[160ms] ease-out line-clamp-2 sm:line-clamp-none",
+                          "text-[clamp(0.75rem,2.3vw,0.975rem)] leading-[1.5] !text-white/95 font-medium max-w-2xl font-tamil drop-shadow-[0_1px_5px_rgba(0,0,0,0.9)] transition-all duration-700 delay-[160ms] ease-out line-clamp-2 sm:line-clamp-3 [@media(max-height:500px)]:line-clamp-1 py-0.5",
                           isActive
                             ? "opacity-100 translate-y-0"
                             : "opacity-0 translate-y-3 pointer-events-none",
@@ -303,10 +306,10 @@ export function HeroSlider({
                         {isTa ? slide.subtitleTa : slide.subtitleEn}
                       </p>
 
-                      {/* Editorial Actions (Primary Pill + Secondary Underline Link) */}
+                      {/* Editorial Actions (Primary Pill + Secondary Link) */}
                       <div
                         className={cn(
-                          "flex flex-wrap items-center gap-3 pt-1 sm:pt-2 transition-all duration-700 delay-[240ms] ease-out",
+                          "flex flex-wrap items-center gap-3 pt-1 sm:pt-1.5 [@media(max-height:500px)]:pt-0.5 transition-all duration-700 delay-[240ms] ease-out",
                           isActive
                             ? "opacity-100 translate-y-0"
                             : "opacity-0 translate-y-3 pointer-events-none",
@@ -315,16 +318,18 @@ export function HeroSlider({
                       >
                         <Link
                           href={slide.ctaPrimaryHref}
-                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A6847] hover:bg-emerald-600 text-white text-xs sm:text-sm font-bold font-tamil shadow-lg shadow-emerald-950/60 transition-all active:scale-95 min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                          tabIndex={isActive ? 0 : -1}
+                          className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl bg-[#0A6847] hover:bg-emerald-600 text-white text-xs sm:text-sm font-bold font-tamil shadow-lg shadow-emerald-950/60 transition-all active:scale-95 min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 touch-manipulation leading-normal"
                         >
                           <span>{isTa ? slide.ctaPrimaryLabelTa : slide.ctaPrimaryLabelEn}</span>
-                          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                          <ArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
                         </Link>
 
                         {slide.ctaSecondaryHref && (
                           <Link
                             href={slide.ctaSecondaryHref}
-                            className="hidden sm:inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-white hover:text-emerald-300 transition-colors relative group py-2 min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-sm drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)] font-tamil"
+                            tabIndex={isActive ? 0 : -1}
+                            className="hidden sm:inline-flex [@media(max-height:500px)]:hidden items-center gap-2 text-xs sm:text-sm font-medium text-white hover:text-emerald-300 transition-colors relative group py-2 px-1 min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 rounded-sm drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)] font-tamil touch-manipulation leading-normal"
                           >
                             <span>
                               {isTa ? slide.ctaSecondaryLabelTa : slide.ctaSecondaryLabelEn}
@@ -341,13 +346,14 @@ export function HeroSlider({
           </div>
         </div>
 
-        {/* Top Control Bar: Monospaced Counter & Play/Pause */}
-        <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20 flex items-center gap-2">
+        {/* Top Control Bar: Play/Pause & Slide Counter (>= 44x44px, 8px spacing) */}
+        <div className="absolute top-3 right-3 sm:top-5 sm:right-5 z-20 flex items-center gap-2">
           <button
             type="button"
             onClick={togglePlayPause}
+            aria-pressed={!isPlayingUI}
             aria-label={
-              isPlaying
+              isPlayingUI
                 ? isTa
                   ? "ஸ்லைடு இடைநிறுத்துக (Pause)"
                   : "Pause slideshow"
@@ -355,27 +361,26 @@ export function HeroSlider({
                 ? "ஸ்லைடு இயக்குக (Play)"
                 : "Play slideshow"
             }
-            className="h-11 w-11 sm:h-9 sm:w-9 min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] rounded-full bg-black/25 hover:bg-black/50 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
-            title={isPlaying ? "Pause" : "Play"}
+            className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-full bg-black/55 hover:bg-black/75 backdrop-blur-md border border-white/25 text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 touch-manipulation"
+            title={isPlayingUI ? "Pause" : "Play"}
           >
-            {isPlaying ? (
-              <Pause className="h-3.5 w-3.5" aria-hidden="true" />
+            {isPlayingUI ? (
+              <Pause className="h-4 w-4" aria-hidden="true" />
             ) : (
-              <Play className="h-3.5 w-3.5 ml-0.5" aria-hidden="true" />
+              <Play className="h-4 w-4 ml-0.5" aria-hidden="true" />
             )}
           </button>
 
           <div
-            className="px-3 py-1 rounded-full bg-black/25 backdrop-blur-md text-white/90 text-[11px] font-mono tabular-nums tracking-widest border border-white/20 shadow-sm"
+            className="px-3 py-1.5 min-h-[44px] flex items-center rounded-full bg-black/55 backdrop-blur-md text-white text-[11px] font-mono tabular-nums tracking-widest border border-white/25 shadow-sm"
             aria-label={`Slide ${selectedIndex + 1} of ${slides.length}`}
           >
             {String(selectedIndex + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
           </div>
         </div>
 
-        {/* Bottom Bar: Hairline Progress Line Indicators & Prev/Next Arrows */}
-        <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 z-20 flex items-center gap-4 sm:gap-6">
-          {/* Thin Line Progress Indicators */}
+        {/* Bottom Control Bar: Indicator Tabs & Prev/Next Arrows (>= 44x44px targets, >= 8px spacing) */}
+        <div className="absolute bottom-2.5 right-3 sm:bottom-5 sm:right-5 z-20 flex items-center gap-3 sm:gap-5">
           <div
             className="flex items-center gap-2"
             role="tablist"
@@ -391,9 +396,9 @@ export function HeroSlider({
                   aria-selected={isCurrent}
                   aria-label={`Go to slide ${idx + 1}: ${isTa ? slide.titleTa : slide.titleEn}`}
                   onClick={() => scrollTo(idx)}
-                  className="group relative min-h-[44px] py-3.5 flex items-center cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 rounded-xs"
+                  className="group relative min-h-[44px] min-w-[44px] p-2 flex items-center justify-center cursor-pointer active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 rounded-lg touch-manipulation"
                 >
-                  <span className="block h-[2px] w-8 sm:w-12 rounded-full bg-white/20 overflow-hidden relative transition-colors group-hover:bg-white/40">
+                  <span className="block h-[3px] w-7 sm:w-10 rounded-full bg-white/35 overflow-hidden relative transition-colors group-hover:bg-white/60">
                     {isCurrent ? (
                       <span
                         key={progressKey}
@@ -401,12 +406,12 @@ export function HeroSlider({
                         style={
                           {
                             "--hero-autoplay-duration": `${autoplayDelay}ms`,
-                            animationPlayState: isPaused ? "paused" : "running",
+                            animationPlayState: shouldPause ? "paused" : "running",
                           } as React.CSSProperties
                         }
                       />
                     ) : idx < selectedIndex ? (
-                      <span className="block h-full w-full bg-white/60 rounded-full" />
+                      <span className="block h-full w-full bg-white/80 rounded-full" />
                     ) : (
                       <span className="block h-full w-0" />
                     )}
@@ -416,13 +421,13 @@ export function HeroSlider({
             })}
           </div>
 
-          {/* Minimal Editorial Prev / Next Buttons (hidden on mobile, swipe-driven) */}
-          <div className="hidden sm:flex items-center gap-1.5">
+          {/* Prev / Next Arrows (hidden below md to keep mobile & narrow landscape clear for swipe) */}
+          <div className="hidden md:flex items-center gap-2">
             <button
               type="button"
               onClick={scrollPrev}
               aria-label={isTa ? "முந்தைய ஸ்லைடு" : "Previous slide"}
-              className="h-9 w-9 rounded-full bg-black/25 hover:bg-black/50 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+              className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-full bg-black/55 hover:bg-black/75 backdrop-blur-md border border-white/25 text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 touch-manipulation"
             >
               <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -431,7 +436,7 @@ export function HeroSlider({
               type="button"
               onClick={scrollNext}
               aria-label={isTa ? "அடுத்த ஸ்லைடு" : "Next slide"}
-              className="h-9 w-9 rounded-full bg-black/25 hover:bg-black/50 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+              className="h-11 w-11 min-h-[44px] min-w-[44px] rounded-full bg-black/55 hover:bg-black/75 backdrop-blur-md border border-white/25 text-white flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 touch-manipulation"
             >
               <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </button>
