@@ -27,16 +27,68 @@ import { formatINR } from "@/lib/utils";
 
 export default function AdminDashboardPage() {
   const [booksState, setBooksState] = React.useState(mockAdminBooks);
+  const [booksSource, setBooksSource] = React.useState<"db" | "mock">("mock");
+  const [restockingId, setRestockingId] = React.useState<string | null>(null);
   const [restockedToast, setRestockedToast] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let active = true;
+    fetch("/api/admin/books")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active || !data?.books || !Array.isArray(data.books)) return;
+        setBooksState(
+          data.books.map((b: any) => ({
+            ...mockAdminBooks[0],
+            id: b.id,
+            title: b.title_ta || b.title_en || b.title,
+            titleEn: b.title_en || b.title || b.slug,
+            stock: Number(b.stock || 0),
+            price: Number(b.price || 0),
+            status: (b.stock <= 0 ? "out_of_stock" : b.stock <= 5 ? "low_stock" : "in_stock") as any,
+          }))
+        );
+        setBooksSource("db");
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const lowStockBooks = booksState.filter((b) => b.stock <= 5);
 
-  const handleQuickRestock = (bookId: string, title: string) => {
-    setBooksState((prev) =>
-      prev.map((b) => (b.id === bookId ? { ...b, stock: b.stock + 10, status: "in_stock" } : b))
-    );
-    setRestockedToast(`"${title}" restocked +10 copies`);
-    setTimeout(() => setRestockedToast(null), 3000);
+  const handleQuickRestock = async (bookId: string, currentStock: number, title: string) => {
+    const nextStock = Number(currentStock || 0) + 10;
+    if (booksSource === "mock") {
+      setRestockedToast(`Mock preview only: connect/sign in to Supabase DB to persist "${title}" stock.`);
+      setTimeout(() => setRestockedToast(null), 3500);
+      return;
+    }
+    setRestockingId(bookId);
+    try {
+      const res = await fetch("/api/admin/books", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: bookId, stock: nextStock }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setRestockedToast(err.error || "Failed to update stock in database.");
+        setTimeout(() => setRestockedToast(null), 3500);
+        return;
+      }
+      setBooksState((prev) =>
+        prev.map((b) => (b.id === bookId ? { ...b, stock: nextStock, status: "in_stock" } : b))
+      );
+      setRestockedToast(`"${title}" restocked +10 copies (saved to DB)`);
+      setTimeout(() => setRestockedToast(null), 3000);
+    } catch {
+      setRestockedToast("Network error updating stock.");
+      setTimeout(() => setRestockedToast(null), 3500);
+    } finally {
+      setRestockingId(null);
+    }
   };
 
   return (
@@ -104,7 +156,7 @@ export default function AdminDashboardPage() {
           },
           {
             label: "Catalog Books",
-            value: dashboardStats.totalBooks,
+            value: booksSource === "db" ? booksState.length : dashboardStats.totalBooks,
             sub: `${lowStockBooks.length} low stock`,
             subColor: "text-rose-700",
             icon: BookOpen,
@@ -252,10 +304,11 @@ export default function AdminDashboardPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleQuickRestock(book.id, book.titleEn)}
-                  className="px-3 py-1.5 rounded-lg bg-[#0A6847] hover:bg-[#085036] text-white text-[11px] font-bold transition-all shrink-0 shadow-sm"
+                  disabled={restockingId === book.id}
+                  onClick={() => handleQuickRestock(book.id, book.stock, book.titleEn)}
+                  className="px-3 py-1.5 rounded-lg bg-[#0A6847] hover:bg-[#085036] disabled:opacity-50 text-white text-[11px] font-bold transition-all shrink-0 shadow-sm cursor-pointer"
                 >
-                  +10
+                  {restockingId === book.id ? "..." : "+10"}
                 </button>
               </div>
             ))}

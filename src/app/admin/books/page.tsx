@@ -141,6 +141,7 @@ function cmsStatusBadge(status?: "draft" | "published") {
 
 export default function AdminBooksPage() {
   const [books, setBooks] = React.useState<AdminBook[]>([]);
+  const [usingFallback, setUsingFallback] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState("all");
@@ -152,6 +153,8 @@ export default function AdminBooksPage() {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [editingBook, setEditingBook] = React.useState<AdminBook | null>(null);
   const [saving, setSaving] = React.useState(false);
+  const [formError, setFormError] = React.useState<string | null>(null);
+  const [updatingStockId, setUpdatingStockId] = React.useState<string | null>(null);
   const [activeLangTab, setActiveLangTab] = React.useState<AppLocale>("en");
   const initialLangSnapshotRef = React.useRef({
     en: { titleEn: "", authorEn: "", descriptionEn: "", publisherEn: "", quoteEn: "", coverAltEn: "" },
@@ -204,11 +207,14 @@ export default function AdminBooksPage() {
         const data = await res.json();
         if (data.books && Array.isArray(data.books)) {
           setBooks(data.books.map(mapSupabaseBook));
+          setUsingFallback(false);
+          setLoading(false);
           return;
         }
       }
     } catch {}
     setBooks(mockAdminBooks);
+    setUsingFallback(true);
     setLoading(false);
   }, []);
 
@@ -291,12 +297,14 @@ export default function AdminBooksPage() {
 
   const handleOpenAddModal = () => {
     setEditingBook(null);
+    setFormError(null);
     resetForm();
     setIsModalOpen(true);
   };
 
   const handleOpenEditModal = (book: AdminBook) => {
     setEditingBook(book);
+    setFormError(null);
     const hasRealCover = Boolean(book.image && book.image !== BOOK_PLACEHOLDER_IMAGE);
     const titleEnVal = book.titleEn || "";
     const titleTaVal = book.titleTa || (book.title !== book.titleEn ? book.title : "");
@@ -506,11 +514,64 @@ export default function AdminBooksPage() {
     );
   }, [activeLangTab, formData]);
 
+  const handleQuickStockAdjust = async (book: AdminBook, delta: number) => {
+    if (usingFallback) {
+      showToast("Cannot change stock on fallback mock data — ensure Supabase books table is loaded.");
+      return;
+    }
+    const nextStock = Math.max(0, Number(book.stock || 0) + delta);
+    setUpdatingStockId(book.id);
+    try {
+      const res = await fetch("/api/admin/books", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: book.id, stock: nextStock }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showToast(data.error || "Failed to update stock quantity.");
+        return;
+      }
+      const updated = data.book ? mapSupabaseBook(data.book) : null;
+      setBooks((prev) =>
+        prev.map((b) =>
+          b.id === book.id
+            ? updated || {
+                ...b,
+                stock: nextStock,
+                status: (nextStock <= 0 ? "out_of_stock" : nextStock <= 5 ? "low_stock" : "in_stock") as BookStatus,
+                updatedAt: new Date().toISOString(),
+              }
+            : b
+        )
+      );
+      showToast(`Stock updated to ${nextStock} copies.`);
+    } catch {
+      showToast("Network error updating stock quantity.");
+    } finally {
+      setUpdatingStockId(null);
+    }
+  };
+
   const handleSaveBook = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.titleEn.trim() || !formData.authorEn.trim()) {
+    setFormError(null);
+
+    const hasTitle = Boolean(formData.titleEn.trim() || (editingBook && formData.titleTa.trim()));
+    const hasAuthor = Boolean(formData.authorEn.trim() || (editingBook && formData.authorTa.trim()));
+
+    if (!editingBook && (!formData.titleEn.trim() || !formData.authorEn.trim())) {
+      const msg = "English title and English author are required.";
       setActiveLangTab("en");
-      showToast("English title and English author are required.");
+      setFormError(msg);
+      showToast(msg);
+      return;
+    }
+    if (editingBook && (!hasTitle || !hasAuthor)) {
+      const msg = "Book title and author cannot be empty.";
+      setActiveLangTab("en");
+      setFormError(msg);
+      showToast(msg);
       return;
     }
     if (
@@ -518,18 +579,24 @@ export default function AdminBooksPage() {
       formData.cmsStatus === "published" &&
       (!formData.titleTa.trim() || !formData.authorTa.trim())
     ) {
+      const msg = "Tamil title and Tamil author are required before publishing.";
       setActiveLangTab("ta");
-      showToast("Tamil title and Tamil author are required before publishing.");
+      setFormError(msg);
+      showToast(msg);
       return;
     }
-    const cleanSlug = (formData.slug.trim() || generateAsciiSlug(formData.titleEn, "book")).toLowerCase();
+    const cleanSlug = (formData.slug.trim() || generateAsciiSlug(formData.titleEn || formData.titleTa, "book")).toLowerCase();
     if (!isAsciiSlug(cleanSlug)) {
-      showToast("Slug must contain only ASCII lowercase letters, numbers, and hyphens.");
+      const msg = "Slug must contain only ASCII lowercase letters, numbers, and hyphens.";
+      setFormError(msg);
+      showToast(msg);
       return;
     }
     const cleanCoverUrl = formData.image.trim();
-    if (!cleanCoverUrl || cleanCoverUrl === BOOK_PLACEHOLDER_IMAGE) {
-      showToast("Front cover (outside) image is required.");
+    if (!editingBook && (!cleanCoverUrl || cleanCoverUrl === BOOK_PLACEHOLDER_IMAGE)) {
+      const msg = "Front cover (outside) image is required.";
+      setFormError(msg);
+      showToast(msg);
       return;
     }
     setSaving(true);
@@ -537,10 +604,10 @@ export default function AdminBooksPage() {
     const requestPayload = {
       slug: cleanSlug,
       title: formData.titleTa.trim() || formData.titleEn.trim(),
-      title_en: formData.titleEn.trim(),
+      title_en: formData.titleEn.trim() || null,
       title_ta: formData.titleTa.trim() || null,
       author: formData.authorTa.trim() || formData.authorEn.trim(),
-      author_en: formData.authorEn.trim(),
+      author_en: formData.authorEn.trim() || null,
       author_ta: formData.authorTa.trim() || null,
       description: formData.descriptionTa.trim() || formData.descriptionEn.trim() || null,
       description_en: formData.descriptionEn.trim() || null,
@@ -552,9 +619,13 @@ export default function AdminBooksPage() {
       quote_ta: formData.quoteTa.trim() || null,
       price: Number(formData.price),
       stock: Number(formData.stock),
-      cover_image_url: cleanCoverUrl,
-      cover_image_path: formData.cover_image_path || null,
-      cover_is_front: true,
+      ...(cleanCoverUrl && cleanCoverUrl !== BOOK_PLACEHOLDER_IMAGE
+        ? {
+            cover_image_url: cleanCoverUrl,
+            cover_image_path: formData.cover_image_path || null,
+            cover_is_front: true,
+          }
+        : {}),
       cover_alt_en: formData.coverAltEn.trim() || null,
       cover_alt_ta: formData.coverAltTa.trim() || null,
       gallery_images: formData.galleryImages,
@@ -614,8 +685,10 @@ export default function AdminBooksPage() {
           showToast("Book updated successfully.");
           setIsModalOpen(false);
         } else {
-          const err = await res.json();
-          showToast(err.error || "Failed to update book.");
+          const err = await res.json().catch(() => ({}));
+          const msg = err.error || "Failed to update book.";
+          setFormError(msg);
+          showToast(msg);
         }
       } else {
         const res = await fetch("/api/admin/books", {
@@ -630,11 +703,14 @@ export default function AdminBooksPage() {
           showToast("New book added to catalog.");
           setIsModalOpen(false);
         } else {
-          const err = await res.json();
-          showToast(err.error || "Failed to create book.");
+          const err = await res.json().catch(() => ({}));
+          const msg = err.error || "Failed to create book.";
+          setFormError(msg);
+          showToast(msg);
         }
       }
     } catch {
+      setFormError("Network error saving book.");
       showToast("Network error saving book.");
     } finally {
       setSaving(false);
@@ -724,9 +800,18 @@ export default function AdminBooksPage() {
     <div className="space-y-6">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-[#1A1A1A] text-white px-4 py-3 rounded-2xl shadow-xl text-xs font-medium animate-in fade-in slide-in-from-bottom-3 duration-200">
+        <div className="fixed bottom-6 right-6 z-[60] flex items-center gap-2 bg-[#1A1A1A] text-white px-4 py-3 rounded-2xl shadow-xl text-xs font-medium animate-in fade-in slide-in-from-bottom-3 duration-200">
           <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {usingFallback && (
+        <div className="bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3 flex items-start gap-2.5 text-xs text-rose-900">
+          <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+          <span>
+            Showing offline fallback books (<code className="font-mono">mockAdminBooks</code>) because <code className="font-mono">/api/admin/books</code> could not load from Supabase. Stock/book edits cannot persist to the database until the session &amp; Supabase connection are active.
+          </span>
         </div>
       )}
 
@@ -911,7 +996,27 @@ export default function AdminBooksPage() {
                       {formatINR(book.price)}
                     </td>
                     <td className="py-3.5 px-4 text-center font-mono font-bold">
-                      {book.stock}
+                      <div className="inline-flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          disabled={updatingStockId === book.id || book.stock <= 0}
+                          onClick={() => handleQuickStockAdjust(book, -1)}
+                          aria-label={`Decrease stock for ${book.titleEn || book.title}`}
+                          className="h-7 w-7 rounded-lg border border-gray-200 bg-white hover:bg-gray-100 disabled:opacity-40 text-gray-700 font-bold flex items-center justify-center cursor-pointer"
+                        >
+                          -
+                        </button>
+                        <span className="w-8 text-center tabular-nums">{book.stock}</span>
+                        <button
+                          type="button"
+                          disabled={updatingStockId === book.id}
+                          onClick={() => handleQuickStockAdjust(book, 1)}
+                          aria-label={`Increase stock for ${book.titleEn || book.title}`}
+                          className="h-7 w-7 rounded-lg border border-gray-200 bg-white hover:bg-gray-100 disabled:opacity-40 text-gray-700 font-bold flex items-center justify-center cursor-pointer"
+                        >
+                          +
+                        </button>
+                      </div>
                     </td>
                     <td className="py-3.5 px-4">
                       <button
@@ -1020,6 +1125,15 @@ export default function AdminBooksPage() {
             </div>
 
             <form onSubmit={handleSaveBook} className="p-6 space-y-5">
+              {formError && (
+                <div
+                  role="alert"
+                  className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-start gap-2"
+                >
+                  <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                  <span>{formError}</span>
+                </div>
+              )}
               {/* Front Cover (Outside) Upload — Required */}
               <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/20 p-4 space-y-3">
                 <div className="flex items-center justify-between gap-2">
@@ -1076,7 +1190,7 @@ export default function AdminBooksPage() {
                     />
                     <input
                       type="text"
-                      required
+                      required={!editingBook}
                       value={formData.image}
                       onChange={(e) => {
                         const nextVal = e.target.value;

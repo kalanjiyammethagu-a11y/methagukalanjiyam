@@ -84,6 +84,7 @@ const initialFormData: VideoFormData = {
 
 export default function AdminVideosPage() {
   const [videos, setVideos] = React.useState<AdminVideoItem[]>([]);
+  const [usingFallback, setUsingFallback] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<"all" | "published" | "draft" | "missing_tamil">("all");
@@ -123,6 +124,7 @@ export default function AdminVideosPage() {
         const data = await res.json();
         if (data.videos) {
           setVideos(data.videos);
+          setUsingFallback(Boolean(data.usingFallback));
         }
       }
     } catch (err) {
@@ -190,13 +192,14 @@ export default function AdminVideosPage() {
       setVideoUploadProgress(5);
 
       // Step 1: Request signed upload URL from admin API
+      const resolvedMime = file.type || "video/mp4";
       const signRes = await fetch("/api/admin/videos/signed-upload-url", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           filename: file.name,
-          contentType: file.type || "video/mp4",
-          fileSize: file.size,
+          mimeType: resolvedMime,
+          sizeBytes: file.size,
         }),
       });
 
@@ -256,19 +259,23 @@ export default function AdminVideosPage() {
   // Toggle Video Status (published / draft)
   const handleToggleStatus = async (videoId: string, currentStatus: "published" | "draft") => {
     const nextStatus = currentStatus === "published" ? "draft" : "published";
-    setVideos((prev) =>
-      prev.map((v) => (v.id === videoId ? { ...v, status: nextStatus, is_active: nextStatus === "published" } : v))
-    );
-    showToast(`Video marked as ${nextStatus}!`);
-
     try {
-      await fetch("/api/admin/videos", {
+      const res = await fetch("/api/admin/videos", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: videoId, status: nextStatus, is_active: nextStatus === "published" }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || "Failed to update video status in database.");
+        return;
+      }
+      setVideos((prev) =>
+        prev.map((v) => (v.id === videoId ? { ...v, status: nextStatus, is_active: nextStatus === "published" } : v))
+      );
+      showToast(`Video marked as ${nextStatus}!`);
     } catch {
-      fetchVideos();
+      showToast("Network error updating video status.");
     }
   };
 
@@ -446,9 +453,14 @@ export default function AdminVideosPage() {
     if (!deleteTarget) return;
 
     try {
-      await fetch(`/api/admin/videos?id=${deleteTarget.id}`, {
+      const res = await fetch(`/api/admin/videos?id=${deleteTarget.id}`, {
         method: "DELETE",
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || "Failed to delete video from database.");
+        return;
+      }
       setVideos((prev) => prev.filter((v) => v.id !== deleteTarget.id));
       showToast("Video and associated storage assets deleted.");
     } catch {
@@ -484,9 +496,18 @@ export default function AdminVideosPage() {
     <div className="space-y-6">
       {/* Toast Alert */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-gray-900 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-gray-700 animate-in fade-in slide-in-from-bottom-3 duration-300">
+        <div className="fixed bottom-6 right-6 z-[60] bg-gray-900 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-gray-700 animate-in fade-in slide-in-from-bottom-3 duration-300">
           <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
           <span className="text-xs font-semibold">{toastMessage}</span>
+        </div>
+      )}
+
+      {usingFallback && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 flex items-start gap-2.5 text-xs text-amber-900">
+          <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+          <span>
+            Showing static fallback videos because the Supabase <code className="font-mono">videos</code> table is currently empty or migrations (<code className="font-mono">015/017/019</code>) have not been executed yet. Use <strong>Add Video Entry</strong> to publish a new database-backed video, or run the migrations first to manage existing ones.
+          </span>
         </div>
       )}
 
@@ -837,7 +858,7 @@ export default function AdminVideosPage() {
                     <input
                       ref={videoInputRef}
                       type="file"
-                      accept="video/mp4,video/webm,video/ogg"
+                      accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
                       onChange={handleVideoUpload}
                       className="hidden"
                     />

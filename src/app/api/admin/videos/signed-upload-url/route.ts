@@ -12,13 +12,15 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { mimeType, sizeBytes } = body;
+    const mimeType = body.mimeType || body.contentType;
+    const rawSize = body.sizeBytes ?? body.fileSize;
+    const sizeBytes = typeof rawSize === "number" ? rawSize : Number(rawSize);
 
     if (!mimeType || typeof mimeType !== "string") {
       return NextResponse.json({ error: "Missing or invalid mimeType" }, { status: 400 });
     }
 
-    if (!sizeBytes || typeof sizeBytes !== "number" || sizeBytes <= 0) {
+    if (!Number.isFinite(sizeBytes) || sizeBytes <= 0) {
       return NextResponse.json({ error: "Missing or invalid sizeBytes" }, { status: 400 });
     }
 
