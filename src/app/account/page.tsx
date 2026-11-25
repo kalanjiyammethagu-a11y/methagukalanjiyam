@@ -38,6 +38,13 @@ import { GlassPanel } from "@/components/ui/GlassPanel";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
 import { allBooks } from "@/data/books";
+import { localized } from "@/lib/i18n";
+import {
+  SHIPMENT_STATUS_LABELS,
+  ST_COURIER_TRACKING_URL,
+  normalizeShipmentStatus,
+  resolveCourierTrackingUrl,
+} from "@/lib/tracking";
 import { formatINR } from "@/lib/utils";
 import { getGeneralWhatsAppUrl } from "@/lib/whatsapp";
 
@@ -778,56 +785,82 @@ function AccountContent() {
                   </h2>
 
                   <div className="space-y-3">
-                    {userOrders.map((o: any) => (
-                      <GlassPanel key={o.id} className="p-5 rounded-2xl border border-black/10 dark:border-white/10 space-y-3">
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <span className="text-xs font-mono font-bold text-neutral-900 dark:text-zinc-100 block">
-                              {o.order_number}
-                            </span>
-                            <span className="text-[11px] text-neutral-500 dark:text-zinc-400 font-mono">
-                              {new Date(o.created_at).toLocaleDateString()}
-                            </span>
+                    {userOrders.map((o: any) => {
+                      const courierName = o.courier_name || o.courier || "ST Courier";
+                      const trackingId = o.tracking_id || o.tracking_number;
+                      const shipStatus = normalizeShipmentStatus(o.shipment_status, o.status, trackingId);
+                      const shipStatusLabel = SHIPMENT_STATUS_LABELS[shipStatus][locale];
+                      const trackUrl =
+                        o.tracking_url || resolveCourierTrackingUrl(courierName) || ST_COURIER_TRACKING_URL;
+                      const customerNote = localized(o, "customer_note", locale);
+
+                      return (
+                        <GlassPanel key={o.id} className="p-5 rounded-2xl border border-black/10 dark:border-white/10 space-y-3">
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <span className="text-xs font-mono font-bold text-neutral-900 dark:text-zinc-100 block">
+                                {o.order_number}
+                              </span>
+                              <span className="text-[11px] text-neutral-500 dark:text-zinc-400 font-mono">
+                                {new Date(o.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div className="text-right space-y-1">
+                              <span className="text-xs font-bold font-mono text-[#0A6847] dark:text-emerald-400 block">
+                                {formatINR(o.total_amount)}
+                              </span>
+                              <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-tamil">
+                                {shipStatusLabel}
+                              </span>
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <span className="text-xs font-bold font-mono text-[#0A6847] dark:text-emerald-400 block">
-                              {formatINR(o.total_amount)}
-                            </span>
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
-                              {o.status}
-                            </span>
+
+                          <div className="text-xs text-neutral-600 dark:text-zinc-300 font-tamil border-t border-black/5 dark:border-white/5 pt-2">
+                            <p className="line-clamp-1">
+                              {o.order_items?.map((item: any) => `${item.title} (x${item.quantity})`).join(", ")}
+                            </p>
+                            {customerNote && (
+                              <p className="text-[11px] text-neutral-500 dark:text-zinc-400 mt-1 line-clamp-2 leading-relaxed">
+                                {customerNote}
+                              </p>
+                            )}
                           </div>
-                        </div>
 
-                        <div className="text-xs text-neutral-600 dark:text-zinc-300 font-tamil border-t border-black/5 dark:border-white/5 pt-2">
-                          <p className="line-clamp-1">
-                            {o.order_items?.map((item: any) => `${item.title} (x${item.quantity})`).join(", ")}
-                          </p>
-                        </div>
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-black/5 dark:border-white/5 text-xs">
+                            {trackingId ? (
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-[11px] text-neutral-700 dark:text-zinc-200 font-mono flex items-center gap-1">
+                                  <Truck className="h-3.5 w-3.5 text-[#0A6847] dark:text-emerald-400" />
+                                  <span>{courierName}: {trackingId}</span>
+                                </span>
+                                <a
+                                  href={trackUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-[11px] font-bold text-[#0A6847] dark:text-emerald-300 hover:underline"
+                                >
+                                  <span>{isTa ? "கண்காணிக்க" : "Track"}</span>
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              </div>
+                            ) : (
+                              <span className="text-[11px] text-amber-700 dark:text-amber-400 font-tamil flex items-center gap-1">
+                                <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                                <span>{shipStatusLabel}</span>
+                              </span>
+                            )}
 
-                        <div className="flex items-center justify-between gap-2 pt-2 border-t border-black/5 dark:border-white/5 text-xs">
-                          {o.tracking_number ? (
-                            <span className="text-[11px] text-neutral-600 dark:text-zinc-300 font-mono flex items-center gap-1">
-                              <Truck className="h-3.5 w-3.5 text-[#0A6847] dark:text-emerald-400" />
-                              <span>{o.courier || "Post"}: {o.tracking_number}</span>
-                            </span>
-                          ) : (
-                            <span className="text-[11px] text-amber-700 dark:text-amber-400 font-tamil flex items-center gap-1">
-                              <Clock className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
-                              <span>{isTa ? "பார்சல் தயாராகிறது" : "Preparing dispatch"}</span>
-                            </span>
-                          )}
-
-                          <Link
-                            href={`/orders/${o.order_number}`}
-                            className="font-bold text-[#0A6847] dark:text-emerald-400 hover:underline flex items-center gap-1 font-tamil"
-                          >
-                            <span>{isTa ? "ரசீது காண்க" : "View Receipt"}</span>
-                            <ArrowRight className="h-3.5 w-3.5" />
-                          </Link>
-                        </div>
-                      </GlassPanel>
-                    ))}
+                            <Link
+                              href={`/orders/${o.order_number}`}
+                              className="font-bold text-[#0A6847] dark:text-emerald-400 hover:underline flex items-center gap-1 font-tamil"
+                            >
+                              <span>{isTa ? "ரசீது & விபரம்" : "View Receipt & Timeline"}</span>
+                              <ArrowRight className="h-3.5 w-3.5" />
+                            </Link>
+                          </div>
+                        </GlassPanel>
+                      );
+                    })}
                   </div>
                 </div>
               )}

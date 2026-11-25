@@ -4,6 +4,8 @@
    Backend-ready: These types mirror the expected Supabase schema.
    ============================================================ */
 
+import type { ShipmentEventItem, ShipmentStatus } from "@/lib/tracking";
+
 export type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
 export type PaymentMethod = "whatsapp_cod" | "upi" | "bank_transfer";
 export type ArticleStatus = "draft" | "published" | "archived";
@@ -24,6 +26,16 @@ export interface AdminOrder {
   paymentMethod: PaymentMethod;
   trackingNumber?: string;
   courierPartner?: string;
+  courierName: string;
+  trackingId?: string;
+  shipmentStatus: ShipmentStatus;
+  trackingUrl?: string;
+  shippedAt?: string | null;
+  estimatedDeliveryDate?: string | null;
+  customerNoteEn?: string | null;
+  customerNoteTa?: string | null;
+  internalNote?: string | null;
+  shipmentEvents?: ShipmentEventItem[];
   notes?: string;
   createdAt: string;
   updatedAt: string;

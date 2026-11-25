@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ASCII_SLUG_REGEX, REQUIRE_BOTH_LANGUAGES_TO_PUBLISH } from "@/lib/i18n";
+import { SHIPMENT_STATUSES, validateTrackingId } from "@/lib/tracking";
 
 const asciiSlugField = z
   .string()
@@ -381,3 +382,44 @@ export const adminImageFolderSchema = z.enum([
   "video-posters",
   "posters",
 ]);
+
+// ============================================================================
+// ORDER TRACKING & SHIPMENT VALIDATOR
+// ============================================================================
+export const adminOrderTrackingUpdateSchema = z
+  .object({
+    orderId: z.string().uuid("Invalid order ID"),
+    status: z.enum(["pending", "confirmed", "shipped", "dispatched", "delivered", "cancelled", "returned"]).optional(),
+    paymentStatus: z.enum(["pending", "paid", "failed", "refunded"]).optional(),
+    courierName: z.string().trim().min(1).max(80).optional(),
+    courier: z.string().trim().max(80).optional(),
+    trackingId: z.string().optional().nullable(),
+    trackingNumber: z.string().optional().nullable(),
+    shipmentStatus: z.enum(SHIPMENT_STATUSES).optional(),
+    shippedAt: z.string().trim().optional().nullable(),
+    estimatedDeliveryDate: z
+      .string()
+      .trim()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Estimated delivery date must be YYYY-MM-DD")
+      .or(z.literal(""))
+      .optional()
+      .nullable(),
+    customerNoteEn: z.string().trim().max(500).optional().nullable(),
+    customerNoteTa: z.string().trim().max(500).optional().nullable(),
+    internalNote: z.string().trim().max(1000).optional().nullable(),
+    adminNotes: z.string().trim().max(1000).optional().nullable(),
+    eventNote: z.string().trim().max(500).optional().nullable(),
+  })
+  .superRefine((data, ctx) => {
+    const rawTracking = data.trackingId !== undefined ? data.trackingId : data.trackingNumber;
+    if (rawTracking !== undefined) {
+      const check = validateTrackingId(rawTracking);
+      if (!check.valid) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["trackingId"],
+          message: check.error || "Invalid tracking ID",
+        });
+      }
+    }
+  });

@@ -13,12 +13,31 @@ import {
   ExternalLink,
   AlertCircle,
   Loader2,
+  Copy,
+  Check,
+  Clock,
+  ShieldCheck,
 } from "lucide-react";
 import { ArchivalWaxSealIcon } from "@/components/ui/Icons";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { formatINR } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
+import { localized } from "@/lib/i18n";
+import {
+  SHIPMENT_STATUS_LABELS,
+  ST_COURIER_TRACKING_URL,
+  normalizeShipmentStatus,
+  resolveCourierTrackingUrl,
+} from "@/lib/tracking";
+
+interface ShipmentEventView {
+  id: string;
+  order_id: string;
+  status: string;
+  note: string | null;
+  created_at: string;
+}
 
 interface OrderDetail {
   id: string;
@@ -30,11 +49,20 @@ interface OrderDetail {
   currency: string;
   status: string;
   payment_status: string;
-  tracking_number: string | null;
+  is_authorized?: boolean;
+  courier_name?: string | null;
   courier: string | null;
+  tracking_id?: string | null;
+  tracking_number: string | null;
+  shipment_status?: string | null;
   tracking_url: string | null;
+  shipped_at?: string | null;
+  estimated_delivery_date?: string | null;
   dispatched_at: string | null;
   delivered_at: string | null;
+  customer_note_en?: string | null;
+  customer_note_ta?: string | null;
+  shipment_events?: ShipmentEventView[];
   created_at: string;
   shipping_address: {
     full_name?: string;
@@ -64,15 +92,19 @@ export default function OrderConfirmationPage() {
   const [order, setOrder] = React.useState<OrderDetail | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [phoneVerifyInput, setPhoneVerifyInput] = React.useState("");
+  const [verifyingPhone, setVerifyingPhone] = React.useState(false);
+  const [copiedTracking, setCopiedTracking] = React.useState(false);
 
-  React.useEffect(() => {
-    if (!orderNumber) return;
-
-    async function fetchOrder() {
-      setLoading(true);
+  const loadOrder = React.useCallback(
+    async (phoneSuffix?: string) => {
+      if (!orderNumber) return;
+      if (phoneSuffix) setVerifyingPhone(true);
+      else setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/orders/${orderNumber}`);
+        const qs = phoneSuffix ? `?phone=${encodeURIComponent(phoneSuffix)}` : "";
+        const res = await fetch(`/api/orders/${encodeURIComponent(orderNumber)}${qs}`);
         const data = await res.json();
         if (!res.ok) {
           throw new Error(data.error || "Order not found");
@@ -82,11 +114,23 @@ export default function OrderConfirmationPage() {
         setError(err.message || "Failed to load order receipt");
       } finally {
         setLoading(false);
+        setVerifyingPhone(false);
       }
-    }
+    },
+    [orderNumber]
+  );
 
-    fetchOrder();
-  }, [orderNumber]);
+  React.useEffect(() => {
+    loadOrder();
+  }, [loadOrder]);
+
+  const handleCopyTracking = async (tid: string) => {
+    try {
+      await navigator.clipboard.writeText(tid);
+      setCopiedTracking(true);
+      setTimeout(() => setCopiedTracking(false), 2000);
+    } catch {}
+  };
 
   const handlePrint = () => {
     window.print();
@@ -190,39 +234,198 @@ export default function OrderConfirmationPage() {
           </div>
         </div>
 
-        {/* Live Postal Tracking Notice (if dispatched) */}
-        {order.tracking_number && (
-          <GlassPanel className="p-5 sm:p-6 rounded-2xl border-emerald-500/30 bg-emerald-50/60 dark:bg-emerald-950/20 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center">
-                  <Truck className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-neutral-900 font-tamil">
-                    {isTa ? "பார்சல் தபாலில் அனுப்பப்பட்டுள்ளது (Dispatched)" : "Parcel Dispatched via Courier"}
-                  </h3>
-                  <p className="text-xs text-neutral-600 font-tamil">
-                    {order.courier || "ST Courier / Speed Post"} • AWB:{" "}
-                    <span className="font-mono font-bold text-neutral-900">{order.tracking_number}</span>
-                  </p>
-                </div>
-              </div>
+        {/* Customer Shipment & Courier Tracking Panel */}
+        {(() => {
+          const activeTrackingId = order.tracking_id || order.tracking_number;
+          const activeCourier = order.courier_name || order.courier || "ST Courier";
+          const shipmentStatus = normalizeShipmentStatus(
+            order.shipment_status,
+            order.status,
+            activeTrackingId
+          );
+          const statusLabel = SHIPMENT_STATUS_LABELS[shipmentStatus][locale];
+          const externalTrackUrl =
+            order.tracking_url || resolveCourierTrackingUrl(activeCourier) || ST_COURIER_TRACKING_URL;
+          const localizedNote = localized(
+            {
+              customer_note_en: order.customer_note_en,
+              customer_note_ta: order.customer_note_ta,
+            },
+            "customer_note",
+            locale
+          );
+          const events = order.shipment_events || [];
 
-              {order.tracking_url && (
+          if (order.is_authorized === false) {
+            return (
+              <GlassPanel className="p-5 sm:p-6 rounded-2xl border-amber-500/30 bg-amber-50/70 space-y-3">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className="h-5 w-5 text-amber-800 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-neutral-900 font-tamil">
+                      {isTa
+                        ? "பார்சல் கண்காணிப்பு மற்றும் முகவரியைக் காண உறுதிப்படுத்தவும்"
+                        : "Verify Your Phone Digits to View Courier Tracking & Address"}
+                    </h3>
+                    <p className="text-xs text-neutral-600 font-tamil leading-relaxed">
+                      {isTa
+                        ? `ஆர்டர் நிலை: ${statusLabel}. முழு கண்காணிப்பு எண் மற்றும் நிகழ்வுகளைக் காண உங்கள் தொலைபேசி எண்ணின் கடைசி 4 இலக்கங்களை உள்ளிடவும்.`
+                        : `Current shipment status: ${statusLabel}. Enter the last 4 digits of your order phone number (or sign in) to unlock tracking details.`}
+                    </p>
+                  </div>
+                </div>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (phoneVerifyInput.trim().length >= 4) {
+                      loadOrder(phoneVerifyInput.trim());
+                    }
+                  }}
+                  className="flex flex-wrap gap-2"
+                >
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    value={phoneVerifyInput}
+                    onChange={(e) => setPhoneVerifyInput(e.target.value)}
+                    placeholder={isTa ? "கடைசி 4 இலக்கங்கள் (எ.கா. 4321)" : "Last 4 digits of phone"}
+                    className="flex-1 min-w-[180px] px-3 py-2 rounded-xl border border-black/15 bg-white text-xs font-mono min-h-[44px]"
+                  />
+                  <button
+                    type="submit"
+                    disabled={verifyingPhone || phoneVerifyInput.trim().length < 4}
+                    className="px-4 py-2 rounded-xl bg-[#0A6847] hover:bg-[#085237] disabled:opacity-60 text-white text-xs font-bold min-h-[44px] cursor-pointer"
+                  >
+                    {verifyingPhone
+                      ? isTa
+                        ? "சரிபார்க்கிறது..."
+                        : "Verifying..."
+                      : isTa
+                        ? "தகவல்களைத் திற"
+                        : "Unlock Tracking"}
+                  </button>
+                </form>
+              </GlassPanel>
+            );
+          }
+
+          return (
+            <GlassPanel className="p-5 sm:p-6 rounded-2xl border-emerald-500/30 bg-emerald-50/60 dark:bg-emerald-950/20 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                    <Truck className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-sm font-bold text-neutral-900 font-tamil leading-snug">
+                        {activeCourier}
+                      </h3>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 text-[11px] font-bold font-tamil">
+                        {statusLabel}
+                      </span>
+                    </div>
+
+                    {activeTrackingId ? (
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-700">
+                        <span>{isTa ? "கண்காணிப்பு எண் (Tracking ID):" : "Tracking ID:"}</span>
+                        <span className="font-mono font-bold text-neutral-950 bg-white px-2 py-0.5 rounded border border-emerald-200">
+                          {activeTrackingId}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyTracking(activeTrackingId)}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded border border-black/10 bg-white hover:bg-neutral-50 text-[11px] font-semibold cursor-pointer min-h-[32px]"
+                        >
+                          {copiedTracking ? (
+                            <Check className="h-3 w-3 text-emerald-700" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                          <span>{copiedTracking ? (isTa ? "நகலெடுக்கப்பட்டது" : "Copied") : isTa ? "நகலெடு" : "Copy"}</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-neutral-600 font-tamil">
+                        {isTa
+                          ? "உங்கள் பார்சல் தயார்படுத்தப்படுகிறது; அனுப்பப்பட்டதும் கண்காணிப்பு எண் இங்கு வெளியிடப்படும்."
+                          : "Your parcel is being prepared; your ST Courier tracking ID will appear here once dispatched."}
+                      </p>
+                    )}
+
+                    {(order.shipped_at || order.dispatched_at || order.estimated_delivery_date) && (
+                      <div className="flex flex-wrap gap-4 text-[11px] text-neutral-600 font-mono pt-0.5">
+                        {(order.shipped_at || order.dispatched_at) && (
+                          <span>
+                            {isTa ? "அனுப்பப்பட்ட தேதி:" : "Shipped:"}{" "}
+                            {new Date(order.shipped_at || order.dispatched_at!).toLocaleDateString()}
+                          </span>
+                        )}
+                        {order.estimated_delivery_date && (
+                          <span>
+                            {isTa ? "எதிர்பார்க்கப்படும் வருகை:" : "Est. Delivery:"}{" "}
+                            {order.estimated_delivery_date}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <a
-                  href={order.tracking_url}
+                  href={externalTrackUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all"
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all min-h-[44px] shrink-0"
                 >
-                  <span>{isTa ? "நேரடி டிராக்கிங்" : "Track Parcel"}</span>
+                  <span>{isTa ? `${activeCourier} இணையத்தில் கண்காணிக்க` : `Track on ${activeCourier}`}</span>
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
+              </div>
+
+              {localizedNote && (
+                <div className="p-3 rounded-xl bg-white/90 border border-emerald-200 text-xs text-neutral-800 font-tamil leading-relaxed">
+                  <span className="font-bold text-emerald-900 mr-1.5">
+                    {isTa ? "குறிப்பு:" : "Dispatch Note:"}
+                  </span>
+                  {localizedNote}
+                </div>
               )}
-            </div>
-          </GlassPanel>
-        )}
+
+              {events.length > 0 && (
+                <div className="pt-3 border-t border-emerald-200/80 space-y-2.5">
+                  <h4 className="text-xs font-bold text-neutral-800 flex items-center gap-1.5 font-tamil">
+                    <Clock className="h-3.5 w-3.5 text-emerald-700" />
+                    <span>{isTa ? "பார்சல் பயண நிலை வரலாறு" : "Shipment Timeline"}</span>
+                  </h4>
+                  <ol className="space-y-2 border-l-2 border-emerald-300 ml-2 pl-4">
+                    {events.map((ev) => {
+                      const st = normalizeShipmentStatus(ev.status);
+                      return (
+                        <li key={ev.id} className="relative text-xs">
+                          <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-emerald-600 ring-2 ring-emerald-50" />
+                          <div className="flex flex-wrap items-baseline justify-between gap-2">
+                            <span className="font-bold text-neutral-900 font-tamil">
+                              {SHIPMENT_STATUS_LABELS[st][locale]}
+                            </span>
+                            <span className="text-[11px] font-mono text-neutral-500">
+                              {new Date(ev.created_at).toLocaleString()}
+                            </span>
+                          </div>
+                          {ev.note && (
+                            <p className="text-neutral-600 font-tamil mt-0.5 leading-relaxed">
+                              {ev.note}
+                            </p>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </div>
+              )}
+            </GlassPanel>
+          );
+        })()}
 
         {/* Bill of Supply / Order Details Box */}
         <div className="bg-white rounded-3xl border border-black/10 p-6 sm:p-8 space-y-6 shadow-sm">

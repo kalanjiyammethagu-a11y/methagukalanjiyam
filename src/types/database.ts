@@ -317,12 +317,20 @@ export interface Database {
           razorpay_signature: string | null;
           shipping_address: Json;
           courier: CourierProvider | null;
+          courier_name?: string;
+          tracking_id?: string | null;
           tracking_number: string | null;
+          shipment_status?: string;
           tracking_url: string | null;
+          shipped_at?: string | null;
+          estimated_delivery_date?: string | null;
           dispatched_at: string | null;
           delivered_at: string | null;
           customer_notes: string | null;
+          customer_note_en?: string | null;
+          customer_note_ta?: string | null;
           admin_notes: string | null;
+          internal_note?: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -346,12 +354,20 @@ export interface Database {
           razorpay_signature?: string | null;
           shipping_address: Json;
           courier?: CourierProvider | null;
+          courier_name?: string;
+          tracking_id?: string | null;
           tracking_number?: string | null;
+          shipment_status?: string;
           tracking_url?: string | null;
+          shipped_at?: string | null;
+          estimated_delivery_date?: string | null;
           dispatched_at?: string | null;
           delivered_at?: string | null;
           customer_notes?: string | null;
+          customer_note_en?: string | null;
+          customer_note_ta?: string | null;
           admin_notes?: string | null;
+          internal_note?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -362,13 +378,41 @@ export interface Database {
           razorpay_payment_id?: string | null;
           razorpay_signature?: string | null;
           courier?: CourierProvider | null;
+          courier_name?: string;
+          tracking_id?: string | null;
           tracking_number?: string | null;
+          shipment_status?: string;
           tracking_url?: string | null;
+          shipped_at?: string | null;
+          estimated_delivery_date?: string | null;
           dispatched_at?: string | null;
           delivered_at?: string | null;
+          customer_notes?: string | null;
+          customer_note_en?: string | null;
+          customer_note_ta?: string | null;
           admin_notes?: string | null;
+          internal_note?: string | null;
           updated_at?: string;
         };
+      };
+      order_shipment_events: {
+        Row: {
+          id: string;
+          order_id: string;
+          status: string;
+          note: string | null;
+          changed_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          status: string;
+          note?: string | null;
+          changed_by?: string | null;
+          created_at?: string;
+        };
+        Update: never;
       };
       order_items: {
         Row: {
