@@ -21,6 +21,7 @@ export interface QuantitySelectorProps {
  * - Direct numeric input with inputmode="numeric" and pattern="[0-9]*"
  * - touch-action: manipulation to eliminate mobile 300ms double-tap zoom delay
  * - Clear active, focus-visible, and disabled states
+ * - Uses data-dark attribute + inline style to bypass Tailwind dark: specificity issues
  */
 export function QuantitySelector({
   value,
@@ -33,6 +34,25 @@ export function QuantitySelector({
   disabled = false,
 }: QuantitySelectorProps) {
   const [inputValue, setInputValue] = React.useState<string>(String(value));
+  const [isDark, setIsDark] = React.useState(false);
+
+  // Detect dark/night mode at runtime — bypasses Tailwind specificity entirely
+  React.useEffect(() => {
+    const checkDark = () => {
+      const html = document.documentElement;
+      setIsDark(
+        html.classList.contains("dark") ||
+          html.getAttribute("data-theme") === "night"
+      );
+    };
+    checkDark();
+    const observer = new MutationObserver(checkDark);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "data-theme"],
+    });
+    return () => observer.disconnect();
+  }, []);
 
   // Sync internal input state when prop changes
   React.useEffect(() => {
@@ -92,18 +112,29 @@ export function QuantitySelector({
 
   const isTa = locale === "ta";
 
+  // Runtime-computed colors — always correct regardless of CSS specificity
+  const iconColor = isDark ? "#F0EDE6" : "#333333";
+  const inputTextColor = isDark ? "#FFFFFF" : "#111111";
+  const bgColor = isDark ? "#1a1918" : "#FFFFFF";
+  const borderColor = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
+  const hoverBg = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)";
+
   return (
     <div
       className={cn(
-        "inline-flex items-center rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-[#1a1918] shadow-2xs select-none",
+        "inline-flex items-center rounded-xl shadow-2xs select-none",
         size === "sm" ? "h-11" : "h-11",
         disabled && "opacity-50 pointer-events-none",
         className
       )}
+      style={{
+        backgroundColor: bgColor,
+        border: `1px solid ${borderColor}`,
+      }}
       role="group"
       aria-label={isTa ? "எண்ணிக்கை தேர்வி" : "Quantity selector"}
     >
-      {/* Decrement Button - Guaranteed >= 44x44px touch target */}
+      {/* Decrement Button */}
       <button
         type="button"
         onClick={handleDecrement}
@@ -114,10 +145,12 @@ export function QuantitySelector({
             : `Decrease quantity (currently ${value})`
         }
         className={cn(
-          "min-h-[44px] min-w-[44px] h-11 w-11 flex items-center justify-center text-[#333333] dark:text-[#F0EDE6] hover:bg-black/5 dark:hover:bg-white/10 active:scale-95 active:bg-black/10 focus-visible:ring-2 focus-visible:ring-[#0A6847] focus-visible:outline-none transition-all cursor-pointer rounded-l-xl",
+          "min-h-[44px] min-w-[44px] h-11 w-11 flex items-center justify-center rounded-l-xl active:scale-95 focus-visible:ring-2 focus-visible:ring-[#0A6847] focus-visible:outline-none transition-all cursor-pointer",
           (disabled || value <= min) && "opacity-30 cursor-not-allowed active:scale-100"
         )}
-        style={{ touchAction: "manipulation" }}
+        style={{ touchAction: "manipulation", color: iconColor }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = hoverBg; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; }}
       >
         <Minus className="h-4 w-4 stroke-[2.2]" />
       </button>
@@ -134,14 +167,20 @@ export function QuantitySelector({
           onKeyDown={handleKeyDown}
           aria-label={isTa ? "புத்தக எண்ணிக்கை" : "Quantity"}
           className={cn(
-            "w-10 sm:w-12 h-9 text-center font-bold text-[var(--color-ink-primary)] dark:!text-[#FFFFFF] bg-transparent border-0 outline-none tabular-nums font-mono text-sm sm:text-base focus:ring-1 focus:ring-[#0A6847] rounded-md",
+            "w-10 sm:w-12 h-9 text-center font-bold bg-transparent border-0 outline-none tabular-nums font-mono focus:ring-1 focus:ring-[#0A6847] rounded-md",
             size === "sm" ? "text-sm" : "text-base"
           )}
-          style={{ touchAction: "manipulation", fontVariantNumeric: "tabular-nums" }}
+          style={{
+            touchAction: "manipulation",
+            fontVariantNumeric: "tabular-nums",
+            color: inputTextColor,
+            WebkitTextFillColor: inputTextColor, // iOS Safari override
+            opacity: 1,                          // prevent iOS dimming
+          }}
         />
       </div>
 
-      {/* Increment Button - Guaranteed >= 44x44px touch target */}
+      {/* Increment Button */}
       <button
         type="button"
         onClick={handleIncrement}
@@ -152,10 +191,12 @@ export function QuantitySelector({
             : `Increase quantity (currently ${value})`
         }
         className={cn(
-          "min-h-[44px] min-w-[44px] h-11 w-11 flex items-center justify-center text-[#333333] dark:text-[#F0EDE6] hover:bg-black/5 dark:hover:bg-white/10 active:scale-95 active:bg-black/10 focus-visible:ring-2 focus-visible:ring-[#0A6847] focus-visible:outline-none transition-all cursor-pointer rounded-r-xl",
+          "min-h-[44px] min-w-[44px] h-11 w-11 flex items-center justify-center rounded-r-xl active:scale-95 focus-visible:ring-2 focus-visible:ring-[#0A6847] focus-visible:outline-none transition-all cursor-pointer",
           (disabled || value >= max) && "opacity-30 cursor-not-allowed active:scale-100"
         )}
-        style={{ touchAction: "manipulation" }}
+        style={{ touchAction: "manipulation", color: iconColor }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = hoverBg; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; }}
       >
         <Plus className="h-4 w-4 stroke-[2.2]" />
       </button>

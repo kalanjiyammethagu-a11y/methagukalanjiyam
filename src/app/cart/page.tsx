@@ -481,16 +481,14 @@ export default function CartPage() {
 
                         <div className="flex flex-wrap items-center justify-between gap-3 mt-3 pt-2.5 border-t border-black/5 min-[380px]:border-t-0 min-[380px]:pt-0">
                           {/* Quantity Selector */}
-                          <div className="text-[#111111] dark:text-white">
-                            <QuantitySelector
-                              value={item.quantity}
-                              min={1}
-                              max={item.maxStock}
-                              onChange={(v) => updateQuantity(item.id, v)}
-                              locale={locale}
-                              size="sm"
-                            />
-                          </div>
+                          <QuantitySelector
+                            value={item.quantity}
+                            min={1}
+                            max={item.maxStock}
+                            onChange={(v) => updateQuantity(item.id, v)}
+                            locale={locale}
+                            size="sm"
+                          />
 
                           {/* Price + Remove Button */}
                           <div className="flex items-center gap-3">
