@@ -6,6 +6,7 @@ import { ImageIcon, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
 import { BOOK_PLACEHOLDER_IMAGE, type BookGalleryImage } from "@/lib/book-images";
+import { localized } from "@/lib/i18n";
 import type { BookItem } from "@/data/books";
 import { BookCoverActions } from "@/components/books/BookDetailClient";
 
@@ -59,9 +60,12 @@ export function BookCoverGallery({ book }: BookCoverGalleryProps) {
   const activeSrc =
     failedUrls[activeSlide.url] ? BOOK_PLACEHOLDER_IMAGE : activeSlide.url;
 
-  const activeAlt = isTa
-    ? activeSlide.alt_ta || activeSlide.alt_en || book.title
-    : activeSlide.alt_en || activeSlide.alt_ta || book.titleEn;
+  const activeAlt = localized(
+    activeSlide,
+    "alt",
+    locale,
+    localized(book, "title", locale)
+  );
 
   return (
     <>

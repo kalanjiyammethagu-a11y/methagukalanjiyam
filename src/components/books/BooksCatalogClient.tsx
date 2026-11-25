@@ -13,6 +13,7 @@ import { allBooks } from "@/data/books";
 import { useSearchParams } from "next/navigation";
 import { matchesSearchQuery } from "@/lib/search";
 import { resolveBookFrontCover } from "@/lib/book-images";
+import { resolveBilingualPair } from "@/lib/i18n";
 
 const categoryOptions: CategoryOption[] = [
   { slug: "history", labelTa: "வரலாறு", labelEn: "History" },
@@ -71,13 +72,25 @@ export function BooksCatalogClient({
             const mapped: BookCardData[] = data.books.map((b: any) => {
               const staticMatch = allBooks.find((sb) => sb.slug === b.slug);
               const cover = resolveBookFrontCover(b, staticMatch?.image);
+              const titlePair = resolveBilingualPair({
+                en: b.title_en || b.titleEn || staticMatch?.titleEn,
+                ta: b.title_ta || b.titleTa,
+                legacy: b.title,
+              });
+              const authorPair = resolveBilingualPair({
+                en: b.author_en || b.authorEn || staticMatch?.authorEn,
+                ta: b.author_ta || b.authorTa,
+                legacy: b.author,
+              });
               return {
                 id: b.id,
                 slug: b.slug,
-                title: b.title,
-                titleEn: b.title_en || b.titleEn || b.title,
-                author: b.author,
-                authorEn: b.author_en || b.authorEn || b.author,
+                title: titlePair.ta || b.title || titlePair.en || staticMatch?.title || "",
+                titleTa: titlePair.ta || staticMatch?.title || "",
+                titleEn: titlePair.en || b.title_en || b.titleEn || staticMatch?.titleEn || titlePair.ta || b.title || "",
+                author: authorPair.ta || b.author || authorPair.en || staticMatch?.author || "",
+                authorTa: authorPair.ta || staticMatch?.author || "",
+                authorEn: authorPair.en || b.author_en || b.authorEn || staticMatch?.authorEn || authorPair.ta || b.author || "",
                 price: Number(b.price),
                 discountPrice: b.discount_price ? Number(b.discount_price) : (b.discountPrice ? Number(b.discountPrice) : undefined),
                 image: cover.url,

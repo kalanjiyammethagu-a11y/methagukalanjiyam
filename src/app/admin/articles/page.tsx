@@ -20,20 +20,49 @@ import {
 } from "lucide-react";
 import { mockArticles } from "@/data/admin-mock";
 import type { AdminArticle, ArticleStatus } from "@/types/admin";
+import {
+  buildBilingualSearchText,
+  generateAsciiSlug,
+  getLanguageCompleteness,
+  isAsciiSlug,
+  REQUIRE_BOTH_LANGUAGES_TO_PUBLISH,
+  resolveBilingualPair,
+  type AppLocale,
+} from "@/lib/i18n";
+import { BilingualListBadge, BilingualTabs } from "@/components/admin/BilingualTabs";
+
+const ARTICLE_REQUIRED_BILINGUAL_FIELDS = ["title", "body"];
 
 interface ArticleItem {
   id: string;
   title: string;
+  titleEn: string;
+  titleTa: string;
   slug: string;
   excerpt: string;
+  excerptEn: string;
+  excerptTa: string;
   content: string;
+  bodyEn: string;
+  bodyTa: string;
   category: string;
+  categoryEn: string;
+  categoryTa: string;
   author: string;
+  authorEn: string;
+  authorTa: string;
+  seoTitleEn: string;
+  seoTitleTa: string;
+  seoDescriptionEn: string;
+  seoDescriptionTa: string;
+  coverAltEn: string;
+  coverAltTa: string;
   status: ArticleStatus;
   readingTimeMinutes: number;
   publishedAt: string;
   viewCount: number;
   coverImage: string;
+  coverImagePath: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -49,19 +78,70 @@ const CATEGORY_OPTIONS = [
 const DEFAULT_COVER = "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp";
 
 function mapSupabaseBlog(b: any): ArticleItem {
+  const rawBody =
+    typeof b.body === "string"
+      ? b.body
+      : typeof b.content === "object" && b.content
+      ? b.content.body || ""
+      : b.content || "";
+
+  const titlePair = resolveBilingualPair({
+    en: b.title_en || b.seo_title || b.meta_title,
+    ta: b.title_ta,
+    legacy: b.title,
+  });
+  const excerptPair = resolveBilingualPair({
+    en: b.excerpt_en || b.seo_description || b.meta_description,
+    ta: b.excerpt_ta,
+    legacy: b.excerpt,
+  });
+  const bodyPair = resolveBilingualPair({
+    en: b.body_en || (typeof b.content === "object" && b.content ? b.content.body_en : undefined),
+    ta: b.body_ta || (typeof b.content === "object" && b.content ? b.content.body_ta : undefined),
+    legacy: rawBody,
+  });
+  const authorPair = resolveBilingualPair({
+    en: b.author_en,
+    ta: b.author_ta,
+    legacy: b.author || b.profiles?.full_name || "Methagu Kalanjiyam",
+  });
+  const resolvedStatus: ArticleStatus =
+    b.status === "draft" || b.status === "archived"
+      ? b.status
+      : b.status === "published" || b.is_published
+      ? "published"
+      : "draft";
+
   return {
     id: b.id,
-    title: b.title || "Untitled Article",
+    title: titlePair.ta || titlePair.en || b.title || "Untitled Article",
+    titleEn: titlePair.en || "",
+    titleTa: titlePair.ta || "",
     slug: b.slug || `article-${b.id}`,
-    excerpt: b.excerpt || "",
-    content: typeof b.content === "object" ? b.content.body || "" : b.content || "",
-    category: Array.isArray(b.keywords) && b.keywords[0] ? b.keywords[0] : "Historical Record",
-    author: b.profiles?.full_name || "Archives Editorial",
-    status: b.is_published ? "published" : "draft",
+    excerpt: excerptPair.ta || excerptPair.en || "",
+    excerptEn: excerptPair.en || "",
+    excerptTa: excerptPair.ta || "",
+    content: bodyPair.ta || bodyPair.en || "",
+    bodyEn: bodyPair.en || "",
+    bodyTa: bodyPair.ta || "",
+    category: b.category_en || b.category_ta || (Array.isArray(b.keywords) && b.keywords[0]) || "Historical Record",
+    categoryEn: b.category_en || (Array.isArray(b.keywords) && b.keywords[0]) || "Historical Record",
+    categoryTa: b.category_ta || "வரலாற்று ஆவணம்",
+    author: authorPair.ta || authorPair.en || "Methagu Kalanjiyam",
+    authorEn: authorPair.en || "Methagu Kalanjiyam",
+    authorTa: authorPair.ta || "மேதகு களஞ்சியம்",
+    seoTitleEn: b.seo_title_en || b.seo_title || b.meta_title || "",
+    seoTitleTa: b.seo_title_ta || "",
+    seoDescriptionEn: b.seo_description_en || b.seo_description || b.meta_description || "",
+    seoDescriptionTa: b.seo_description_ta || "",
+    coverAltEn: b.cover_alt_en || "",
+    coverAltTa: b.cover_alt_ta || "",
+    status: resolvedStatus,
     readingTimeMinutes: b.reading_time_mins || 5,
     publishedAt: b.published_at ? b.published_at.split("T")[0] : "",
     viewCount: b.view_count || 0,
-    coverImage: b.cover_image || DEFAULT_COVER,
+    coverImage: b.cover_image_url || b.cover_image || DEFAULT_COVER,
+    coverImagePath: b.cover_image_path || "",
     createdAt: b.created_at || new Date().toISOString(),
     updatedAt: b.updated_at || new Date().toISOString(),
   };
@@ -70,17 +150,34 @@ function mapSupabaseBlog(b: any): ArticleItem {
 function mapMockArticle(a: AdminArticle): ArticleItem {
   return {
     id: a.id,
-    title: a.titleEn || a.titleTa,
+    title: a.titleTa || a.titleEn,
+    titleEn: a.titleEn || "",
+    titleTa: a.titleTa || "",
     slug: a.slug,
-    excerpt: a.subtitleEn || a.subtitleTa,
+    excerpt: a.subtitleTa || a.subtitleEn,
+    excerptEn: a.subtitleEn || "",
+    excerptTa: a.subtitleTa || "",
     content: "Detailed historical archival documentation and contextual records.",
+    bodyEn: "Detailed historical archival documentation and contextual records.",
+    bodyTa: a.subtitleTa || "",
     category: a.categoryEn || a.categoryTa,
+    categoryEn: a.categoryEn || "Historical Record",
+    categoryTa: a.categoryTa || "வரலாற்று ஆவணம்",
     author: a.authorEn || a.author,
+    authorEn: a.authorEn || a.author || "Deepak Harvin",
+    authorTa: a.authorTa || "தீபக் ஹார்வின்",
+    seoTitleEn: a.titleEn || "",
+    seoTitleTa: a.titleTa || "",
+    seoDescriptionEn: a.subtitleEn || "",
+    seoDescriptionTa: a.subtitleTa || "",
+    coverAltEn: a.coverAltEn || "",
+    coverAltTa: a.coverAltTa || "",
     status: a.status,
     readingTimeMinutes: a.readingTimeMinutes,
     publishedAt: a.publishedAt,
     viewCount: a.viewCount,
     coverImage: DEFAULT_COVER,
+    coverImagePath: "",
     createdAt: a.createdAt,
     updatedAt: a.updatedAt,
   };
@@ -92,6 +189,7 @@ export default function AdminArticlesPage() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedStatus, setSelectedStatus] = React.useState<string>("all");
   const [selectedCategory, setSelectedCategory] = React.useState<string>("all");
+  const [selectedLangFilter, setSelectedLangFilter] = React.useState<"all" | "missing_tamil">("all");
   const [toastMessage, setToastMessage] = React.useState<string | null>(null);
 
   // Modal State
@@ -101,15 +199,27 @@ export default function AdminArticlesPage() {
   const [uploadingImage, setUploadingImage] = React.useState(false);
   const [deleteTarget, setDeleteTarget] = React.useState<ArticleItem | null>(null);
   const [deleting, setDeleting] = React.useState(false);
+  const [activeLangTab, setActiveLangTab] = React.useState<AppLocale>("en");
+  const initialSnapshotRef = React.useRef({
+    en: { titleEn: "", excerptEn: "", bodyEn: "", authorEn: "", coverAltEn: "" },
+    ta: { titleTa: "", excerptTa: "", bodyTa: "", authorTa: "", coverAltTa: "" },
+  });
 
   // Form State
   const [formData, setFormData] = React.useState({
-    title: "",
     slug: "",
-    excerpt: "",
-    content: "",
-    category: "Historical Record",
-    author: "Deepak Harvin",
+    titleEn: "",
+    titleTa: "",
+    excerptEn: "",
+    excerptTa: "",
+    bodyEn: "",
+    bodyTa: "",
+    categoryEn: "Historical Record",
+    categoryTa: "வரலாற்று ஆவணம்",
+    authorEn: "Deepak Harvin",
+    authorTa: "தீபக் ஹார்வின்",
+    coverAltEn: "",
+    coverAltTa: "",
     readingTimeMinutes: 5,
     status: "published" as ArticleStatus,
     coverImage: DEFAULT_COVER,
@@ -163,35 +273,73 @@ export default function AdminArticlesPage() {
 
   const handleOpenAddModal = () => {
     setEditingArticle(null);
-    setFormData({
-      title: "",
+    const empty = {
       slug: "",
-      excerpt: "",
-      content: "",
-      category: "Historical Record",
-      author: "Deepak Harvin",
+      titleEn: "",
+      titleTa: "",
+      excerptEn: "",
+      excerptTa: "",
+      bodyEn: "",
+      bodyTa: "",
+      categoryEn: "Historical Record",
+      categoryTa: "வரலாற்று ஆவணம்",
+      authorEn: "Deepak Harvin",
+      authorTa: "தீபக் ஹார்வின்",
+      coverAltEn: "",
+      coverAltTa: "",
       readingTimeMinutes: 5,
-      status: "published",
+      status: "published" as ArticleStatus,
       coverImage: DEFAULT_COVER,
       cover_image_path: "",
-    });
+    };
+    setFormData(empty);
+    initialSnapshotRef.current = {
+      en: { titleEn: "", excerptEn: "", bodyEn: "", authorEn: empty.authorEn, coverAltEn: "" },
+      ta: { titleTa: "", excerptTa: "", bodyTa: "", authorTa: empty.authorTa, coverAltTa: "" },
+    };
+    setActiveLangTab("en");
     setIsModalOpen(true);
   };
 
   const handleOpenEditModal = (article: ArticleItem) => {
     setEditingArticle(article);
-    setFormData({
-      title: article.title,
+    const populated = {
       slug: article.slug,
-      excerpt: article.excerpt,
-      content: article.content,
-      category: article.category,
-      author: article.author,
+      titleEn: article.titleEn || "",
+      titleTa: article.titleTa || (article.title !== article.titleEn ? article.title : ""),
+      excerptEn: article.excerptEn || "",
+      excerptTa: article.excerptTa || (article.excerpt !== article.excerptEn ? article.excerpt : ""),
+      bodyEn: article.bodyEn || "",
+      bodyTa: article.bodyTa || (article.content !== article.bodyEn ? article.content : ""),
+      categoryEn: article.categoryEn || article.category || "Historical Record",
+      categoryTa: article.categoryTa || "வரலாற்று ஆவணம்",
+      authorEn: article.authorEn || "Deepak Harvin",
+      authorTa: article.authorTa || "தீபக் ஹார்வின்",
+      coverAltEn: article.coverAltEn || "",
+      coverAltTa: article.coverAltTa || "",
       readingTimeMinutes: article.readingTimeMinutes,
       status: article.status,
       coverImage: article.coverImage,
-      cover_image_path: "",
-    });
+      cover_image_path: article.coverImagePath || "",
+    };
+    setFormData(populated);
+    initialSnapshotRef.current = {
+      en: {
+        titleEn: populated.titleEn,
+        excerptEn: populated.excerptEn,
+        bodyEn: populated.bodyEn,
+        authorEn: populated.authorEn,
+        coverAltEn: populated.coverAltEn,
+      },
+      ta: {
+        titleTa: populated.titleTa,
+        excerptTa: populated.excerptTa,
+        bodyTa: populated.bodyTa,
+        authorTa: populated.authorTa,
+        coverAltTa: populated.coverAltTa,
+      },
+    };
+    setActiveLangTab("en");
     setIsModalOpen(true);
   };
 
@@ -272,21 +420,89 @@ export default function AdminArticlesPage() {
     }
   };
 
+  const formCompleteness = React.useMemo(
+    () =>
+      getLanguageCompleteness(
+        {
+          titleEn: formData.titleEn,
+          titleTa: formData.titleTa,
+          bodyEn: formData.bodyEn,
+          bodyTa: formData.bodyTa,
+        },
+        ARTICLE_REQUIRED_BILINGUAL_FIELDS
+      ),
+    [formData]
+  );
+
+  const isActiveTabDirty = React.useMemo(() => {
+    const snap = initialSnapshotRef.current;
+    if (activeLangTab === "en") {
+      return (
+        formData.titleEn !== snap.en.titleEn ||
+        formData.excerptEn !== snap.en.excerptEn ||
+        formData.bodyEn !== snap.en.bodyEn ||
+        formData.authorEn !== snap.en.authorEn ||
+        formData.coverAltEn !== snap.en.coverAltEn
+      );
+    }
+    return (
+      formData.titleTa !== snap.ta.titleTa ||
+      formData.excerptTa !== snap.ta.excerptTa ||
+      formData.bodyTa !== snap.ta.bodyTa ||
+      formData.authorTa !== snap.ta.authorTa ||
+      formData.coverAltTa !== snap.ta.coverAltTa
+    );
+  }, [activeLangTab, formData]);
+
   const handleSaveArticle = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title.trim()) {
-      showToast("Article title is required.");
+    if (!formData.titleEn.trim() || !formData.bodyEn.trim()) {
+      setActiveLangTab("en");
+      showToast("English title and English article body are required.");
+      return;
+    }
+    if (
+      REQUIRE_BOTH_LANGUAGES_TO_PUBLISH &&
+      formData.status === "published" &&
+      (!formData.titleTa.trim() || !formData.bodyTa.trim())
+    ) {
+      setActiveLangTab("ta");
+      showToast("Tamil title and Tamil body are required to publish.");
+      return;
+    }
+
+    const generatedSlug = (formData.slug.trim() || generateAsciiSlug(formData.titleEn, "article")).toLowerCase();
+    if (!isAsciiSlug(generatedSlug)) {
+      showToast("Slug must contain only ASCII lowercase letters, numbers, and hyphens.");
       return;
     }
     setSaving(true);
 
-    const generatedSlug =
-      formData.slug.trim() ||
-      formData.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)+/g, "") ||
-      `article-${Date.now()}`;
+    const apiPayload = {
+      title: formData.titleTa.trim() || formData.titleEn.trim(),
+      title_en: formData.titleEn.trim(),
+      title_ta: formData.titleTa.trim() || null,
+      slug: generatedSlug,
+      excerpt: formData.excerptTa.trim() || formData.excerptEn.trim() || null,
+      excerpt_en: formData.excerptEn.trim() || null,
+      excerpt_ta: formData.excerptTa.trim() || null,
+      body: formData.bodyTa.trim() || formData.bodyEn.trim(),
+      body_en: formData.bodyEn.trim(),
+      body_ta: formData.bodyTa.trim() || null,
+      category_en: formData.categoryEn,
+      category_ta: formData.categoryTa || "வரலாற்று ஆவணம்",
+      author: formData.authorTa.trim() || formData.authorEn.trim() || "மேதகு களஞ்சியம்",
+      author_en: formData.authorEn.trim() || "Methagu Kalanjiyam",
+      author_ta: formData.authorTa.trim() || null,
+      cover_alt_en: formData.coverAltEn.trim() || null,
+      cover_alt_ta: formData.coverAltTa.trim() || null,
+      seo_title: formData.titleEn.trim(),
+      seo_description: formData.excerptEn.trim() || null,
+      reading_time_mins: Number(formData.readingTimeMinutes),
+      status: formData.status === "archived" ? "draft" : formData.status,
+      cover_image_url: formData.coverImage,
+      cover_image_path: formData.cover_image_path || undefined,
+    };
 
     try {
       if (editingArticle) {
@@ -295,64 +511,52 @@ export default function AdminArticlesPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             id: editingArticle.id,
-            title: formData.title,
-            slug: generatedSlug,
-            excerpt: formData.excerpt,
-            body: formData.content,
-            content: formData.content,
-            category: formData.category,
-            author: formData.author,
-            reading_time_mins: Number(formData.readingTimeMinutes),
-            status: formData.status,
-            is_published: formData.status === "published",
-            cover_image_url: formData.coverImage,
-            cover_image_path: formData.cover_image_path || undefined,
-            cover_image: formData.coverImage,
+            ...apiPayload,
           }),
         });
 
         if (res.ok) {
-          setArticles((prev) =>
-            prev.map((a) =>
-              a.id === editingArticle.id
-                ? {
-                  ...a,
-                  title: formData.title,
-                  slug: generatedSlug,
-                  excerpt: formData.excerpt,
-                  content: formData.content,
-                  category: formData.category,
-                  author: formData.author,
-                  readingTimeMinutes: Number(formData.readingTimeMinutes),
-                  status: formData.status,
-                  coverImage: formData.coverImage,
-                  updatedAt: new Date().toISOString(),
-                }
-                : a
-            )
-          );
+          const resData = await res.json().catch(() => ({}));
+          const updatedItem = resData.article
+            ? mapSupabaseBlog(resData.article)
+            : {
+                ...editingArticle,
+                title: apiPayload.title,
+                titleEn: formData.titleEn.trim(),
+                titleTa: formData.titleTa.trim(),
+                slug: generatedSlug,
+                excerpt: apiPayload.excerpt || "",
+                excerptEn: formData.excerptEn.trim(),
+                excerptTa: formData.excerptTa.trim(),
+                content: apiPayload.body,
+                bodyEn: formData.bodyEn.trim(),
+                bodyTa: formData.bodyTa.trim(),
+                category: formData.categoryEn,
+                categoryEn: formData.categoryEn,
+                categoryTa: formData.categoryTa,
+                author: apiPayload.author,
+                authorEn: formData.authorEn.trim(),
+                authorTa: formData.authorTa.trim(),
+                coverAltEn: formData.coverAltEn.trim(),
+                coverAltTa: formData.coverAltTa.trim(),
+                readingTimeMinutes: Number(formData.readingTimeMinutes),
+                status: formData.status,
+                coverImage: formData.coverImage,
+                updatedAt: new Date().toISOString(),
+              };
+
+          setArticles((prev) => prev.map((a) => (a.id === editingArticle.id ? updatedItem : a)));
           showToast("Article updated successfully.");
+          setIsModalOpen(false);
         } else {
-          showToast("Failed to update article in database.");
+          const err = await res.json().catch(() => ({}));
+          showToast(err.error || "Failed to update article in database.");
         }
       } else {
         const res = await fetch("/api/admin/articles", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: formData.title,
-            slug: generatedSlug,
-            excerpt: formData.excerpt,
-            body: formData.content,
-            content: formData.content,
-            cover_image_url: formData.coverImage,
-            cover_image_path: formData.cover_image_path || undefined,
-            cover_image: formData.coverImage,
-            author: formData.author,
-            category: formData.category,
-            reading_time_mins: Number(formData.readingTimeMinutes),
-            status: formData.status,
-          }),
+          body: JSON.stringify(apiPayload),
         });
 
         if (res.ok) {
@@ -360,33 +564,51 @@ export default function AdminArticlesPage() {
           const newArt: ArticleItem = data.article
             ? mapSupabaseBlog(data.article)
             : {
-              id: `art-${Date.now()}`,
-              title: formData.title,
-              slug: generatedSlug,
-              excerpt: formData.excerpt,
-              content: formData.content,
-              category: formData.category,
-              author: formData.author,
-              status: formData.status,
-              readingTimeMinutes: Number(formData.readingTimeMinutes),
-              publishedAt: formData.status === "published" ? new Date().toISOString().split("T")[0] : "",
-              viewCount: 0,
-              coverImage: formData.coverImage,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            };
+                id: `art-${Date.now()}`,
+                title: apiPayload.title,
+                titleEn: formData.titleEn.trim(),
+                titleTa: formData.titleTa.trim(),
+                slug: generatedSlug,
+                excerpt: apiPayload.excerpt || "",
+                excerptEn: formData.excerptEn.trim(),
+                excerptTa: formData.excerptTa.trim(),
+                content: apiPayload.body,
+                bodyEn: formData.bodyEn.trim(),
+                bodyTa: formData.bodyTa.trim(),
+                category: formData.categoryEn,
+                categoryEn: formData.categoryEn,
+                categoryTa: formData.categoryTa,
+                author: apiPayload.author,
+                authorEn: formData.authorEn.trim(),
+                authorTa: formData.authorTa.trim(),
+                seoTitleEn: formData.titleEn.trim(),
+                seoTitleTa: formData.titleTa.trim(),
+                seoDescriptionEn: formData.excerptEn.trim(),
+                seoDescriptionTa: formData.excerptTa.trim(),
+                coverAltEn: formData.coverAltEn.trim(),
+                coverAltTa: formData.coverAltTa.trim(),
+                status: formData.status,
+                readingTimeMinutes: Number(formData.readingTimeMinutes),
+                publishedAt: formData.status === "published" ? new Date().toISOString().split("T")[0] : "",
+                viewCount: 0,
+                coverImage: formData.coverImage,
+                coverImagePath: formData.cover_image_path,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              };
 
           setArticles((prev) => [newArt, ...prev]);
           showToast("New article created and published.");
+          setIsModalOpen(false);
         } else {
-          showToast("Failed to create article in database.");
+          const err = await res.json().catch(() => ({}));
+          showToast(err.error || "Failed to create article in database.");
         }
       }
     } catch {
       showToast("Network error saving article.");
     } finally {
       setSaving(false);
-      setIsModalOpen(false);
     }
   };
 
@@ -413,19 +635,32 @@ export default function AdminArticlesPage() {
     }
   };
 
-  // Filter articles
+  // Filter articles (bilingual search + status + category + missing Tamil filter)
   const filteredArticles = articles.filter((a) => {
-    const q = searchQuery.toLowerCase();
-    const matchesSearch =
-      !q ||
-      a.title.toLowerCase().includes(q) ||
-      a.slug.toLowerCase().includes(q) ||
-      a.author.toLowerCase().includes(q);
-
+    const q = searchQuery.trim().toLowerCase();
+    const corpus = buildBilingualSearchText(
+      {
+        titleEn: a.titleEn,
+        titleTa: a.titleTa,
+        excerptEn: a.excerptEn,
+        excerptTa: a.excerptTa,
+        authorEn: a.authorEn,
+        authorTa: a.authorTa,
+        slug: a.slug,
+      },
+      ["title", "excerpt", "author"]
+    );
+    const matchesSearch = !q || corpus.includes(q);
     const matchesStatus = selectedStatus === "all" || a.status === selectedStatus;
     const matchesCategory = selectedCategory === "all" || a.category === selectedCategory;
+    const langComp = getLanguageCompleteness(
+      { titleEn: a.titleEn, titleTa: a.titleTa, bodyEn: a.bodyEn, bodyTa: a.bodyTa },
+      ARTICLE_REQUIRED_BILINGUAL_FIELDS
+    );
+    const matchesLang =
+      selectedLangFilter === "all" || (selectedLangFilter === "missing_tamil" && langComp.missingTamil);
 
-    return matchesSearch && matchesStatus && matchesCategory;
+    return matchesSearch && matchesStatus && matchesCategory && matchesLang;
   });
 
   const totalPublished = articles.filter((a) => a.status === "published").length;
@@ -535,6 +770,15 @@ export default function AdminArticlesPage() {
             <option value="published">Published</option>
             <option value="draft">Draft</option>
           </select>
+
+          <select
+            value={selectedLangFilter}
+            onChange={(e) => setSelectedLangFilter(e.target.value as "all" | "missing_tamil")}
+            className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[40px] cursor-pointer"
+          >
+            <option value="all">All Languages</option>
+            <option value="missing_tamil">Missing Tamil</option>
+          </select>
         </div>
       </div>
 
@@ -584,14 +828,27 @@ export default function AdminArticlesPage() {
                           />
                         </div>
                         <div className="min-w-0 max-w-sm sm:max-w-md">
-                          <h4 className="font-bold text-gray-900 truncate">
-                            {article.title}
+                          <h4 className="font-bold text-gray-900 truncate font-tamil leading-[1.45]">
+                            {article.titleTa || article.titleEn || article.title}
                           </h4>
-                          <div className="text-[11px] text-gray-500 mt-0.5 flex items-center gap-2">
+                          {article.titleEn && article.titleTa && article.titleEn !== article.titleTa && (
+                            <p className="text-[11px] text-gray-500 truncate mt-0.5">{article.titleEn}</p>
+                          )}
+                          <div className="text-[11px] text-gray-500 mt-1 flex flex-wrap items-center gap-2">
                             <span className="font-mono text-[10px] text-gray-400">
                               /blog/{article.slug}
                             </span>
-                            <span>•</span>
+                            <BilingualListBadge
+                              completeness={getLanguageCompleteness(
+                                {
+                                  titleEn: article.titleEn,
+                                  titleTa: article.titleTa,
+                                  bodyEn: article.bodyEn,
+                                  bodyTa: article.bodyTa,
+                                },
+                                ARTICLE_REQUIRED_BILINGUAL_FIELDS
+                              )}
+                            />
                             <span className="flex items-center gap-1 font-mono text-[10px] text-gray-400">
                               <Clock className="h-3 w-3" />
                               {article.readingTimeMinutes} mins
@@ -814,113 +1071,178 @@ export default function AdminArticlesPage() {
                 </div>
               </div>
 
-              {/* Title & Slug */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700">
-                    Article Title *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setFormData((prev) => ({
-                        ...prev,
-                        title: val,
-                        slug: prev.slug ? prev.slug : val.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-                      }));
-                    }}
-                    placeholder="e.g. Commander Vinayagam Commemoration"
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[38px]"
-                  />
-                </div>
+              {/* Dual-Language Text Tabs (English | தமிழ்) */}
+              <div className="rounded-2xl border border-gray-200 p-4 space-y-4">
+                <BilingualTabs
+                  activeTab={activeLangTab}
+                  onTabChange={setActiveLangTab}
+                  completeness={formCompleteness}
+                  isActiveTabDirty={isActiveTabDirty}
+                />
 
+                {activeLangTab === "en" ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-700">Article Title (English) *</label>
+                        <input
+                          type="text"
+                          value={formData.titleEn}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setFormData((prev) => ({
+                              ...prev,
+                              titleEn: val,
+                              slug: editingArticle
+                                ? prev.slug
+                                : prev.slug || generateAsciiSlug(val, "article"),
+                            }));
+                          }}
+                          placeholder="e.g. Commander Vinayagam Commemoration"
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[44px]"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-700">Author (English)</label>
+                        <input
+                          type="text"
+                          value={formData.authorEn}
+                          onChange={(e) => setFormData({ ...formData, authorEn: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-700">Cover Image Alt Text (English)</label>
+                        <input
+                          type="text"
+                          value={formData.coverAltEn}
+                          onChange={(e) => setFormData({ ...formData, coverAltEn: e.target.value })}
+                          placeholder="Banner illustrating archival feature"
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-700">Short Excerpt (English)</label>
+                        <input
+                          type="text"
+                          value={formData.excerptEn}
+                          onChange={(e) => setFormData({ ...formData, excerptEn: e.target.value })}
+                          placeholder="Concise summary for cards and SEO..."
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-gray-700">Article Body Content (English) *</label>
+                      <textarea
+                        rows={5}
+                        value={formData.bodyEn}
+                        onChange={(e) => setFormData({ ...formData, bodyEn: e.target.value })}
+                        placeholder="Write or paste English article content..."
+                        className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs resize-y focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 font-sans"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-700 font-tamil">கட்டுரைத் தலைப்பு (Tamil)</label>
+                        <input
+                          type="text"
+                          value={formData.titleTa}
+                          onChange={(e) => setFormData({ ...formData, titleTa: e.target.value })}
+                          placeholder="தமிழில் கட்டுரைத் தலைப்பு..."
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-tamil focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[44px]"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-700 font-tamil">ஆசிரியர் (Author in Tamil)</label>
+                        <input
+                          type="text"
+                          value={formData.authorTa}
+                          onChange={(e) => setFormData({ ...formData, authorTa: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-tamil min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-700 font-tamil">பட விவரம் (Cover Alt in Tamil)</label>
+                        <input
+                          type="text"
+                          value={formData.coverAltTa}
+                          onChange={(e) => setFormData({ ...formData, coverAltTa: e.target.value })}
+                          placeholder="கட்டுரை முகப்புப் படம்"
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-tamil min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-700 font-tamil">சுருக்கக் குறிப்பு (Excerpt in Tamil)</label>
+                        <input
+                          type="text"
+                          value={formData.excerptTa}
+                          onChange={(e) => setFormData({ ...formData, excerptTa: e.target.value })}
+                          placeholder="கட்டுரை முன்னுரைச் சுருக்கம்..."
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-tamil min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-gray-700 font-tamil">கட்டுரை உள்ளடக்கம் (Article Body in Tamil)</label>
+                      <textarea
+                        rows={5}
+                        value={formData.bodyTa}
+                        onChange={(e) => setFormData({ ...formData, bodyTa: e.target.value })}
+                        placeholder="தமிழில் முழுக் கட்டுரை உள்ளடக்கத்தை உள்ளிடவும்..."
+                        className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-tamil leading-[1.65] resize-y focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ASCII Slug, Category, Reading Time */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700">
-                    URL Slug
-                  </label>
+                  <label className="text-xs font-bold text-gray-700">URL Slug (ASCII only)</label>
                   <input
                     type="text"
                     value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    placeholder="e.g. commander-vinayagam-commemoration"
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-mono focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[38px]"
+                    onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase() })}
+                    placeholder="commander-vinayagam"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-mono focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[44px]"
                   />
                 </div>
-              </div>
-
-              {/* Category, Author, Reading Time */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700">
-                    Category
-                  </label>
+                  <label className="text-xs font-bold text-gray-700">Category</label>
                   <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs min-h-[38px] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 cursor-pointer"
+                    value={formData.categoryEn}
+                    onChange={(e) => setFormData({ ...formData, categoryEn: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 cursor-pointer"
                   >
                     {CATEGORY_OPTIONS.map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
                 </div>
-
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700">
-                    Author
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.author}
-                    onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs min-h-[38px] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700">
-                    Est. Reading Time (Mins)
-                  </label>
+                  <label className="text-xs font-bold text-gray-700">Est. Reading Time (Mins)</label>
                   <input
                     type="number"
                     min={1}
                     max={60}
                     value={formData.readingTimeMinutes}
                     onChange={(e) => setFormData({ ...formData, readingTimeMinutes: Number(e.target.value) })}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-mono min-h-[38px] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-mono min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
                   />
                 </div>
-              </div>
-
-              {/* Excerpt / Summary */}
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-700">
-                  Short Excerpt / Teaser
-                </label>
-                <textarea
-                  rows={2}
-                  value={formData.excerpt}
-                  onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                  placeholder="A concise summary of the article displayed on card teasers and search results..."
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
-                />
-              </div>
-
-              {/* Article Content */}
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-700">
-                  Article Body Content
-                </label>
-                <textarea
-                  rows={5}
-                  value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  placeholder="Write or paste your article content here..."
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs resize-y focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 font-sans"
-                />
               </div>
 
               {/* Publication Status Selector */}

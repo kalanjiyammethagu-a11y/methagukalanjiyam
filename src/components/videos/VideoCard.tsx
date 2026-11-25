@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Play, Clock, Maximize2, Square, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
+import { localized } from "@/lib/i18n";
 
 export interface VideoData {
   id: string;
@@ -15,6 +16,8 @@ export interface VideoData {
   embedUrl: string;
   videoUrl?: string;
   posterImage: string;
+  posterAltTa?: string;
+  posterAltEn?: string;
   categoryTa: string;
   categoryEn: string;
   duration?: string;
@@ -54,9 +57,9 @@ export function VideoCard({
   className,
 }: VideoCardProps) {
   const isTa = locale === "ta";
-  const title = isTa ? video.titleTa : video.titleEn;
-  const description = isTa ? video.descriptionTa : video.descriptionEn;
-  const category = isTa ? video.categoryTa : video.categoryEn;
+  const title = localized(video, "title", locale);
+  const description = localized(video, "description", locale);
+  const category = localized(video, "category", locale);
 
   const cardRef = React.useRef<HTMLElement>(null);
 
@@ -167,7 +170,7 @@ export function VideoCard({
                   ? video.posterImage
                   : `/${video.posterImage}`
               }
-              alt={title}
+              alt={localized(video, "posterAlt", locale, title)}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 ease-out"

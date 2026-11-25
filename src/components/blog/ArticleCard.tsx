@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowRight, Calendar, Clock, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
+import { localized } from "@/lib/i18n";
 
 export interface ArticleCardData {
   slug: string;
@@ -14,6 +15,8 @@ export interface ArticleCardData {
   excerptTa: string;
   excerptEn: string;
   coverImage: string;
+  coverAltTa?: string;
+  coverAltEn?: string;
   categoryTa: string;
   categoryEn: string;
   publishedAt: string;
@@ -35,9 +38,14 @@ export function ArticleCard({
   className,
 }: ArticleCardProps) {
   const isTa = locale === "ta";
-  const title = isTa ? article.titleTa : article.titleEn;
-  const excerpt = isTa ? article.excerptTa : article.excerptEn;
-  const category = isTa ? article.categoryTa : article.categoryEn;
+  const title = localized(article, "title", locale);
+  const excerpt = localized(article, "excerpt", locale);
+  const category = localized(article, "category", locale);
+  const coverAlt = localized(article, "coverAlt", locale, title);
+  const normalizedCoverSrc =
+    article.coverImage.startsWith("http") || article.coverImage.startsWith("/")
+      ? article.coverImage
+      : `/${article.coverImage}`;
 
   // Format date nicely
   const formattedDate = React.useMemo(() => {
@@ -63,8 +71,8 @@ export function ArticleCard({
       >
         <div className="lg:col-span-7 relative aspect-[16/10] lg:aspect-auto lg:min-h-[380px] overflow-hidden bg-black/5">
           <Image
-            src={article.coverImage.startsWith("/") ? article.coverImage : `/${article.coverImage}`}
-            alt={title}
+            src={normalizedCoverSrc}
+            alt={coverAlt}
             fill
             sizes="(max-width: 1024px) 100vw, 60vw"
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
@@ -135,8 +143,8 @@ export function ArticleCard({
       {/* Cover Image */}
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-black/5 shrink-0">
         <Image
-          src={article.coverImage.startsWith("/") ? article.coverImage : `/${article.coverImage}`}
-          alt={title}
+          src={normalizedCoverSrc}
+          alt={coverAlt}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"

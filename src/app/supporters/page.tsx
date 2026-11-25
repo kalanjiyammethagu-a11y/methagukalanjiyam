@@ -4,6 +4,7 @@ import { SupportersCatalogClient } from "@/components/supporters/SupportersCatal
 import type { SupporterData } from "@/components/supporters/SupporterCard";
 import { safeJsonLdStringify } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/server";
+import { resolveBilingualPair } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -52,16 +53,26 @@ export default async function SupportersPage() {
       .order("created_at", { ascending: true });
 
     if (!error && data && data.length > 0) {
-      dbSupporters = data.map((row: any) => ({
-        id: row.id,
-        nameTa: row.name,
-        nameEn: row.name,
-        roleTa: row.role_ta || row.description || "ஆவணப் பங்களிப்பாளர்",
-        roleEn: row.role_en || row.description || "Archival Contributor",
-        image: row.logo_or_photo_url || row.avatar_url || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/harvin.webp",
-        instagramUrl: row.website_url || undefined,
-        whatsappUrl: undefined,
-      }));
+      dbSupporters = data.map((row: any) => {
+        const namePair = resolveBilingualPair({ en: row.name_en, ta: row.name_ta, legacy: row.name });
+        const rolePair = resolveBilingualPair({
+          en: row.role_en ?? row.description_en,
+          ta: row.role_ta ?? row.description_ta,
+          legacy: row.description,
+        });
+        return {
+          id: row.id,
+          nameTa: namePair.ta || namePair.en || row.name,
+          nameEn: namePair.en || namePair.ta || row.name,
+          roleTa: rolePair.ta || rolePair.en || "ஆவணப் பங்களிப்பாளர்",
+          roleEn: rolePair.en || rolePair.ta || "Archival Contributor",
+          image: row.logo_or_photo_url || row.avatar_url || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/harvin.webp",
+          photoAltTa: row.photo_alt_ta || row.avatar_alt_ta || undefined,
+          photoAltEn: row.photo_alt_en || row.avatar_alt_en || undefined,
+          instagramUrl: row.website_url || undefined,
+          whatsappUrl: undefined,
+        };
+      });
     }
   } catch (err) {
     console.error("Failed to load supporters from Supabase:", err);

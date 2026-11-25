@@ -31,7 +31,7 @@
 
   /* Typography Scales */
   --font-serif: var(--font-fraunces), "Playfair Display", Georgia, serif;
-  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-inter), var(--font-noto-tamil), system-ui, -apple-system, sans-serif;
   --font-tamil: var(--font-noto-tamil), "Latha", "Tamil Sangam MN", "Mukta Malar", "InaiMathi", "Vijaya", system-ui, sans-serif;
   --font-tamil-serif: var(--font-noto-serif-tamil), "Bamini", "Tamil Sangam MN", Georgia, serif;
 
@@ -258,6 +258,17 @@ html.dark {
   font-family: var(--font-serif);
   line-height: 1.45;
   letter-spacing: -0.01em;
+}
+
+/* Prevent Tamil vowel signs/descenders clipping in buttons, badges, cards, and table cells */
+html[lang="ta"] body {
+  line-height: 1.65;
+}
+html[lang="ta"] button,
+html[lang="ta"] a[role="button"],
+html[lang="ta"] th,
+html[lang="ta"] td {
+  line-height: 1.5;
 }
 
 /* Reading Font Size Scale Adjustments */

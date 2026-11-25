@@ -4,6 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import { MessageCircle, Instagram } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { localized } from "@/lib/i18n";
 
 export interface SupporterData {
   id: string;
@@ -12,6 +13,8 @@ export interface SupporterData {
   roleTa: string;
   roleEn: string;
   image: string;
+  photoAltTa?: string;
+  photoAltEn?: string;
   instagramUrl?: string;
   whatsappUrl?: string;
   badge?: string;
@@ -28,9 +31,9 @@ export function SupporterCard({
   locale = "ta",
   className,
 }: SupporterCardProps) {
-  const isTa = locale === "ta";
-  const name = isTa ? supporter.nameTa : supporter.nameEn;
-  const role = isTa ? supporter.roleTa : supporter.roleEn;
+  const name = localized(supporter, "name", locale);
+  const role = localized(supporter, "role", locale);
+  const photoAlt = localized(supporter, "photoAlt", locale, name);
   const imageSrc =
     supporter.image.startsWith("http") || supporter.image.startsWith("/")
       ? supporter.image
@@ -49,7 +52,7 @@ export function SupporterCard({
           <div className="relative h-full w-full rounded-full overflow-hidden bg-black/5">
             <Image
               src={imageSrc}
-              alt={name}
+              alt={photoAlt}
               fill
               sizes="112px"
               className="object-cover"

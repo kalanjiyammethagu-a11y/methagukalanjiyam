@@ -5,14 +5,23 @@ import { requireAdmin } from "@/lib/auth-service";
 import { allVideos } from "@/data/videos";
 import { adminVideoSchema, adminVideoUpdateSchema } from "@/lib/validators/admin";
 import { deleteAdminAsset, verifyStorageObjectExists } from "@/lib/storage";
+import { generateAsciiSlug, resolveBilingualPair } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
 export interface AdminVideoItem {
   id: string;
   title: string;
+  title_en?: string;
+  title_ta?: string;
   slug: string;
   description: string;
+  description_en?: string;
+  description_ta?: string;
+  category_en?: string;
+  category_ta?: string;
+  poster_alt_en?: string;
+  poster_alt_ta?: string;
   embed_url: string;
   video_path?: string;
   video_url?: string;
@@ -29,12 +38,76 @@ export interface AdminVideoItem {
   updated_at: string;
 }
 
-// In-memory fallback
-let inMemoryVideos: AdminVideoItem[] = allVideos.map((v, i) => ({
+function isMissingVideoColumnError(error: any): boolean {
+  const msg = String(error?.message || "");
+  return (
+    error?.code === "PGRST204" ||
+    error?.code === "42703" ||
+    msg.includes("title_") ||
+    msg.includes("description_") ||
+    msg.includes("category_") ||
+    msg.includes("poster_alt_")
+  );
+}
+
+function mapSupabaseVideoRow(row: any): AdminVideoItem {
+  const titlePair = resolveBilingualPair({
+    en: row.title_en,
+    ta: row.title_ta,
+    legacy: row.title,
+  });
+  const descPair = resolveBilingualPair({
+    en: row.description_en,
+    ta: row.description_ta,
+    legacy: row.description,
+  });
+
+  return {
+    id: row.id,
+    title: row.title || titlePair.ta || titlePair.en || "",
+    title_en: titlePair.en || "",
+    title_ta: titlePair.ta || "",
+    slug: row.slug || `video-${row.id}`,
+    description: row.description || descPair.ta || descPair.en || "",
+    description_en: descPair.en || "",
+    description_ta: descPair.ta || "",
+    category_en: row.category_en || undefined,
+    category_ta: row.category_ta || undefined,
+    poster_alt_en: row.poster_alt_en || undefined,
+    poster_alt_ta: row.poster_alt_ta || undefined,
+    embed_url: row.embed_url || row.video_url || "",
+    video_path: row.video_path || undefined,
+    video_url: row.video_url || undefined,
+    poster_path: row.poster_path || undefined,
+    poster_url:
+      row.poster_url ||
+      "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/video-posters/1.webp",
+    duration_seconds: row.duration_seconds || undefined,
+    duration_formatted: row.duration_seconds
+      ? `${Math.floor(row.duration_seconds / 60)}:${(row.duration_seconds % 60).toString().padStart(2, "0")}`
+      : undefined,
+    file_size_bytes: row.file_size_bytes || undefined,
+    mime_type: row.mime_type || undefined,
+    sort_order: row.sort_order ?? 0,
+    status: row.status || "published",
+    is_active: Boolean(row.is_active ?? true),
+    created_at: row.created_at || new Date().toISOString(),
+    updated_at: row.updated_at || new Date().toISOString(),
+  };
+}
+
+// Static fallback only when database is unreachable
+const fallbackVideos: AdminVideoItem[] = allVideos.map((v, i) => ({
   id: v.id,
   title: v.titleTa,
+  title_en: v.titleEn,
+  title_ta: v.titleTa,
   slug: `video-${v.id}`,
   description: v.descriptionTa,
+  description_en: v.descriptionEn,
+  description_ta: v.descriptionTa,
+  category_en: v.categoryEn,
+  category_ta: v.categoryTa,
   embed_url: v.embedUrl,
   poster_url: v.posterImage,
   duration_formatted: v.duration,
@@ -44,15 +117,6 @@ let inMemoryVideos: AdminVideoItem[] = allVideos.map((v, i) => ({
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 }));
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/--+/g, "-")
-    .trim();
-}
 
 export async function GET(req: NextRequest) {
   try {
@@ -69,35 +133,13 @@ export async function GET(req: NextRequest) {
         .order("created_at", { ascending: false });
 
       if (!error && data && data.length > 0) {
-        const mapped: AdminVideoItem[] = data.map((row: any) => ({
-          id: row.id,
-          title: row.title,
-          slug: row.slug || `video-${row.id}`,
-          description: row.description || "",
-          embed_url: row.embed_url || row.video_url || "",
-          video_path: row.video_path || undefined,
-          video_url: row.video_url || undefined,
-          poster_path: row.poster_path || undefined,
-          poster_url: row.poster_url || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/video-posters/1.webp",
-          duration_seconds: row.duration_seconds || undefined,
-          duration_formatted: row.duration_seconds
-            ? `${Math.floor(row.duration_seconds / 60)}:${(row.duration_seconds % 60).toString().padStart(2, "0")}`
-            : undefined,
-          file_size_bytes: row.file_size_bytes || undefined,
-          mime_type: row.mime_type || undefined,
-          sort_order: row.sort_order ?? 0,
-          status: row.status || "published",
-          is_active: Boolean(row.is_active ?? true),
-          created_at: row.created_at || new Date().toISOString(),
-          updated_at: row.updated_at || new Date().toISOString(),
-        }));
-        return NextResponse.json({ videos: mapped });
+        return NextResponse.json({ videos: data.map(mapSupabaseVideoRow) });
       }
     } catch {
-      // Supabase unavailable or table empty, fallback to in-memory store
+      // Supabase unavailable or table empty, fallback to static catalog
     }
 
-    return NextResponse.json({ videos: inMemoryVideos });
+    return NextResponse.json({ videos: fallbackVideos });
   } catch (err: any) {
     console.error("GET /api/admin/videos error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -121,7 +163,15 @@ export async function POST(req: NextRequest) {
     }
 
     const val = parseResult.data;
-    const slug = val.slug || slugify(val.title) || `video-${Date.now()}`;
+    const titlePair = resolveBilingualPair({ en: val.title_en, ta: val.title_ta, legacy: val.title });
+    const descPair = resolveBilingualPair({
+      en: val.description_en,
+      ta: val.description_ta,
+      legacy: val.description,
+    });
+    const primaryTitle = titlePair.ta || titlePair.en || val.title || "Archival Video";
+    const primaryDesc = descPair.ta || descPair.en || val.description || null;
+    const slug = val.slug || generateAsciiSlug(titlePair.en || val.title_en || val.title, "video");
     const embedUrl = val.embed_url || val.video_url || "";
 
     // If a direct storage path was provided, verify it exists in the bucket
@@ -132,62 +182,92 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    let createdId = `vid-${Date.now()}`;
+    let createdRow: any = null;
     const nowIso = new Date().toISOString();
 
     try {
       const adminSupabase = createAdminClient();
-      const { data, error } = await (adminSupabase.from("videos") as any)
-        .insert({
-          title: val.title,
-          slug,
-          description: val.description || null,
-          embed_url: embedUrl,
-          video_path: val.video_path || null,
-          video_url: val.video_url || null,
-          poster_path: val.poster_path || null,
-          poster_url: val.poster_url,
-          duration_seconds: val.duration_seconds || null,
-          file_size_bytes: val.file_size_bytes || null,
-          mime_type: val.mime_type || null,
-          sort_order: val.sort_order ?? 0,
-          status: val.status || "published",
-          is_active: val.is_active ?? true,
-        })
+      const baseInsert = {
+        title: primaryTitle,
+        slug,
+        description: primaryDesc,
+        embed_url: embedUrl,
+        video_path: val.video_path || null,
+        video_url: val.video_url || null,
+        poster_path: val.poster_path || null,
+        poster_url: val.poster_url,
+        duration_seconds: val.duration_seconds || null,
+        file_size_bytes: val.file_size_bytes || null,
+        mime_type: val.mime_type || null,
+        sort_order: val.sort_order ?? 0,
+        status: val.status || "published",
+        is_active: val.is_active ?? true,
+      };
+      const fullInsert = {
+        ...baseInsert,
+        title_en: titlePair.en || null,
+        title_ta: titlePair.ta || null,
+        description_en: descPair.en || null,
+        description_ta: descPair.ta || null,
+        category_en: val.category_en || null,
+        category_ta: val.category_ta || null,
+        poster_alt_en: val.poster_alt_en || null,
+        poster_alt_ta: val.poster_alt_ta || null,
+      };
+
+      let { data, error } = await (adminSupabase.from("videos") as any)
+        .insert(fullInsert)
         .select()
         .single();
 
+      if (error && isMissingVideoColumnError(error)) {
+        const retry = await (adminSupabase.from("videos") as any)
+          .insert(baseInsert)
+          .select()
+          .single();
+        data = retry.data;
+        error = retry.error;
+      }
+
       if (!error && data) {
-        createdId = data.id;
+        createdRow = data;
       }
     } catch {
       // Fallback
     }
 
-    const newVideo: AdminVideoItem = {
-      id: createdId,
-      title: val.title,
-      slug,
-      description: val.description || "",
-      embed_url: embedUrl,
-      video_path: val.video_path,
-      video_url: val.video_url,
-      poster_path: val.poster_path,
-      poster_url: val.poster_url,
-      duration_seconds: val.duration_seconds,
-      duration_formatted: val.duration_seconds
-        ? `${Math.floor(val.duration_seconds / 60)}:${(val.duration_seconds % 60).toString().padStart(2, "0")}`
-        : undefined,
-      file_size_bytes: val.file_size_bytes,
-      mime_type: val.mime_type,
-      sort_order: val.sort_order ?? 0,
-      status: val.status || "published",
-      is_active: val.is_active ?? true,
-      created_at: nowIso,
-      updated_at: nowIso,
-    };
-
-    inMemoryVideos = [newVideo, ...inMemoryVideos];
+    const newVideo: AdminVideoItem = createdRow
+      ? mapSupabaseVideoRow(createdRow)
+      : {
+          id: `vid-${Date.now()}`,
+          title: primaryTitle,
+          title_en: titlePair.en || "",
+          title_ta: titlePair.ta || "",
+          slug,
+          description: primaryDesc || "",
+          description_en: descPair.en || "",
+          description_ta: descPair.ta || "",
+          category_en: val.category_en || undefined,
+          category_ta: val.category_ta || undefined,
+          poster_alt_en: val.poster_alt_en || undefined,
+          poster_alt_ta: val.poster_alt_ta || undefined,
+          embed_url: embedUrl,
+          video_path: val.video_path,
+          video_url: val.video_url,
+          poster_path: val.poster_path,
+          poster_url: val.poster_url,
+          duration_seconds: val.duration_seconds,
+          duration_formatted: val.duration_seconds
+            ? `${Math.floor(val.duration_seconds / 60)}:${(val.duration_seconds % 60).toString().padStart(2, "0")}`
+            : undefined,
+          file_size_bytes: val.file_size_bytes,
+          mime_type: val.mime_type,
+          sort_order: val.sort_order ?? 0,
+          status: val.status || "published",
+          is_active: val.is_active ?? true,
+          created_at: nowIso,
+          updated_at: nowIso,
+        };
 
     try {
       revalidatePath("/videos");
@@ -251,45 +331,97 @@ export async function PATCH(req: NextRequest) {
         }
       }
 
-      const supabaseUpdates: any = {
+      const baseUpdates: any = {
         updated_at: new Date().toISOString(),
       };
-      if (updates.title) supabaseUpdates.title = updates.title;
-      if (updates.slug) supabaseUpdates.slug = updates.slug;
-      if (updates.description !== undefined) supabaseUpdates.description = updates.description;
-      if (updates.embed_url !== undefined) supabaseUpdates.embed_url = updates.embed_url;
-      if (updates.video_path !== undefined) supabaseUpdates.video_path = updates.video_path;
-      if (updates.video_url !== undefined) supabaseUpdates.video_url = updates.video_url;
-      if (updates.poster_path !== undefined) supabaseUpdates.poster_path = updates.poster_path;
-      if (updates.poster_url !== undefined) supabaseUpdates.poster_url = updates.poster_url;
-      if (updates.duration_seconds !== undefined) supabaseUpdates.duration_seconds = updates.duration_seconds;
-      if (updates.file_size_bytes !== undefined) supabaseUpdates.file_size_bytes = updates.file_size_bytes;
-      if (updates.mime_type !== undefined) supabaseUpdates.mime_type = updates.mime_type;
-      if (updates.sort_order !== undefined) supabaseUpdates.sort_order = updates.sort_order;
-      if (updates.status !== undefined) supabaseUpdates.status = updates.status;
-      if (updates.is_active !== undefined) supabaseUpdates.is_active = updates.is_active;
+      if (updates.title || updates.title_ta || updates.title_en) {
+        baseUpdates.title = updates.title_ta || updates.title || updates.title_en;
+      }
+      if (updates.slug) baseUpdates.slug = updates.slug;
+      if (updates.description !== undefined || updates.description_ta !== undefined || updates.description_en !== undefined) {
+        baseUpdates.description = updates.description_ta ?? updates.description ?? updates.description_en;
+      }
+      if (updates.embed_url !== undefined) baseUpdates.embed_url = updates.embed_url;
+      if (updates.video_path !== undefined) baseUpdates.video_path = updates.video_path;
+      if (updates.video_url !== undefined) baseUpdates.video_url = updates.video_url;
+      if (updates.poster_path !== undefined) baseUpdates.poster_path = updates.poster_path;
+      if (updates.poster_url !== undefined) baseUpdates.poster_url = updates.poster_url;
+      if (updates.duration_seconds !== undefined) baseUpdates.duration_seconds = updates.duration_seconds;
+      if (updates.file_size_bytes !== undefined) baseUpdates.file_size_bytes = updates.file_size_bytes;
+      if (updates.mime_type !== undefined) baseUpdates.mime_type = updates.mime_type;
+      if (updates.sort_order !== undefined) baseUpdates.sort_order = updates.sort_order;
+      if (updates.status !== undefined) baseUpdates.status = updates.status;
+      if (updates.is_active !== undefined) baseUpdates.is_active = updates.is_active;
 
-      if (Object.keys(supabaseUpdates).length > 0) {
-        await (adminSupabase.from("videos") as any)
-          .update(supabaseUpdates)
-          .eq("id", id);
+      const fullUpdates: any = { ...baseUpdates };
+      if (updates.title_en !== undefined) fullUpdates.title_en = updates.title_en;
+      if (updates.title_ta !== undefined) fullUpdates.title_ta = updates.title_ta;
+      if (updates.description_en !== undefined) fullUpdates.description_en = updates.description_en;
+      if (updates.description_ta !== undefined) fullUpdates.description_ta = updates.description_ta;
+      if (updates.category_en !== undefined) fullUpdates.category_en = updates.category_en;
+      if (updates.category_ta !== undefined) fullUpdates.category_ta = updates.category_ta;
+      if (updates.poster_alt_en !== undefined) fullUpdates.poster_alt_en = updates.poster_alt_en;
+      if (updates.poster_alt_ta !== undefined) fullUpdates.poster_alt_ta = updates.poster_alt_ta;
+
+      let { data: updatedRow, error: updErr } = await (adminSupabase.from("videos") as any)
+        .update(fullUpdates)
+        .eq("id", id)
+        .select()
+        .maybeSingle();
+
+      if (updErr && isMissingVideoColumnError(updErr)) {
+        const retry = await (adminSupabase.from("videos") as any)
+          .update(baseUpdates)
+          .eq("id", id)
+          .select()
+          .maybeSingle();
+        updatedRow = retry.data;
+        updErr = retry.error;
+      }
+
+      if (!updErr && updatedRow) {
+        try {
+          revalidatePath("/videos");
+          revalidatePath("/");
+        } catch {}
+        return NextResponse.json({
+          video: mapSupabaseVideoRow(updatedRow),
+          message: "Video updated successfully",
+        });
       }
     } catch {
       // Fallback
     }
 
-    inMemoryVideos = inMemoryVideos.map((v) => {
-      if (v.id === id) {
-        return {
-          ...v,
-          ...updates,
-          updated_at: new Date().toISOString(),
-        };
-      }
-      return v;
-    });
-
-    const updated = inMemoryVideos.find((v) => v.id === id);
+    const baseFallback = fallbackVideos.find((v) => v.id === id);
+    const updated: AdminVideoItem = {
+      ...(baseFallback || {
+        id,
+        title: "",
+        slug: "",
+        description: "",
+        embed_url: "",
+        poster_url: "",
+        sort_order: 0,
+        status: "published" as const,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }),
+      ...updates,
+      title: updates.title_ta || updates.title_en || updates.title || baseFallback?.title || "",
+      description:
+        updates.description_ta || updates.description_en || updates.description || baseFallback?.description || "",
+      title_en: updates.title_en ?? baseFallback?.title_en,
+      title_ta: updates.title_ta ?? baseFallback?.title_ta,
+      description_en: updates.description_en ?? baseFallback?.description_en,
+      description_ta: updates.description_ta ?? baseFallback?.description_ta,
+      category_en: updates.category_en ?? baseFallback?.category_en,
+      category_ta: updates.category_ta ?? baseFallback?.category_ta,
+      poster_alt_en: updates.poster_alt_en ?? baseFallback?.poster_alt_en,
+      poster_alt_ta: updates.poster_alt_ta ?? baseFallback?.poster_alt_ta,
+      updated_at: new Date().toISOString(),
+    };
 
     try {
       revalidatePath("/videos");
@@ -340,8 +472,6 @@ export async function DELETE(req: NextRequest) {
     } catch {
       // Fallback
     }
-
-    inMemoryVideos = inMemoryVideos.filter((v) => v.id !== id);
 
     try {
       revalidatePath("/videos");

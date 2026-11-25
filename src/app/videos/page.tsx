@@ -5,6 +5,7 @@ import type { VideoData } from "@/components/videos/VideoCard";
 import { allVideos } from "@/data/videos";
 import { safeJsonLdStringify } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/server";
+import { resolveBilingualPair } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -53,22 +54,29 @@ export default async function VideosPage() {
       .order("created_at", { ascending: true });
 
     if (!error && data && data.length > 0) {
-      videosList = data.map((row: any) => ({
-        id: row.id,
-        titleTa: row.title,
-        titleEn: row.title,
-        descriptionTa: row.description || "",
-        descriptionEn: row.description || "",
-        embedUrl: row.embed_url || row.video_url || "",
-        videoUrl: row.video_url || undefined,
-        posterImage: row.poster_url || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/video-posters/1.webp",
-        categoryTa: "வரலாற்று ஆவணம்",
-        categoryEn: "History",
-        duration: row.duration_seconds
-          ? `${Math.floor(row.duration_seconds / 60)}:${(row.duration_seconds % 60).toString().padStart(2, "0")}`
-          : undefined,
-        publishedDate: row.created_at ? row.created_at.split("T")[0] : "2026",
-      }));
+      videosList = data.map((row: any) => {
+        const titlePair = resolveBilingualPair({ en: row.title_en, ta: row.title_ta, legacy: row.title });
+        const descPair = resolveBilingualPair({ en: row.description_en, ta: row.description_ta, legacy: row.description });
+        const catPair = resolveBilingualPair({ en: row.category_en, ta: row.category_ta, legacy: "History" });
+        return {
+          id: row.id,
+          titleTa: titlePair.ta || titlePair.en || row.title,
+          titleEn: titlePair.en || titlePair.ta || row.title,
+          descriptionTa: descPair.ta || descPair.en || "",
+          descriptionEn: descPair.en || descPair.ta || "",
+          embedUrl: row.embed_url || row.video_url || "",
+          videoUrl: row.video_url || undefined,
+          posterImage: row.poster_url || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/video-posters/1.webp",
+          posterAltTa: row.poster_alt_ta || undefined,
+          posterAltEn: row.poster_alt_en || undefined,
+          categoryTa: catPair.ta || "வரலாற்று ஆவணம்",
+          categoryEn: catPair.en || "History",
+          duration: row.duration_seconds
+            ? `${Math.floor(row.duration_seconds / 60)}:${(row.duration_seconds % 60).toString().padStart(2, "0")}`
+            : undefined,
+          publishedDate: row.created_at ? row.created_at.split("T")[0] : "2026",
+        };
+      });
     }
   } catch (err) {
     console.error("Failed to load videos from Supabase:", err);

@@ -20,12 +20,30 @@ import {
   ExternalLink,
 } from "lucide-react";
 import type { AdminVideoItem } from "@/app/api/admin/videos/route";
+import {
+  buildBilingualSearchText,
+  generateAsciiSlug,
+  getLanguageCompleteness,
+  isAsciiSlug,
+  REQUIRE_BOTH_LANGUAGES_TO_PUBLISH,
+  resolveBilingualPair,
+  type AppLocale,
+} from "@/lib/i18n";
+import { BilingualListBadge, BilingualTabs } from "@/components/admin/BilingualTabs";
+
+const VIDEO_REQUIRED_BILINGUAL_FIELDS = ["title"];
 
 interface VideoFormData {
   id?: string;
-  title: string;
+  title_en: string;
+  title_ta: string;
   slug: string;
-  description: string;
+  description_en: string;
+  description_ta: string;
+  category_en: string;
+  category_ta: string;
+  poster_alt_en: string;
+  poster_alt_ta: string;
   sourceType: "upload" | "embed";
   video_path: string;
   video_url: string;
@@ -41,9 +59,15 @@ interface VideoFormData {
 }
 
 const initialFormData: VideoFormData = {
-  title: "",
+  title_en: "",
+  title_ta: "",
   slug: "",
-  description: "",
+  description_en: "",
+  description_ta: "",
+  category_en: "Book Showcase",
+  category_ta: "புத்தகக் காணொளி",
+  poster_alt_en: "",
+  poster_alt_ta: "",
   sourceType: "upload",
   video_path: "",
   video_url: "",
@@ -62,7 +86,7 @@ export default function AdminVideosPage() {
   const [videos, setVideos] = React.useState<AdminVideoItem[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [statusFilter, setStatusFilter] = React.useState<"all" | "published" | "draft">("all");
+  const [statusFilter, setStatusFilter] = React.useState<"all" | "published" | "draft" | "missing_tamil">("all");
   const [toastMessage, setToastMessage] = React.useState<string | null>(null);
 
   // Modals state
@@ -70,6 +94,11 @@ export default function AdminVideosPage() {
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [deleteTarget, setDeleteTarget] = React.useState<AdminVideoItem | null>(null);
   const [formData, setFormData] = React.useState<VideoFormData>(initialFormData);
+  const [activeLangTab, setActiveLangTab] = React.useState<AppLocale>("en");
+  const initialLangSnapshotRef = React.useRef({
+    en: { title_en: "", description_en: "", poster_alt_en: "" },
+    ta: { title_ta: "", description_ta: "", poster_alt_ta: "" },
+  });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   // Upload progress states
@@ -245,11 +274,19 @@ export default function AdminVideosPage() {
 
   // Open Edit Modal
   const handleOpenEdit = (v: AdminVideoItem) => {
-    setFormData({
+    const titlePair = resolveBilingualPair({ en: v.title_en, ta: v.title_ta, legacy: v.title });
+    const descPair = resolveBilingualPair({ en: v.description_en, ta: v.description_ta, legacy: v.description });
+    const populated: VideoFormData = {
       id: v.id,
-      title: v.title,
+      title_en: titlePair.en,
+      title_ta: titlePair.ta,
       slug: v.slug,
-      description: v.description,
+      description_en: descPair.en,
+      description_ta: descPair.ta,
+      category_en: v.category_en || "Book Showcase",
+      category_ta: v.category_ta || "புத்தகக் காணொளி",
+      poster_alt_en: v.poster_alt_en || "",
+      poster_alt_ta: v.poster_alt_ta || "",
       sourceType: v.video_url ? "upload" : "embed",
       video_path: v.video_path || "",
       video_url: v.video_url || "",
@@ -262,18 +299,83 @@ export default function AdminVideosPage() {
       sort_order: v.sort_order,
       status: v.status,
       is_active: v.is_active,
-    });
+    };
+    setFormData(populated);
+    initialLangSnapshotRef.current = {
+      en: {
+        title_en: populated.title_en,
+        description_en: populated.description_en,
+        poster_alt_en: populated.poster_alt_en,
+      },
+      ta: {
+        title_ta: populated.title_ta,
+        description_ta: populated.description_ta,
+        poster_alt_ta: populated.poster_alt_ta,
+      },
+    };
+    setActiveLangTab("en");
     setUploadWarning(null);
     setIsEditOpen(true);
+  };
+
+  const formCompleteness = React.useMemo(
+    () => getLanguageCompleteness(formData as unknown as Record<string, unknown>, VIDEO_REQUIRED_BILINGUAL_FIELDS),
+    [formData]
+  );
+
+  const isActiveTabDirty = React.useMemo(() => {
+    const snap = initialLangSnapshotRef.current;
+    if (activeLangTab === "en") {
+      return (
+        formData.title_en !== snap.en.title_en ||
+        formData.description_en !== snap.en.description_en ||
+        formData.poster_alt_en !== snap.en.poster_alt_en
+      );
+    }
+    return (
+      formData.title_ta !== snap.ta.title_ta ||
+      formData.description_ta !== snap.ta.description_ta ||
+      formData.poster_alt_ta !== snap.ta.poster_alt_ta
+    );
+  }, [activeLangTab, formData]);
+
+  const validateAndBuildVideoPayload = () => {
+    if (!formData.title_en.trim()) {
+      setActiveLangTab("en");
+      showToast("English video title is required.");
+      return null;
+    }
+    if (
+      REQUIRE_BOTH_LANGUAGES_TO_PUBLISH &&
+      formData.status === "published" &&
+      !formData.title_ta.trim()
+    ) {
+      setActiveLangTab("ta");
+      showToast("Tamil video title is required to publish.");
+      return null;
+    }
+    const cleanSlug = (formData.slug.trim() || generateAsciiSlug(formData.title_en, "video")).toLowerCase();
+    if (!isAsciiSlug(cleanSlug)) {
+      showToast("Slug must contain only ASCII lowercase letters, numbers, and hyphens.");
+      return null;
+    }
+    return {
+      ...formData,
+      title: formData.title_ta.trim() || formData.title_en.trim(),
+      title_en: formData.title_en.trim(),
+      title_ta: formData.title_ta.trim() || null,
+      description: formData.description_ta.trim() || formData.description_en.trim() || "",
+      description_en: formData.description_en.trim() || null,
+      description_ta: formData.description_ta.trim() || null,
+      slug: cleanSlug,
+    };
   };
 
   // Submit Create Video
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title.trim()) {
-      showToast("Please enter a video title.");
-      return;
-    }
+    const payload = validateAndBuildVideoPayload();
+    if (!payload) return;
     if (!formData.poster_url) {
       showToast("Poster thumbnail is required.");
       return;
@@ -288,7 +390,7 @@ export default function AdminVideosPage() {
       const res = await fetch("/api/admin/videos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -312,13 +414,15 @@ export default function AdminVideosPage() {
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.id) return;
+    const payload = validateAndBuildVideoPayload();
+    if (!payload) return;
 
     setIsSubmitting(true);
     try {
       const res = await fetch("/api/admin/videos", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -355,17 +459,23 @@ export default function AdminVideosPage() {
   };
 
   const filteredVideos = videos.filter((v) => {
-    const q = searchQuery.toLowerCase();
-    const matchesSearch =
-      !q ||
-      v.title.toLowerCase().includes(q) ||
-      v.slug.toLowerCase().includes(q) ||
-      v.description.toLowerCase().includes(q);
+    const q = searchQuery.trim().toLowerCase();
+    const corpus = buildBilingualSearchText(v as unknown as Record<string, unknown>, [
+      "title",
+      "description",
+      "category",
+    ]);
+    const matchesSearch = !q || corpus.includes(q);
+    const langComp = getLanguageCompleteness(
+      v as unknown as Record<string, unknown>,
+      VIDEO_REQUIRED_BILINGUAL_FIELDS
+    );
 
     const matchesStatus =
       statusFilter === "all" ||
       (statusFilter === "published" && v.status === "published") ||
-      (statusFilter === "draft" && v.status === "draft");
+      (statusFilter === "draft" && v.status === "draft") ||
+      (statusFilter === "missing_tamil" && langComp.missingTamil);
 
     return matchesSearch && matchesStatus;
   });
@@ -395,6 +505,11 @@ export default function AdminVideosPage() {
           type="button"
           onClick={() => {
             setFormData(initialFormData);
+            initialLangSnapshotRef.current = {
+              en: { title_en: "", description_en: "", poster_alt_en: "" },
+              ta: { title_ta: "", description_ta: "", poster_alt_ta: "" },
+            };
+            setActiveLangTab("en");
             setIsAddOpen(true);
           }}
           className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer min-h-[44px]"
@@ -416,19 +531,19 @@ export default function AdminVideosPage() {
             className="w-full pl-10 pr-4 py-2 text-xs rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
           />
         </div>
-        <div className="flex items-center gap-2">
-          {(["all", "published", "draft"] as const).map((st) => (
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+          {(["all", "published", "draft", "missing_tamil"] as const).map((st) => (
             <button
               key={st}
               type="button"
               onClick={() => setStatusFilter(st)}
-              className={`px-3 py-2 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer min-h-[44px] ${
+              className={`px-3 py-2 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer min-h-[44px] whitespace-nowrap ${
                 statusFilter === st
                   ? "bg-[#0A6847] text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
-              {st}
+              {st === "missing_tamil" ? "Missing Tamil" : st}
             </button>
           ))}
         </div>
@@ -469,9 +584,22 @@ export default function AdminVideosPage() {
                             className="object-cover"
                           />
                         </div>
-                        <div className="space-y-0.5 max-w-xs">
-                          <div className="font-bold text-gray-900 line-clamp-1">{v.title}</div>
-                          <div className="text-[11px] text-gray-400 font-mono truncate">{v.slug}</div>
+                        <div className="space-y-1 max-w-xs">
+                          <div className="font-bold text-gray-900 line-clamp-1 font-tamil leading-[1.45]">
+                            {v.title_ta || v.title_en || v.title}
+                          </div>
+                          {v.title_en && v.title_ta && v.title_en !== v.title_ta && (
+                            <div className="text-[11px] text-gray-500 line-clamp-1">{v.title_en}</div>
+                          )}
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-[11px] text-gray-400 font-mono truncate">{v.slug}</span>
+                            <BilingualListBadge
+                              completeness={getLanguageCompleteness(
+                                v as unknown as Record<string, unknown>,
+                                VIDEO_REQUIRED_BILINGUAL_FIELDS
+                              )}
+                            />
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -555,30 +683,106 @@ export default function AdminVideosPage() {
             </div>
 
             <form onSubmit={isAddOpen ? handleCreateSubmit : handleEditSubmit} className="p-4 sm:p-6 space-y-4">
-              {/* Title */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Video Title (Tamil / English) *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="மேதகு களஞ்சியம் — அறிமுகக் காணொளி"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
+              {/* Dual-Language Text Tabs (English | தமிழ் — Text Fields Only) */}
+              <div className="rounded-2xl border border-gray-200 p-4 space-y-3.5">
+                <BilingualTabs
+                  activeTab={activeLangTab}
+                  onTabChange={setActiveLangTab}
+                  completeness={formCompleteness}
+                  isActiveTabDirty={isActiveTabDirty}
                 />
+
+                {activeLangTab === "en" ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Video Title (English) *
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.title_en}
+                        onChange={(e) => {
+                          const nextTitle = e.target.value;
+                          setFormData((prev) => ({
+                            ...prev,
+                            title_en: nextTitle,
+                            slug: isEditOpen
+                              ? prev.slug
+                              : prev.slug || generateAsciiSlug(nextTitle, "video"),
+                          }));
+                        }}
+                        placeholder="e.g. Methagu Kalanjiyam — Platform Introduction"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">Description (English)</label>
+                      <textarea
+                        rows={2}
+                        value={formData.description_en}
+                        onChange={(e) => setFormData({ ...formData, description_en: e.target.value })}
+                        placeholder="English summary and archival context..."
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 resize-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">Poster Alt Text (English)</label>
+                      <input
+                        type="text"
+                        value={formData.poster_alt_en}
+                        onChange={(e) => setFormData({ ...formData, poster_alt_en: e.target.value })}
+                        placeholder="Thumbnail preview of video"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 font-tamil mb-1">
+                        காணொளித் தலைப்பு (Title in Tamil)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.title_ta}
+                        onChange={(e) => setFormData({ ...formData, title_ta: e.target.value })}
+                        placeholder="மேதகு களஞ்சியம் — அறிமுகக் காணொளி"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-900 font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 font-tamil mb-1">விளக்கம் (Description in Tamil)</label>
+                      <textarea
+                        rows={2}
+                        value={formData.description_ta}
+                        onChange={(e) => setFormData({ ...formData, description_ta: e.target.value })}
+                        placeholder="தமிழில் காணொளி விளக்கம்..."
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-900 font-tamil leading-[1.6] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 resize-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 font-tamil mb-1">பட விவரம் (Poster Alt in Tamil)</label>
+                      <input
+                        type="text"
+                        value={formData.poster_alt_ta}
+                        onChange={(e) => setFormData({ ...formData, poster_alt_ta: e.target.value })}
+                        placeholder="காணொளி முன்னோட்டப் படம்"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-900 font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Description */}
+              {/* ASCII Slug */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Description</label>
-                <textarea
-                  rows={3}
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Detailed context and archival notes..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 resize-none"
+                <label className="block text-xs font-bold text-gray-700 mb-1">URL Slug (ASCII only)</label>
+                <input
+                  type="text"
+                  value={formData.slug}
+                  onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase() })}
+                  placeholder="introduction-video"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs font-mono text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
                 />
               </div>
 

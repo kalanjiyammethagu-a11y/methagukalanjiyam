@@ -76,7 +76,7 @@ export function VideosCatalogClient({ initialVideos }: VideosCatalogClientProps 
     }
 
     return list;
-  }, [search, selectedCategory]);
+  }, [baseVideos, search, selectedCategory]);
 
   // Stop playback when category or search changes to prevent hidden audio
   const handleCategorySelect = (category: string) => {

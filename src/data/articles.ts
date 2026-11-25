@@ -5,6 +5,8 @@ export interface ArticleDetailData {
   subtitleTa: string;
   subtitleEn: string;
   coverImage: string;
+  coverAltTa?: string;
+  coverAltEn?: string;
   categoryTa: string;
   categoryEn: string;
   publishedAt: string;

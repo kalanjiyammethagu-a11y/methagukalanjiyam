@@ -1,8 +1,10 @@
 export interface BookItem {
   id: string;
   title: string;
+  titleTa?: string;
   titleEn: string;
   author: string;
+  authorTa?: string;
   authorEn: string;
   price: number;
   discountPrice?: number | null;

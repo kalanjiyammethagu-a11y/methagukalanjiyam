@@ -19,6 +19,7 @@ import { getBookBySlug, type BookItem } from "@/data/books";
 import { formatINR } from "@/lib/utils";
 import { sanitizeHtml } from "@/lib/sanitize";
 import type { ArticleDetailData } from "@/data/articles";
+import { localized } from "@/lib/i18n";
 
 interface ArticleDetailClientProps {
   article: ArticleDetailData;
@@ -62,11 +63,16 @@ export function ArticleDetailClient({ article }: ArticleDetailClientProps) {
     }
   };
 
-  const title = isTa ? article.titleTa : article.titleEn;
-  const subtitle = isTa ? article.subtitleTa : article.subtitleEn;
-  const author = isTa ? article.authorTa : article.authorEn;
-  const category = isTa ? article.categoryTa : article.categoryEn;
-  const content = isTa ? article.htmlContentTa : article.htmlContentEn;
+  const title = localized(article, "title", locale);
+  const subtitle = localized(article, "subtitle", locale);
+  const author = localized(article, "author", locale);
+  const category = localized(article, "category", locale);
+  const content = localized(article, "htmlContent", locale);
+  const coverAlt = localized(article, "coverAlt", locale, title);
+  const normalizedCoverSrc =
+    article.coverImage.startsWith("http") || article.coverImage.startsWith("/")
+      ? article.coverImage
+      : `/${article.coverImage}`;
 
   return (
     <div className="min-h-screen pb-24">
@@ -163,8 +169,8 @@ export function ArticleDetailClient({ article }: ArticleDetailClientProps) {
         {/* Hero Image */}
         <div className="relative aspect-[16/9] w-full rounded-3xl overflow-hidden shadow-lg border border-black/10 bg-black">
           <Image
-            src={article.coverImage.startsWith("/") ? article.coverImage : `/${article.coverImage}`}
-            alt={title}
+            src={normalizedCoverSrc}
+            alt={coverAlt}
             fill
             sizes="(max-width: 1024px) 100vw, 900px"
             className="object-cover"

@@ -9,6 +9,7 @@ import {
   normalizeGalleryImages,
   sanitizeBookStoragePath,
 } from "@/lib/book-images";
+import { generateAsciiSlug, resolveBilingualPair } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -44,8 +45,12 @@ function isMissingBookColumnError(error: any): boolean {
     error?.code === "42703" ||
     msg.includes("gallery_images") ||
     msg.includes("cover_is_front") ||
-    msg.includes("cover_alt_en") ||
-    msg.includes("cover_alt_ta")
+    msg.includes("cover_alt_") ||
+    msg.includes("title_") ||
+    msg.includes("author_") ||
+    msg.includes("description_") ||
+    msg.includes("publisher_") ||
+    msg.includes("quote_")
   );
 }
 
@@ -67,13 +72,35 @@ export async function POST(req: NextRequest) {
 
     const data = parsed.data;
 
+    const titlePair = resolveBilingualPair({
+      en: data.title_en,
+      ta: data.title_ta,
+      legacy: data.title,
+    });
+    const authorPair = resolveBilingualPair({
+      en: data.author_en,
+      ta: data.author_ta,
+      legacy: data.author,
+    });
+    const descPair = resolveBilingualPair({
+      en: data.description_en,
+      ta: data.description_ta,
+      legacy: data.description,
+    });
+    const pubPair = resolveBilingualPair({
+      en: data.publisher_en,
+      ta: data.publisher_ta,
+      legacy: data.publisher,
+    });
+
+    const primaryTitle = titlePair.ta || titlePair.en || data.title?.trim() || "Untitled Book";
+    const primaryAuthor = authorPair.ta || authorPair.en || data.author?.trim() || "Saanthi Nesakaram";
+    const primaryDesc = descPair.ta || descPair.en || data.description || null;
+    const primaryPub = pubPair.ta || pubPair.en || data.publisher || "மேதகு களஞ்சியம்";
+
+    // Strict ASCII slug from English title (no Tamil script in slugs)
     const generatedSlug =
-      data.slug ||
-      data.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)+/g, "") ||
-      `book-${Date.now()}`;
+      data.slug || generateAsciiSlug(titlePair.en || data.title_en || data.title, "book");
 
     const adminSupabase = createAdminClient();
     const coverUrl = (data.cover_image_url || data.cover_front || "").trim();
@@ -81,10 +108,10 @@ export async function POST(req: NextRequest) {
     const normalizedGallery = normalizeGalleryImages(data.gallery_images, null, coverUrl);
 
     const basePayload: Record<string, any> = {
-      title: data.title,
+      title: primaryTitle,
       slug: generatedSlug,
-      author: data.author,
-      description: data.description || null,
+      author: primaryAuthor,
+      description: primaryDesc,
       price: data.price,
       discount_price: data.discount_price ?? null,
       stock: data.stock,
@@ -95,7 +122,7 @@ export async function POST(req: NextRequest) {
       whatsapp_link: data.whatsapp_link || null,
       isbn: data.isbn || null,
       pages: data.pages || null,
-      publisher: data.publisher || "மேதகு களஞ்சியம்",
+      publisher: primaryPub,
       published_year: data.published_year || new Date().getFullYear(),
       weight_grams: data.weight_grams || 350,
       is_featured: Boolean(data.is_featured),
@@ -108,6 +135,16 @@ export async function POST(req: NextRequest) {
 
     const fullPayload: Record<string, any> = {
       ...basePayload,
+      title_en: titlePair.en || null,
+      title_ta: titlePair.ta || null,
+      author_en: authorPair.en || null,
+      author_ta: authorPair.ta || null,
+      description_en: descPair.en || null,
+      description_ta: descPair.ta || null,
+      publisher_en: pubPair.en || "Methagu Kalanjiyam",
+      publisher_ta: pubPair.ta || "மேதகு களஞ்சியம்",
+      quote_en: data.quote_en || null,
+      quote_ta: data.quote_ta || null,
       cover_is_front: data.cover_is_front ?? true,
       cover_alt_en: data.cover_alt_en || null,
       cover_alt_ta: data.cover_alt_ta || null,
@@ -191,10 +228,18 @@ export async function PATCH(req: NextRequest) {
       updated_at: new Date().toISOString(),
     };
 
-    if (updates.title !== undefined) basePayload.title = updates.title;
+    if (updates.title !== undefined || updates.title_ta !== undefined || updates.title_en !== undefined) {
+      const legacyTitle = updates.title_ta || updates.title || updates.title_en;
+      if (legacyTitle) basePayload.title = legacyTitle;
+    }
     if (updates.slug !== undefined) basePayload.slug = updates.slug;
-    if (updates.author !== undefined) basePayload.author = updates.author;
-    if (updates.description !== undefined) basePayload.description = updates.description;
+    if (updates.author !== undefined || updates.author_ta !== undefined || updates.author_en !== undefined) {
+      const legacyAuthor = updates.author_ta || updates.author || updates.author_en;
+      if (legacyAuthor) basePayload.author = legacyAuthor;
+    }
+    if (updates.description !== undefined || updates.description_ta !== undefined || updates.description_en !== undefined) {
+      basePayload.description = updates.description_ta || updates.description || updates.description_en || null;
+    }
     if (updates.price !== undefined) basePayload.price = updates.price;
     if (updates.discount_price !== undefined) basePayload.discount_price = updates.discount_price;
     if (updates.stock !== undefined) basePayload.stock = updates.stock;
@@ -237,6 +282,16 @@ export async function PATCH(req: NextRequest) {
         : undefined;
 
     const fullPayload: Record<string, any> = { ...basePayload };
+    if (updates.title_en !== undefined) fullPayload.title_en = updates.title_en;
+    if (updates.title_ta !== undefined) fullPayload.title_ta = updates.title_ta;
+    if (updates.author_en !== undefined) fullPayload.author_en = updates.author_en;
+    if (updates.author_ta !== undefined) fullPayload.author_ta = updates.author_ta;
+    if (updates.description_en !== undefined) fullPayload.description_en = updates.description_en;
+    if (updates.description_ta !== undefined) fullPayload.description_ta = updates.description_ta;
+    if (updates.publisher_en !== undefined) fullPayload.publisher_en = updates.publisher_en;
+    if (updates.publisher_ta !== undefined) fullPayload.publisher_ta = updates.publisher_ta;
+    if (updates.quote_en !== undefined) fullPayload.quote_en = updates.quote_en;
+    if (updates.quote_ta !== undefined) fullPayload.quote_ta = updates.quote_ta;
     if (updates.cover_is_front !== undefined) fullPayload.cover_is_front = updates.cover_is_front;
     else if (updates.cover_image_url !== undefined) fullPayload.cover_is_front = true;
     if (updates.cover_alt_en !== undefined) fullPayload.cover_alt_en = updates.cover_alt_en;

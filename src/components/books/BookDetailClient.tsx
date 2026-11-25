@@ -24,6 +24,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
 import { formatINR, cn } from "@/lib/utils";
 import type { BookItem } from "@/data/books";
+import { localized } from "@/lib/i18n";
 
 export interface BookDetailClientProps {
   book: BookItem;
@@ -387,7 +388,7 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
                 </div>
               )}
               <p className="text-sm sm:text-base text-[#222222] dark:text-zinc-200 leading-[1.8] font-tamil whitespace-pre-line text-pretty">
-                {isTa ? book.descriptionTa : book.descriptionEn}
+                {localized(book, "description", locale)}
               </p>
             </div>
           ) : (
@@ -396,9 +397,9 @@ export function BookDetailClient({ book }: BookDetailClientProps) {
                 { labelTa: "நூல் பதிவு எண்", labelEn: "Archival ID", value: `MK-ARCH-${book.id.padStart(4, "0")}` },
                 { labelTa: "வெளியீட்டு ஆண்டு", labelEn: "Publication Year", value: book.year },
                 { labelTa: "பக்கங்களின் எண்ணிக்கை", labelEn: "Page Count", value: book.pages ? `${book.pages} பக்கங்கள்` : undefined },
-                { labelTa: "பதிப்பகம்", labelEn: "Publisher", value: isTa ? book.publisher : book.publisherEn },
-                { labelTa: "வகைப்பாடு", labelEn: "Taxonomy Genre", value: isTa ? book.categoryTa : book.categoryEn },
-                { labelTa: "மொழி", labelEn: "Language", value: "தமிழ் (Tamil)" },
+                { labelTa: "பதிப்பகம்", labelEn: "Publisher", value: localized(book, "publisher", locale) },
+                { labelTa: "வகைப்பாடு", labelEn: "Taxonomy Genre", value: localized(book, "category", locale) },
+                { labelTa: "மொழி", labelEn: "Language", value: isTa ? "தமிழ் / English" : "Tamil / English" },
                 { labelTa: "நூல் வடிவம்", labelEn: "Binding", value: isTa ? "அரிய ஆவண மறுபதிப்பு (Archival Monograph)" : "Archival Edition" },
                 { labelTa: "ஆவண நம்பகத்தன்மை", labelEn: "Provenance", value: isTa ? "100% சரிபார்க்கப்பட்ட வரலாற்றுத் தரவு" : "100% Archival Verified" },
               ]

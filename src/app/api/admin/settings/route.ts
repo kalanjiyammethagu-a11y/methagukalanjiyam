@@ -29,6 +29,8 @@ export async function GET(req: NextRequest) {
       settings: {
         general: settingsMap.general || {
           site_name: "மேதகு களஞ்சியம்",
+          site_name_ta: "மேதகு களஞ்சியம்",
+          site_name_en: "Methagu Kalanjiyam",
           site_tagline: "Rare Tamil Literature & National Archives",
           contact_phone: "+91 82486 54946",
           alt_phone: "+91 63846 54946",
@@ -44,6 +46,7 @@ export async function GET(req: NextRequest) {
           free_shipping_threshold: 1000,
           deliverable_pincodes_mode: "all_india",
           deliverable_pincodes_note: "Speed Post delivers to all 19,100+ postal PIN codes in India. ST Courier covers Tamil Nadu, Puducherry and South India.",
+          deliverable_pincodes_note_ta: "தமிழ்நாடு, புதுச்சேரி மற்றும் தென்னிந்தியாவிற்கு எஸ்டி கூரியர் மூலமும், இந்தியா முழுவதும் 19,100+ அஞ்சல் குறியீடுகளுக்கு விரைவு அஞ்சல் மூலமும் நூல்கள் அனுப்பப்படுகின்றன.",
         },
         payment: settingsMap.payment || {
           cod_enabled: false,

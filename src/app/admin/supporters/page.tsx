@@ -20,6 +20,15 @@ import {
 } from "lucide-react";
 import { mockSupporters } from "@/data/admin-mock";
 import type { AdminSupporter } from "@/types/admin";
+import {
+  buildBilingualSearchText,
+  getLanguageCompleteness,
+  REQUIRE_BOTH_LANGUAGES_TO_PUBLISH,
+  type AppLocale,
+} from "@/lib/i18n";
+import { BilingualListBadge, BilingualTabs } from "@/components/admin/BilingualTabs";
+
+const SUPPORTER_REQUIRED_BILINGUAL_FIELDS = ["name", "role"];
 
 interface MemberFormData {
   id?: string;
@@ -27,6 +36,12 @@ interface MemberFormData {
   nameTa: string;
   roleEn: string;
   roleTa: string;
+  taglineEn: string;
+  taglineTa: string;
+  descriptionEn: string;
+  descriptionTa: string;
+  photoAltEn: string;
+  photoAltTa: string;
   image: string;
   logo_or_photo_path?: string;
   logo_or_photo_url?: string;
@@ -41,6 +56,12 @@ const initialFormData: MemberFormData = {
   nameTa: "",
   roleEn: "",
   roleTa: "",
+  taglineEn: "",
+  taglineTa: "",
+  descriptionEn: "",
+  descriptionTa: "",
+  photoAltEn: "",
+  photoAltTa: "",
   image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/harvin.webp",
   logo_or_photo_path: "",
   logo_or_photo_url: "",
@@ -53,14 +74,18 @@ const initialFormData: MemberFormData = {
 export default function AdminSupportersPage() {
   const [supporters, setSupporters] = React.useState<AdminSupporter[]>(mockSupporters);
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [statusFilter, setStatusFilter] = React.useState<"all" | "active" | "inactive">("all");
+  const [statusFilter, setStatusFilter] = React.useState<"all" | "active" | "inactive" | "missing_tamil">("all");
   const [toastMessage, setToastMessage] = React.useState<string | null>(null);
 
   // Modals state
-  const [isAddOpen, setIsAddOpen] = React.useState(false);
-  const [isEditOpen, setIsEditOpen] = React.useState(false);
+  const [modalMode, setModalMode] = React.useState<"add" | "edit" | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<AdminSupporter | null>(null);
   const [formData, setFormData] = React.useState<MemberFormData>(initialFormData);
+  const [activeLangTab, setActiveLangTab] = React.useState<AppLocale>("en");
+  const initialLangSnapshotRef = React.useRef({
+    en: { nameEn: "", roleEn: "", taglineEn: "", descriptionEn: "", photoAltEn: "" },
+    ta: { nameTa: "", roleTa: "", taglineTa: "", descriptionTa: "", photoAltTa: "" },
+  });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [uploadProgress, setUploadProgress] = React.useState(false);
 
@@ -151,14 +176,47 @@ export default function AdminSupportersPage() {
     }
   };
 
+  const setSnapshotFromForm = (data: MemberFormData) => {
+    initialLangSnapshotRef.current = {
+      en: {
+        nameEn: data.nameEn,
+        roleEn: data.roleEn,
+        taglineEn: data.taglineEn,
+        descriptionEn: data.descriptionEn,
+        photoAltEn: data.photoAltEn,
+      },
+      ta: {
+        nameTa: data.nameTa,
+        roleTa: data.roleTa,
+        taglineTa: data.taglineTa,
+        descriptionTa: data.descriptionTa,
+        photoAltTa: data.photoAltTa,
+      },
+    };
+  };
+
+  // Open Add Modal
+  const handleOpenAdd = () => {
+    setFormData(initialFormData);
+    setSnapshotFromForm(initialFormData);
+    setActiveLangTab("en");
+    setModalMode("add");
+  };
+
   // Open Edit Modal
   const handleOpenEdit = (supporter: AdminSupporter) => {
-    setFormData({
+    const populated: MemberFormData = {
       id: supporter.id,
-      nameEn: supporter.nameEn,
-      nameTa: supporter.nameTa,
-      roleEn: supporter.roleEn,
-      roleTa: supporter.roleTa,
+      nameEn: supporter.nameEn || "",
+      nameTa: supporter.nameTa || "",
+      roleEn: supporter.roleEn || "",
+      roleTa: supporter.roleTa || "",
+      taglineEn: supporter.taglineEn || supporter.tagline || "",
+      taglineTa: supporter.taglineTa || "",
+      descriptionEn: supporter.descriptionEn || supporter.description || "",
+      descriptionTa: supporter.descriptionTa || "",
+      photoAltEn: supporter.photoAltEn || "",
+      photoAltTa: supporter.photoAltTa || "",
       image: supporter.image,
       logo_or_photo_path: supporter.logo_or_photo_path || "",
       logo_or_photo_url: supporter.logo_or_photo_url || supporter.image,
@@ -166,102 +224,110 @@ export default function AdminSupportersPage() {
       instagramUrl: supporter.instagramUrl || "",
       whatsappUrl: supporter.whatsappUrl || "",
       isActive: supporter.isActive,
-    });
-    setIsEditOpen(true);
+    };
+    setFormData(populated);
+    setSnapshotFromForm(populated);
+    setActiveLangTab("en");
+    setModalMode("edit");
   };
 
-  // Submit Create Member
-  const handleCreateSubmit = async (e: React.FormEvent) => {
+  const formCompleteness = React.useMemo(
+    () => getLanguageCompleteness(formData as unknown as Record<string, unknown>, SUPPORTER_REQUIRED_BILINGUAL_FIELDS),
+    [formData]
+  );
+
+  const isActiveTabDirty = React.useMemo(() => {
+    const snap = initialLangSnapshotRef.current;
+    if (activeLangTab === "en") {
+      return (
+        formData.nameEn !== snap.en.nameEn ||
+        formData.roleEn !== snap.en.roleEn ||
+        formData.taglineEn !== snap.en.taglineEn ||
+        formData.descriptionEn !== snap.en.descriptionEn ||
+        formData.photoAltEn !== snap.en.photoAltEn
+      );
+    }
+    return (
+      formData.nameTa !== snap.ta.nameTa ||
+      formData.roleTa !== snap.ta.roleTa ||
+      formData.taglineTa !== snap.ta.taglineTa ||
+      formData.descriptionTa !== snap.ta.descriptionTa ||
+      formData.photoAltTa !== snap.ta.photoAltTa
+    );
+  }, [activeLangTab, formData]);
+
+  // Unified Create / Edit Submit
+  const handleModalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.nameEn && !formData.nameTa) {
-      showToast("Please enter a name for the member.");
+    if (!formData.nameEn.trim() || !formData.roleEn.trim()) {
+      setActiveLangTab("en");
+      showToast("English name and English role are required.");
+      return;
+    }
+    if (
+      REQUIRE_BOTH_LANGUAGES_TO_PUBLISH &&
+      formData.isActive &&
+      (!formData.nameTa.trim() || !formData.roleTa.trim())
+    ) {
+      setActiveLangTab("ta");
+      showToast("Tamil name and Tamil role are required before publishing.");
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      const res = await fetch("/api/admin/supporters", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      if (res.ok) {
-        const result = await res.json();
-        setSupporters((prev) => [result.supporter, ...prev]);
-        setIsAddOpen(false);
-        setFormData(initialFormData);
-        showToast("New member added to roster successfully!");
-      } else {
-        showToast("Failed to save member.");
-      }
-    } catch {
-      // Offline fallback
-      const localMember: AdminSupporter = {
-        id: `sup-${Date.now()}`,
-        nameEn: formData.nameEn || formData.nameTa,
-        nameTa: formData.nameTa || formData.nameEn,
-        roleEn: formData.roleEn || "Archival Contributor",
-        roleTa: formData.roleTa || "ஆவணப் பங்களிப்பாளர்",
-        image: formData.image,
-        instagramUrl: formData.instagramUrl || undefined,
-        whatsappUrl: formData.whatsappUrl || undefined,
-        isActive: formData.isActive,
-        joinedAt: new Date().toISOString().split("T")[0],
-      };
-      setSupporters((prev) => [localMember, ...prev]);
-      setIsAddOpen(false);
-      setFormData(initialFormData);
-      showToast("Member saved locally!");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Submit Edit Member
-  const handleEditSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.id) return;
+    const payload = {
+      ...formData,
+      name: formData.nameEn.trim(),
+      name_en: formData.nameEn.trim(),
+      name_ta: formData.nameTa.trim() || null,
+      role_en: formData.roleEn.trim(),
+      role_ta: formData.roleTa.trim() || null,
+      tagline_en: formData.taglineEn.trim() || null,
+      tagline_ta: formData.taglineTa.trim() || null,
+      description_en: formData.descriptionEn.trim() || null,
+      description_ta: formData.descriptionTa.trim() || null,
+      photo_alt_en: formData.photoAltEn.trim() || null,
+      photo_alt_ta: formData.photoAltTa.trim() || null,
+      status: formData.isActive ? "published" : "draft",
+    };
 
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/admin/supporters", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      if (modalMode === "edit" && formData.id) {
+        const res = await fetch("/api/admin/supporters", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
 
-      if (res.ok) {
-        const result = await res.json();
-        setSupporters((prev) =>
-          prev.map((s) => (s.id === formData.id ? result.supporter : s))
-        );
-        setIsEditOpen(false);
-        showToast("Member updated successfully!");
+        if (res.ok) {
+          const result = await res.json();
+          setSupporters((prev) => prev.map((s) => (s.id === formData.id ? result.supporter : s)));
+          setModalMode(null);
+          showToast("Member updated successfully!");
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.error || "Failed to update member.");
+        }
       } else {
-        showToast("Failed to update member.");
+        const res = await fetch("/api/admin/supporters", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok) {
+          const result = await res.json();
+          setSupporters((prev) => [result.supporter, ...prev]);
+          setModalMode(null);
+          setFormData(initialFormData);
+          showToast("New member added to roster successfully!");
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.error || "Failed to save member.");
+        }
       }
     } catch {
-      // Offline fallback
-      setSupporters((prev) =>
-        prev.map((s) =>
-          s.id === formData.id
-            ? {
-                ...s,
-                nameEn: formData.nameEn,
-                nameTa: formData.nameTa,
-                roleEn: formData.roleEn,
-                roleTa: formData.roleTa,
-                image: formData.image,
-                instagramUrl: formData.instagramUrl || undefined,
-                whatsappUrl: formData.whatsappUrl || undefined,
-                isActive: formData.isActive,
-              }
-            : s
-        )
-      );
-      setIsEditOpen(false);
-      showToast("Member updated locally!");
+      showToast("Network error saving member.");
     } finally {
       setIsSubmitting(false);
     }
@@ -285,18 +351,24 @@ export default function AdminSupportersPage() {
   };
 
   const filteredSupporters = supporters.filter((s) => {
-    const q = searchQuery.toLowerCase();
-    const matchesSearch =
-      !q ||
-      s.nameEn.toLowerCase().includes(q) ||
-      s.nameTa.toLowerCase().includes(q) ||
-      s.roleEn.toLowerCase().includes(q) ||
-      s.roleTa.toLowerCase().includes(q);
+    const q = searchQuery.trim().toLowerCase();
+    const corpus = buildBilingualSearchText(s as unknown as Record<string, unknown>, [
+      "name",
+      "role",
+      "tagline",
+      "description",
+    ]);
+    const matchesSearch = !q || corpus.includes(q);
+    const langComp = getLanguageCompleteness(
+      s as unknown as Record<string, unknown>,
+      SUPPORTER_REQUIRED_BILINGUAL_FIELDS
+    );
 
     const matchesStatus =
       statusFilter === "all" ||
       (statusFilter === "active" && s.isActive) ||
-      (statusFilter === "inactive" && !s.isActive);
+      (statusFilter === "inactive" && !s.isActive) ||
+      (statusFilter === "missing_tamil" && langComp.missingTamil);
 
     return matchesSearch && matchesStatus;
   });
@@ -327,10 +399,7 @@ export default function AdminSupportersPage() {
         </div>
         <button
           type="button"
-          onClick={() => {
-            setFormData(initialFormData);
-            setIsAddOpen(true);
-          }}
+          onClick={handleOpenAdd}
           className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer min-h-[44px]"
         >
           <Plus className="h-4 w-4" />
@@ -385,7 +454,7 @@ export default function AdminSupportersPage() {
         </div>
 
         <div className="flex items-center gap-1.5 self-start sm:self-auto shrink-0 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
-          {(["all", "active", "inactive"] as const).map((filter) => (
+          {(["all", "active", "inactive", "missing_tamil"] as const).map((filter) => (
             <button
               key={filter}
               type="button"
@@ -396,7 +465,13 @@ export default function AdminSupportersPage() {
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
-              {filter === "all" ? `All (${totalCount})` : filter === "active" ? `Active (${activeCount})` : `Inactive (${inactiveCount})`}
+              {filter === "all"
+                ? `All (${totalCount})`
+                : filter === "active"
+                ? `Active (${activeCount})`
+                : filter === "inactive"
+                ? `Inactive (${inactiveCount})`
+                : "Missing Tamil"}
             </button>
           ))}
         </div>
@@ -464,14 +539,22 @@ export default function AdminSupportersPage() {
                     </div>
                   )}
 
-                  <p className="text-xs text-[#0A6847] font-semibold mt-1 leading-snug line-clamp-1">
+                  <p className="text-xs text-[#0A6847] font-semibold mt-1 leading-snug line-clamp-1 font-tamil">
                     {s.roleEn || s.roleTa}
                   </p>
 
-                  <p className="text-[10px] text-gray-400 font-mono mt-1.5 flex items-center gap-1">
-                    <Calendar className="h-3 w-3 shrink-0" />
-                    <span>Joined: {s.joinedAt}</span>
-                  </p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                    <BilingualListBadge
+                      completeness={getLanguageCompleteness(
+                        s as unknown as Record<string, unknown>,
+                        SUPPORTER_REQUIRED_BILINGUAL_FIELDS
+                      )}
+                    />
+                    <span className="text-[10px] text-gray-400 font-mono flex items-center gap-1">
+                      <Calendar className="h-3 w-3 shrink-0" />
+                      <span>{s.joinedAt}</span>
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -541,355 +624,220 @@ export default function AdminSupportersPage() {
       )}
 
       {/* =========================================================================
-          ADD MEMBER MODAL
+          UNIFIED ADD / EDIT MEMBER MODAL (Dual-Language Tabs)
           ========================================================================= */}
-      {isAddOpen && (
+      {modalMode && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl border border-gray-200 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
             <div className="flex items-center justify-between border-b border-gray-100 p-5 sm:p-6 pb-4 shrink-0">
               <div>
-                <h2 className="text-base sm:text-lg font-bold text-gray-900">Add New Team Member</h2>
-                <p className="text-xs text-gray-500 mt-0.5">Publish a contributor or patron on the roster.</p>
+                <h2 className="text-base sm:text-lg font-bold text-gray-900">
+                  {modalMode === "edit" ? "Edit Member Details" : "Add New Team Member"}
+                </h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {modalMode === "edit"
+                    ? "Update team role, bilingual details, and social channels."
+                    : "Publish a bilingual contributor or patron profile on the roster."}
+                </p>
               </div>
               <button
                 type="button"
-                onClick={() => setIsAddOpen(false)}
+                onClick={() => setModalMode(null)}
                 className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 cursor-pointer min-h-[44px] min-w-[44px]"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateSubmit} className="flex flex-col flex-1 min-h-0">
+            <form onSubmit={handleModalSubmit} className="flex flex-col flex-1 min-h-0">
               <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
-              {/* Profile Photo Upload */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">Profile Photo</label>
-                <div className="flex items-center gap-4">
-                  <div className="relative h-16 w-16 rounded-2xl overflow-hidden border border-gray-200 bg-gray-50 shrink-0">
-                    <Image
-                      src={formData.image || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/harvin.webp"}
-                      alt="Preview"
-                      width={64}
-                      height={64}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                    <button
-                      type="button"
-                      disabled={uploadProgress}
-                      onClick={() => fileInputRef.current?.click()}
-                      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition-colors cursor-pointer min-h-[44px]"
-                    >
-                      <UploadCloud className="h-4 w-4 text-gray-500" />
-                      <span>{uploadProgress ? "Uploading..." : "Upload New Photo"}</span>
-                    </button>
-                    <p className="text-[11px] text-gray-400 mt-1">Accepts JPG, PNG, WebP up to 5 MB.</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Names */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Profile Photo Upload */}
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Name (English) <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.nameEn}
-                    onChange={(e) => setFormData({ ...formData, nameEn: e.target.value })}
-                    placeholder="e.g. Deepak Harvin"
-                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Name (Tamil)</label>
-                  <input
-                    type="text"
-                    value={formData.nameTa}
-                    onChange={(e) => setFormData({ ...formData, nameTa: e.target.value })}
-                    placeholder="e.g. தீபக் ஹார்வின்"
-                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
-                  />
-                </div>
-              </div>
-
-              {/* Roles */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Role / Title (English) <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.roleEn}
-                    onChange={(e) => setFormData({ ...formData, roleEn: e.target.value })}
-                    placeholder="e.g. Archival Documenter"
-                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Role / Title (Tamil)</label>
-                  <input
-                    type="text"
-                    value={formData.roleTa}
-                    onChange={(e) => setFormData({ ...formData, roleTa: e.target.value })}
-                    placeholder="e.g. ஆவணப் பதிவாளர்"
-                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
-                  />
-                </div>
-              </div>
-
-              {/* Social Channels */}
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Instagram URL</label>
-                  <div className="relative">
-                    <Instagram className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-pink-600" />
-                    <input
-                      type="url"
-                      value={formData.instagramUrl}
-                      onChange={(e) => setFormData({ ...formData, instagramUrl: e.target.value })}
-                      placeholder="https://www.instagram.com/handle"
-                      className="w-full pl-10 pr-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
-                    />
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5">Profile Photo</label>
+                  <div className="flex items-center gap-4">
+                    <div className="relative h-16 w-16 rounded-2xl overflow-hidden border border-gray-200 bg-gray-50 shrink-0">
+                      <Image
+                        src={formData.image || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/harvin.webp"}
+                        alt="Preview"
+                        width={64}
+                        height={64}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        disabled={uploadProgress}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition-colors cursor-pointer min-h-[44px]"
+                      >
+                        <UploadCloud className="h-4 w-4 text-gray-500" />
+                        <span>{uploadProgress ? "Uploading..." : modalMode === "edit" ? "Replace Photo" : "Upload New Photo"}</span>
+                      </button>
+                      <p className="text-[11px] text-gray-400 mt-1">Accepts JPG, PNG, WebP up to 5 MB.</p>
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">WhatsApp Link or Number</label>
-                  <div className="relative">
-                    <MessageCircle className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-600" />
-                    <input
-                      type="text"
-                      value={formData.whatsappUrl}
-                      onChange={(e) => setFormData({ ...formData, whatsappUrl: e.target.value })}
-                      placeholder="https://wa.me/918248654946"
-                      className="w-full pl-10 pr-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
-                    />
+                {/* Dual-Language Text Tabs (English | தமிழ்) */}
+                <div className="rounded-2xl border border-gray-200 p-4 space-y-3.5">
+                  <BilingualTabs
+                    activeTab={activeLangTab}
+                    onTabChange={setActiveLangTab}
+                    completeness={formCompleteness}
+                    isActiveTabDirty={isActiveTabDirty}
+                  />
+
+                  {activeLangTab === "en" ? (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">
+                          Name (English) <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.nameEn}
+                          onChange={(e) => setFormData({ ...formData, nameEn: e.target.value })}
+                          placeholder="e.g. Deepak Harvin"
+                          className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">
+                          Role / Title (English) <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.roleEn}
+                          onChange={(e) => setFormData({ ...formData, roleEn: e.target.value })}
+                          placeholder="e.g. Archival Documenter"
+                          className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">Photo Alt Text (English)</label>
+                        <input
+                          type="text"
+                          value={formData.photoAltEn}
+                          onChange={(e) => setFormData({ ...formData, photoAltEn: e.target.value })}
+                          placeholder="Portrait photo of member"
+                          className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 font-tamil mb-1">பெயர் (Name in Tamil)</label>
+                        <input
+                          type="text"
+                          value={formData.nameTa}
+                          onChange={(e) => setFormData({ ...formData, nameTa: e.target.value })}
+                          placeholder="e.g. தீபக் ஹார்வின்"
+                          className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 font-tamil mb-1">பதவி / பங்களிப்பு (Role in Tamil)</label>
+                        <input
+                          type="text"
+                          value={formData.roleTa}
+                          onChange={(e) => setFormData({ ...formData, roleTa: e.target.value })}
+                          placeholder="e.g. ஆவணப் பதிவாளர்"
+                          className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 font-tamil mb-1">பட விவரம் (Photo Alt in Tamil)</label>
+                        <input
+                          type="text"
+                          value={formData.photoAltTa}
+                          onChange={(e) => setFormData({ ...formData, photoAltTa: e.target.value })}
+                          placeholder="உறுப்பினர் நிழற்படம்"
+                          className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Social Channels */}
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Instagram URL</label>
+                    <div className="relative">
+                      <Instagram className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-pink-600" />
+                      <input
+                        type="url"
+                        value={formData.instagramUrl}
+                        onChange={(e) => setFormData({ ...formData, instagramUrl: e.target.value })}
+                        placeholder="https://www.instagram.com/handle"
+                        className="w-full pl-10 pr-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">WhatsApp Link or Number</label>
+                    <div className="relative">
+                      <MessageCircle className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-600" />
+                      <input
+                        type="text"
+                        value={formData.whatsappUrl}
+                        onChange={(e) => setFormData({ ...formData, whatsappUrl: e.target.value })}
+                        placeholder="https://wa.me/918248654946"
+                        className="w-full pl-10 pr-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Active Toggle */}
-              <div className="pt-2 flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200">
-                <div>
-                  <div className="text-xs font-bold text-gray-900">Publish Immediately</div>
-                  <div className="text-[11px] text-gray-500">Show this member on the public supporters page</div>
+                {/* Active Toggle */}
+                <div className="pt-2 flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200">
+                  <div>
+                    <div className="text-xs font-bold text-gray-900">Member Visibility</div>
+                    <div className="text-[11px] text-gray-500">Show this member on the public supporters page</div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={formData.isActive}
+                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                    className="h-5 w-5 rounded text-[#0A6847] focus:ring-[#0A6847] cursor-pointer"
+                  />
                 </div>
-                <input
-                  type="checkbox"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  className="h-5 w-5 rounded text-[#0A6847] focus:ring-[#0A6847] cursor-pointer"
-                />
               </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="p-4 sm:p-5 border-t border-gray-100 bg-gray-50/80 flex items-center justify-end gap-2.5 shrink-0">
-              <button
-                type="button"
-                onClick={() => setIsAddOpen(false)}
-                className="px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer min-h-[44px]"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-5 py-2.5 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer min-h-[44px]"
-              >
-                {isSubmitting ? "Saving..." : "Add to Roster"}
-              </button>
-            </div>
-          </form>
+              {/* Action Buttons */}
+              <div className="p-4 sm:p-5 border-t border-gray-100 bg-gray-50/80 flex items-center justify-end gap-2.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setModalMode(null)}
+                  className="px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer min-h-[44px]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-5 py-2.5 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer min-h-[44px]"
+                >
+                  {isSubmitting
+                    ? "Saving..."
+                    : modalMode === "edit"
+                    ? "Save Changes"
+                    : "Add to Roster"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
-      )}
-
-      {/* =========================================================================
-          EDIT MEMBER MODAL
-          ========================================================================= */}
-      {isEditOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl border border-gray-200 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
-            <div className="flex items-center justify-between border-b border-gray-100 p-5 sm:p-6 pb-4 shrink-0">
-              <div>
-                <h2 className="text-base sm:text-lg font-bold text-gray-900">Edit Member Details</h2>
-                <p className="text-xs text-gray-500 mt-0.5">Update team role, credentials, and social channels.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsEditOpen(false)}
-                className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 cursor-pointer min-h-[44px] min-w-[44px]"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleEditSubmit} className="flex flex-col flex-1 min-h-0">
-              <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
-              {/* Photo Upload */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">Profile Photo</label>
-                <div className="flex items-center gap-4">
-                  <div className="relative h-16 w-16 rounded-2xl overflow-hidden border border-gray-200 bg-gray-50 shrink-0">
-                    <Image
-                      src={formData.image || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/harvin.webp"}
-                      alt="Preview"
-                      width={64}
-                      height={64}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                    <button
-                      type="button"
-                      disabled={uploadProgress}
-                      onClick={() => fileInputRef.current?.click()}
-                      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold transition-colors cursor-pointer min-h-[44px]"
-                    >
-                      <UploadCloud className="h-4 w-4 text-gray-500" />
-                      <span>{uploadProgress ? "Uploading..." : "Replace Photo"}</span>
-                    </button>
-                    <p className="text-[11px] text-gray-400 mt-1">Accepts JPG, PNG, WebP up to 5 MB.</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Names */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Name (English) <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.nameEn}
-                    onChange={(e) => setFormData({ ...formData, nameEn: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Name (Tamil)</label>
-                  <input
-                    type="text"
-                    value={formData.nameTa}
-                    onChange={(e) => setFormData({ ...formData, nameTa: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
-                  />
-                </div>
-              </div>
-
-              {/* Roles */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Role / Title (English) <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.roleEn}
-                    onChange={(e) => setFormData({ ...formData, roleEn: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Role / Title (Tamil)</label>
-                  <input
-                    type="text"
-                    value={formData.roleTa}
-                    onChange={(e) => setFormData({ ...formData, roleTa: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 font-tamil focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
-                  />
-                </div>
-              </div>
-
-              {/* Social Channels */}
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Instagram URL</label>
-                  <div className="relative">
-                    <Instagram className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-pink-600" />
-                    <input
-                      type="url"
-                      value={formData.instagramUrl}
-                      onChange={(e) => setFormData({ ...formData, instagramUrl: e.target.value })}
-                      className="w-full pl-10 pr-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">WhatsApp Link or Number</label>
-                  <div className="relative">
-                    <MessageCircle className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-600" />
-                    <input
-                      type="text"
-                      value={formData.whatsappUrl}
-                      onChange={(e) => setFormData({ ...formData, whatsappUrl: e.target.value })}
-                      className="w-full pl-10 pr-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Active Toggle */}
-              <div className="pt-2 flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-200">
-                <div>
-                  <div className="text-xs font-bold text-gray-900">Member Status</div>
-                  <div className="text-[11px] text-gray-500">Visible to visitors on public website</div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  className="h-5 w-5 rounded text-[#0A6847] focus:ring-[#0A6847] cursor-pointer"
-                />
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="p-4 sm:p-5 border-t border-gray-100 bg-gray-50/80 flex items-center justify-end gap-2.5 shrink-0">
-              <button
-                type="button"
-                onClick={() => setIsEditOpen(false)}
-                className="px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer min-h-[44px]"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-5 py-2.5 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer min-h-[44px]"
-              >
-                {isSubmitting ? "Updating..." : "Save Changes"}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
       )}
 
       {/* =========================================================================

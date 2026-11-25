@@ -11,12 +11,15 @@ import { Badge } from "@/components/ui/Badge";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
 import { BOOK_PLACEHOLDER_IMAGE, resolveBookFrontCover } from "@/lib/book-images";
+import { localized } from "@/lib/i18n";
 
 export interface BookCardData {
   id: string;
   title: string;
+  titleTa?: string;
   titleEn: string;
   author: string;
+  authorTa?: string;
   authorEn: string;
   price: number;
   discountPrice?: number | null;
@@ -203,11 +206,7 @@ export function BookCard({
 
             <Image
               src={imgSrc}
-              alt={
-                locale === "ta"
-                  ? book.coverAltTa || `${book.title} - முன் அட்டை`
-                  : book.coverAltEn || `${book.titleEn} front cover`
-              }
+              alt={localized(book, "coverAlt", locale, `${localized(book, "title", locale)} (${locale === "ta" ? "முன் அட்டை" : "front cover"})`)}
               fill
               sizes={isCompact ? "96px" : isFeatured ? "176px" : "160px"}
               className="object-cover"
@@ -230,11 +229,11 @@ export function BookCard({
           <div className="flex items-center justify-between gap-2">
             <span
               className={cn(
-                "text-[11px] font-bold text-[#0D5C3A] dark:text-emerald-400",
+                "text-[11px] font-bold text-[#0D5C3A] dark:text-emerald-400 leading-[1.45]",
                 locale === "ta" ? "font-tamil tracking-normal" : "uppercase tracking-wider font-sans"
               )}
             >
-              {locale === "ta" ? book.categoryTa : book.categoryEn}
+              {localized(book, "category", locale)}
             </span>
           </div>
 
@@ -242,7 +241,7 @@ export function BookCard({
           <Link href={`/books/${book.slug}`} className="group/title block">
             <h3
               className={cn(
-                "font-bold text-[#191614] dark:text-zinc-100 group-hover/title:text-[#0D5C3A] dark:group-hover/title:text-emerald-400 transition-colors leading-snug line-clamp-2",
+                "font-bold text-[#191614] dark:text-zinc-100 group-hover/title:text-[#0D5C3A] dark:group-hover/title:text-emerald-400 transition-colors leading-[1.45] line-clamp-2",
                 isCompact
                   ? "text-xs font-tamil"
                   : isHorizontal
@@ -250,20 +249,22 @@ export function BookCard({
                   : "text-sm sm:text-base font-tamil-serif"
               )}
             >
-              {locale === "ta" ? book.title : (book.titleEn || book.title)}
+              {localized(book, "title", locale)}
             </h3>
 
             {/* Subtitle: Only show secondary language when in horizontal layout and distinctly different */}
             {isHorizontal && book.titleEn && book.title !== book.titleEn && (
-              <p className="text-xs text-[#665F57] dark:text-zinc-400 truncate mt-0.5" lang={locale === "ta" ? "en" : "ta"}>
-                {locale === "ta" ? book.titleEn : book.title}
+              <p className="text-xs text-[#665F57] dark:text-zinc-400 truncate mt-0.5 leading-[1.45]" lang={locale === "ta" ? "en" : "ta"}>
+                {locale === "ta" ? book.titleEn : localized(book, "title", "ta")}
               </p>
             )}
           </Link>
 
           {/* Author */}
-          <p className="text-xs text-[#4A443E] dark:text-zinc-400 font-medium font-tamil line-clamp-1">
-            {locale === "ta" ? `ஆசிரியர்: ${book.author}` : `Author: ${book.authorEn}`}
+          <p className="text-xs text-[#4A443E] dark:text-zinc-400 font-medium font-tamil line-clamp-1 leading-[1.5]">
+            {locale === "ta"
+              ? `ஆசிரியர்: ${localized(book, "author", "ta")}`
+              : `Author: ${localized(book, "author", "en")}`}
           </p>
         </div>
 

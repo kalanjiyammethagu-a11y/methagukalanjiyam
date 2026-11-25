@@ -18,6 +18,7 @@ export default function AdminSettingsPage() {
 
   // Form states
   const [storeName, setStoreName] = React.useState("Methagu Kalanjiyam");
+  const [storeNameTa, setStoreNameTa] = React.useState("மேதகு களஞ்சியம்");
   const [phone, setPhone] = React.useState("+91 82486 54946");
   const [altPhone, setAltPhone] = React.useState("+91 63846 54946");
   const [tnShippingFee, setTnShippingFee] = React.useState(60);
@@ -28,6 +29,9 @@ export default function AdminSettingsPage() {
   const [pincodeMode, setPincodeMode] = React.useState("all_india");
   const [pincodeNote, setPincodeNote] = React.useState(
     "Speed Post (India Post) provides pan-India delivery to all 19,100+ postal PIN codes across all 28 states & 8 UTs. ST Courier covers Tamil Nadu, Puducherry and South India."
+  );
+  const [pincodeNoteTa, setPincodeNoteTa] = React.useState(
+    "இந்தியா முழுவதும் 19,100+ அஞ்சல் குறியீடுகளுக்கு விரைவு அஞ்சல் மற்றும் தமிழ்நாடு / புதுச்சேரிக்கு ST கூரியர் சேவை."
   );
 
   const showToast = (msg: string) => {
@@ -45,7 +49,8 @@ export default function AdminSettingsPage() {
           const g = data.settings?.general || {};
           const s = data.settings?.shipping || {};
 
-          if (g.site_name) setStoreName(g.site_name);
+          if (g.site_name_en || g.site_name) setStoreName(g.site_name_en || g.site_name);
+          if (g.site_name_ta) setStoreNameTa(g.site_name_ta);
           if (g.contact_phone) setPhone(g.contact_phone);
           if (g.alt_phone) setAltPhone(g.alt_phone);
           if (g.udyam_id) setUdyamId(g.udyam_id);
@@ -56,6 +61,7 @@ export default function AdminSettingsPage() {
           if (s.free_shipping_threshold !== undefined) setFreeShippingThreshold(Number(s.free_shipping_threshold));
           if (s.deliverable_pincodes_mode) setPincodeMode(s.deliverable_pincodes_mode);
           if (s.deliverable_pincodes_note) setPincodeNote(s.deliverable_pincodes_note);
+          if (s.deliverable_pincodes_note_ta) setPincodeNoteTa(s.deliverable_pincodes_note_ta);
         }
       } catch (err) {
         console.warn("Could not load live settings, using defaults:", err);
@@ -74,7 +80,9 @@ export default function AdminSettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           general: {
-            site_name: storeName,
+            site_name: storeNameTa || storeName,
+            site_name_en: storeName,
+            site_name_ta: storeNameTa,
             contact_phone: phone,
             alt_phone: altPhone,
             whatsapp_number: phone.replace(/\D/g, ""),
@@ -89,6 +97,7 @@ export default function AdminSettingsPage() {
             default_courier: "st_courier",
             deliverable_pincodes_mode: pincodeMode,
             deliverable_pincodes_note: pincodeNote,
+            deliverable_pincodes_note_ta: pincodeNoteTa,
           },
         }),
       });
@@ -138,13 +147,25 @@ export default function AdminSettingsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-bold text-gray-700">
-                Store Name
+                Store Name (English)
               </label>
               <input
                 type="text"
                 value={storeName}
                 onChange={(e) => setStoreName(e.target.value)}
                 className="w-full px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[40px]"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-gray-700 font-tamil">
+                அங்காடி பெயர் (Store Name in Tamil)
+              </label>
+              <input
+                type="text"
+                value={storeNameTa}
+                onChange={(e) => setStoreNameTa(e.target.value)}
+                className="w-full px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs font-tamil text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[40px]"
               />
             </div>
 
@@ -304,16 +325,29 @@ export default function AdminSettingsPage() {
               </label>
             </div>
 
-            <div className="pt-2">
-              <label className="text-[11px] font-bold text-gray-600 block mb-1">
-                Dispatch & SLA Policy Note
-              </label>
-              <textarea
-                rows={2}
-                value={pincodeNote}
-                onChange={(e) => setPincodeNote(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
-              />
+            <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] font-bold text-gray-600 block mb-1">
+                  Dispatch & SLA Policy Note (English)
+                </label>
+                <textarea
+                  rows={2}
+                  value={pincodeNote}
+                  onChange={(e) => setPincodeNote(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-bold text-gray-600 font-tamil block mb-1">
+                  அஞ்சல் விநியோகக் குறிப்பு (Policy Note in Tamil)
+                </label>
+                <textarea
+                  rows={2}
+                  value={pincodeNoteTa}
+                  onChange={(e) => setPincodeNoteTa(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 text-xs font-tamil text-gray-900 resize-none focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
+                />
+              </div>
             </div>
           </div>
         </div>

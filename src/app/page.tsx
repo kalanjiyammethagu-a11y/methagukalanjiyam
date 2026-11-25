@@ -18,7 +18,7 @@ import { defaultHeroSlides } from "@/data/hero-slides";
 import { CategoryFilterTabs } from "@/components/home/CategoryFilterTabs";
 import { allBooks, type BookItem } from "@/data/books";
 import { createClient } from "@/lib/supabase/server";
-import { resolveBookFrontCover } from "@/lib/book-images";
+import { mapDbBookToBookItem } from "@/lib/book-mappers";
 
 export const metadata: Metadata = {
   title: "மேதகு களஞ்சியம் — Rare Tamil Literature & National Archives",
@@ -98,30 +98,9 @@ export default async function HomePage() {
       .order("sort_order", { ascending: true });
 
     if (dbBooks && dbBooks.length > 0) {
-      books = dbBooks.map((b: any) => ({
-        id: b.id,
-        slug: b.slug,
-        title: b.title,
-        titleEn: b.title_en || b.title,
-        author: b.author,
-        authorEn: b.author_en || b.author,
-        price: Number(b.price),
-        discountPrice: b.discount_price ? Number(b.discount_price) : null,
-        stock: Number(b.stock ?? 10),
-        categorySlug: b.categories?.slug || "history",
-        categoryTa: b.categories?.name_ta || "வரலாறு",
-        categoryEn: b.categories?.name_en || "History",
-        image: resolveBookFrontCover(b).url,
-        coverIsFront: resolveBookFrontCover(b).isFront,
-        coverAltEn: b.cover_alt_en || undefined,
-        coverAltTa: b.cover_alt_ta || undefined,
-        featured: Boolean(b.is_featured),
-        pages: b.pages,
-        year: String(b.published_year || "2024"),
-        publisher: b.publisher || "மேதகு களஞ்சியம்",
-        descriptionTa: b.description || "",
-        descriptionEn: b.description || "",
-      }));
+      books = dbBooks.map((b: any) =>
+        mapDbBookToBookItem(b, allBooks.find((sb) => sb.slug === b.slug))
+      );
     }
   } catch (err) {
     console.error("Failed to fetch books on HomePage:", err);

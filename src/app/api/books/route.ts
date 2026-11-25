@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { allBooks } from "@/data/books";
-import { normalizeGalleryImages, resolveBookFrontCover } from "@/lib/book-images";
+import { mapDbBookToBookItem } from "@/lib/book-mappers";
 
 export const dynamic = "force-dynamic";
 
@@ -16,62 +16,51 @@ export async function GET(req: NextRequest) {
 
     try {
       const supabase = await createClient();
-      let query = (supabase.from("books") as any)
-        .select("*, categories(name_ta, name_en, slug)")
-        .eq("status", "published");
+      const buildQuery = (bilingualSearch: boolean) => {
+        let qBuilder = (supabase.from("books") as any)
+          .select("*, categories(name_ta, name_en, slug)")
+          .eq("status", "published");
 
-      if (category && category !== "all") {
-        query = query.eq("categories.slug", category);
+        if (category && category !== "all") {
+          qBuilder = qBuilder.eq("categories.slug", category);
+        }
+
+        const cleanSearch = search.trim().replace(/[(),%]/g, "");
+        if (cleanSearch) {
+          qBuilder = qBuilder.or(
+            bilingualSearch
+              ? `title.ilike.%${cleanSearch}%,title_en.ilike.%${cleanSearch}%,title_ta.ilike.%${cleanSearch}%,author.ilike.%${cleanSearch}%,author_en.ilike.%${cleanSearch}%,author_ta.ilike.%${cleanSearch}%,slug.ilike.%${cleanSearch}%`
+              : `title.ilike.%${cleanSearch}%,author.ilike.%${cleanSearch}%,slug.ilike.%${cleanSearch}%`
+          );
+        }
+
+        if (sort === "price-low") {
+          qBuilder = qBuilder.order("price", { ascending: true });
+        } else if (sort === "price-high") {
+          qBuilder = qBuilder.order("price", { ascending: false });
+        } else if (sort === "newest") {
+          qBuilder = qBuilder.order("created_at", { ascending: false });
+        } else {
+          qBuilder = qBuilder.order("sort_order", { ascending: true });
+        }
+
+        return qBuilder.range(offset, offset + limit - 1);
+      };
+
+      let { data: dbBooks, error } = await buildQuery(true);
+      if (
+        error &&
+        (error.code === "PGRST204" ||
+          error.code === "42703" ||
+          String(error.message || "").includes("column"))
+      ) {
+        ({ data: dbBooks, error } = await buildQuery(false));
       }
-
-      const cleanSearch = search.trim().replace(/[(),%]/g, "");
-      if (cleanSearch) {
-        query = query.or(
-          `title.ilike.%${cleanSearch}%,author.ilike.%${cleanSearch}%,slug.ilike.%${cleanSearch}%`
-        );
-      }
-
-      if (sort === "price-low") {
-        query = query.order("price", { ascending: true });
-      } else if (sort === "price-high") {
-        query = query.order("price", { ascending: false });
-      } else if (sort === "newest") {
-        query = query.order("created_at", { ascending: false });
-      } else {
-        query = query.order("sort_order", { ascending: true });
-      }
-
-      query = query.range(offset, offset + limit - 1);
-
-      const { data: dbBooks, error } = await query;
 
       if (!error && dbBooks && dbBooks.length > 0) {
-        const mappedBooks = dbBooks.map((b: any) => ({
-          id: b.id,
-          slug: b.slug,
-          title: b.title,
-          titleEn: b.title_en || b.title,
-          author: b.author,
-          authorEn: b.author_en || b.author,
-          price: Number(b.price),
-          discountPrice: b.discount_price ? Number(b.discount_price) : null,
-          stock: Number(b.stock ?? 10),
-          categorySlug: b.categories?.slug || "history",
-          categoryTa: b.categories?.name_ta || "வரலாறு",
-          categoryEn: b.categories?.name_en || "History",
-          image: resolveBookFrontCover(b).url,
-          coverIsFront: resolveBookFrontCover(b).isFront,
-          coverAltEn: b.cover_alt_en || null,
-          coverAltTa: b.cover_alt_ta || null,
-          galleryImages: normalizeGalleryImages(b.gallery_images, b.cover_back, resolveBookFrontCover(b).url),
-          featured: Boolean(b.is_featured),
-          pages: b.pages,
-          year: String(b.published_year || "2024"),
-          publisher: b.publisher || "மேதகு களஞ்சியம்",
-          descriptionTa: b.description || "",
-          descriptionEn: b.description || "",
-          whatsappLink: b.whatsapp_link || null,
-        }));
+        const mappedBooks = dbBooks.map((b: any) =>
+          mapDbBookToBookItem(b, allBooks.find((sb) => sb.slug === b.slug))
+        );
 
         return NextResponse.json(
           {

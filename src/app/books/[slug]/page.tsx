@@ -13,10 +13,10 @@ import { allBooks, getBookBySlug, getRelatedBooks, type BookItem } from "@/data/
 import { safeJsonLdStringify } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/server";
 import {
-  normalizeGalleryImages,
-  resolveBookFrontCover,
   toAbsoluteSiteImageUrl,
 } from "@/lib/book-images";
+import { mapDbBookToBookItem } from "@/lib/book-mappers";
+import { localized } from "@/lib/i18n";
 
 export const revalidate = 60;
 
@@ -35,39 +35,7 @@ async function resolveBook(slug: string): Promise<BookItem | undefined> {
       .maybeSingle();
 
     if (dbBook) {
-      const cover = resolveBookFrontCover(dbBook, staticBook?.image);
-      const galleryImages = normalizeGalleryImages(
-        dbBook.gallery_images,
-        dbBook.cover_back,
-        cover.url
-      );
-
-      return {
-        id: dbBook.id,
-        slug: dbBook.slug,
-        title: dbBook.title,
-        titleEn: dbBook.title_en || staticBook?.titleEn || dbBook.title,
-        author: dbBook.author,
-        authorEn: dbBook.author_en || staticBook?.authorEn || dbBook.author,
-        price: Number(dbBook.price),
-        discountPrice: dbBook.discount_price ? Number(dbBook.discount_price) : undefined,
-        categorySlug: dbBook.categories?.slug || staticBook?.categorySlug || "history",
-        categoryTa: dbBook.categories?.name_ta || staticBook?.categoryTa || "வரலாறு",
-        categoryEn: dbBook.categories?.name_en || staticBook?.categoryEn || "History",
-        image: cover.url,
-        coverIsFront: cover.isFront,
-        coverAltEn: dbBook.cover_alt_en || staticBook?.coverAltEn,
-        coverAltTa: dbBook.cover_alt_ta || staticBook?.coverAltTa,
-        galleryImages: galleryImages.length > 0 ? galleryImages : staticBook?.galleryImages,
-        featured: Boolean(dbBook.is_featured),
-        stock: Number(dbBook.stock ?? 10),
-        pages: dbBook.pages || staticBook?.pages,
-        year: String(dbBook.published_year || dbBook.publication_year || staticBook?.year || "2024"),
-        publisher: dbBook.publisher || staticBook?.publisher,
-        isbn: dbBook.isbn || staticBook?.isbn,
-        descriptionTa: dbBook.description_ta || dbBook.description || staticBook?.descriptionTa || "",
-        descriptionEn: dbBook.description_en || staticBook?.descriptionEn || dbBook.description || "",
-      };
+      return mapDbBookToBookItem(dbBook, staticBook);
     }
   } catch {
     // Return static if DB is unreachable
@@ -94,8 +62,11 @@ export async function generateMetadata({
     };
   }
 
-  const title = `${book.title} (${book.titleEn}) — மேதகு களஞ்சியம்`;
-  const description = `${book.descriptionTa.slice(0, 160)}...`;
+  const titleTa = localized(book, "title", "ta");
+  const titleEn = localized(book, "title", "en");
+  const title = titleTa === titleEn ? `${titleTa} — மேதகு களஞ்சியம்` : `${titleTa} (${titleEn}) — மேதகு களஞ்சியம்`;
+  const rawDescription = localized(book, "description", "ta") || localized(book, "description", "en");
+  const description = `${rawDescription.slice(0, 160)}...`;
   const ogImageUrl = toAbsoluteSiteImageUrl(book.image);
 
   return {
@@ -110,13 +81,14 @@ export async function generateMetadata({
       url: `https://methagukalanjiyam.in/books/${book.slug}`,
       siteName: "மேதகு களஞ்சியம்",
       locale: "ta_IN",
+      alternateLocale: ["en_IN"],
       type: "article",
       images: [
         {
           url: ogImageUrl,
           width: 800,
           height: 1067,
-          alt: book.title,
+          alt: book.coverAltTa || book.coverAltEn || titleTa,
         },
       ],
     },
@@ -149,21 +121,22 @@ export default async function BookDetailPage({ params }: BookPageProps) {
   const bookSchema = {
     "@context": "https://schema.org",
     "@type": "Book",
-    name: book.title,
-    alternateName: book.titleEn,
+    name: localized(book, "title", "ta"),
+    alternateName: localized(book, "title", "en"),
+    description: localized(book, "description", "ta") || localized(book, "description", "en"),
     author: {
       "@type": "Person",
-      name: book.author,
-      alternateName: book.authorEn,
+      name: localized(book, "author", "ta"),
+      alternateName: localized(book, "author", "en"),
     },
     publisher: {
       "@type": "Organization",
-      name: book.publisher || "மேதகு களஞ்சியம்",
-      alternateName: "Methagu Kalanjiyam",
+      name: localized(book, "publisher", "ta", "மேதகு களஞ்சியம்"),
+      alternateName: localized(book, "publisher", "en", "Methagu Kalanjiyam"),
     },
     datePublished: book.year || "2024",
     numberOfPages: book.pages,
-    inLanguage: "ta",
+    inLanguage: ["ta", "en"],
     image:
       galleryAbsoluteUrls.length > 0
         ? [primaryImageUrl, ...galleryAbsoluteUrls]

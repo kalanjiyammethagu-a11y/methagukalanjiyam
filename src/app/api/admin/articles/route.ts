@@ -2,10 +2,27 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth-service";
-import { adminBlogPostSchema, adminBlogPostUpdateSchema } from "@/lib/validators/admin";
+import { adminBlogPostCreateSchema, adminBlogPostUpdateSchema } from "@/lib/validators/admin";
 import { deleteAdminAsset } from "@/lib/storage";
+import { generateAsciiSlug, resolveBilingualPair } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
+
+function isMissingArticleColumnError(error: any): boolean {
+  const msg = String(error?.message || "");
+  return (
+    error?.code === "PGRST204" ||
+    error?.code === "42703" ||
+    msg.includes("title_") ||
+    msg.includes("excerpt_") ||
+    msg.includes("body_") ||
+    msg.includes("author_") ||
+    msg.includes("category_") ||
+    msg.includes("seo_title_") ||
+    msg.includes("seo_description_") ||
+    msg.includes("cover_alt_")
+  );
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -51,7 +68,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const parsed = adminBlogPostSchema.safeParse(body);
+    const parsed = adminBlogPostCreateSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Validation failed", details: parsed.error.flatten() },
@@ -60,49 +77,84 @@ export async function POST(req: NextRequest) {
     }
 
     const data = parsed.data;
+    const titlePair = resolveBilingualPair({ en: data.title_en, ta: data.title_ta, legacy: data.title });
+    const excerptPair = resolveBilingualPair({ en: data.excerpt_en, ta: data.excerpt_ta, legacy: data.excerpt });
+    const bodyPair = resolveBilingualPair({ en: data.body_en, ta: data.body_ta, legacy: data.body });
+    const authorPair = resolveBilingualPair({ en: data.author_en, ta: data.author_ta, legacy: data.author });
+
+    const primaryTitle = titlePair.ta || titlePair.en || data.title || "Untitled Article";
+    const primaryBody = bodyPair.ta || bodyPair.en || data.body || "";
+    const primaryExcerpt = excerptPair.ta || excerptPair.en || data.excerpt || null;
+    const primaryAuthor = authorPair.ta || authorPair.en || data.author || "மேதகு களஞ்சியம்";
 
     const generatedSlug =
-      data.slug ||
-      data.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)+/g, "") ||
-      `article-${Date.now()}`;
+      data.slug || generateAsciiSlug(titlePair.en || data.title_en || data.title, "article");
 
     const adminSupabase = createAdminClient();
     const coverUrl = data.cover_image_url || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp";
     const publishedAt = data.published_at || (data.status === "published" ? new Date().toISOString() : null);
 
-    // Try inserting into blog_posts table
-    const { data: newPost, error } = await (adminSupabase.from("blog_posts") as any)
-      .insert({
-        title: data.title,
-        slug: generatedSlug,
-        excerpt: data.excerpt || null,
-        body: data.body,
-        author: data.author || "மேதகு களஞ்சியம்",
-        cover_image_url: coverUrl,
-        cover_image_path: data.cover_image_path || null,
-        status: data.status || "published",
-        sort_order: data.sort_order ?? 0,
-        published_at: publishedAt,
-        seo_title: data.seo_title || null,
-        seo_description: data.seo_description || null,
-        reading_time_mins: data.reading_time_mins ?? 5,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
+    const basePayload = {
+      title: primaryTitle,
+      slug: generatedSlug,
+      excerpt: primaryExcerpt,
+      body: primaryBody,
+      author: primaryAuthor,
+      cover_image_url: coverUrl,
+      cover_image_path: data.cover_image_path || null,
+      status: data.status || "published",
+      sort_order: data.sort_order ?? 0,
+      published_at: publishedAt,
+      seo_title: data.seo_title_en || data.seo_title || titlePair.en || null,
+      seo_description: data.seo_description_en || data.seo_description || excerptPair.en || null,
+      reading_time_mins: data.reading_time_mins ?? 5,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    const fullPayload = {
+      ...basePayload,
+      title_en: titlePair.en || null,
+      title_ta: titlePair.ta || null,
+      excerpt_en: excerptPair.en || null,
+      excerpt_ta: excerptPair.ta || null,
+      body_en: bodyPair.en || null,
+      body_ta: bodyPair.ta || null,
+      author_en: authorPair.en || null,
+      author_ta: authorPair.ta || null,
+      category_en: data.category_en || null,
+      category_ta: data.category_ta || null,
+      seo_title_en: data.seo_title_en || data.seo_title || null,
+      seo_title_ta: data.seo_title_ta || null,
+      seo_description_en: data.seo_description_en || data.seo_description || null,
+      seo_description_ta: data.seo_description_ta || null,
+      cover_alt_en: data.cover_alt_en || null,
+      cover_alt_ta: data.cover_alt_ta || null,
+    };
+
+    // Try inserting into blog_posts table (with schema fallback if migration 019 pending)
+    let { data: newPost, error } = await (adminSupabase.from("blog_posts") as any)
+      .insert(fullPayload)
       .select()
       .single();
+
+    if (error && isMissingArticleColumnError(error)) {
+      const retry = await (adminSupabase.from("blog_posts") as any)
+        .insert(basePayload)
+        .select()
+        .single();
+      newPost = retry.data;
+      error = retry.error;
+    }
 
     if (error) {
       // If blog_posts table isn't migrated yet, try legacy blogs table
       const { data: legacyPost, error: legacyErr } = await (adminSupabase.from("blogs") as any)
         .insert({
-          title: data.title,
+          title: primaryTitle,
           slug: generatedSlug,
-          excerpt: data.excerpt || null,
-          content: { body: data.body },
+          excerpt: primaryExcerpt,
+          content: { body: primaryBody, body_en: bodyPair.en || null, body_ta: bodyPair.ta || null },
           cover_image: coverUrl,
           post_type: "article",
           is_published: data.status === "published",
@@ -171,34 +223,77 @@ export async function PATCH(req: NextRequest) {
       .eq("id", id)
       .maybeSingle();
 
-    const payload: Record<string, any> = {
+    const basePayload: Record<string, any> = {
       updated_at: new Date().toISOString(),
     };
 
-    if (updates.title !== undefined) payload.title = updates.title;
-    if (updates.slug !== undefined) payload.slug = updates.slug;
-    if (updates.excerpt !== undefined) payload.excerpt = updates.excerpt;
-    if (updates.body !== undefined) payload.body = updates.body;
-    if (updates.author !== undefined) payload.author = updates.author;
-    if (updates.cover_image_url !== undefined) payload.cover_image_url = updates.cover_image_url;
-    if (updates.cover_image_path !== undefined) payload.cover_image_path = updates.cover_image_path;
+    if (updates.title !== undefined || updates.title_ta !== undefined || updates.title_en !== undefined) {
+      const legacyTitle = updates.title_ta || updates.title || updates.title_en;
+      if (legacyTitle) basePayload.title = legacyTitle;
+    }
+    if (updates.slug !== undefined) basePayload.slug = updates.slug;
+    if (updates.excerpt !== undefined || updates.excerpt_ta !== undefined || updates.excerpt_en !== undefined) {
+      basePayload.excerpt = updates.excerpt_ta || updates.excerpt || updates.excerpt_en || null;
+    }
+    if (updates.body !== undefined || updates.body_ta !== undefined || updates.body_en !== undefined) {
+      const legacyBody = updates.body_ta || updates.body || updates.body_en;
+      if (legacyBody !== undefined) basePayload.body = legacyBody;
+    }
+    if (updates.author !== undefined || updates.author_ta !== undefined || updates.author_en !== undefined) {
+      const legacyAuthor = updates.author_ta || updates.author || updates.author_en;
+      if (legacyAuthor) basePayload.author = legacyAuthor;
+    }
+    if (updates.cover_image_url !== undefined) basePayload.cover_image_url = updates.cover_image_url;
+    if (updates.cover_image_path !== undefined) basePayload.cover_image_path = updates.cover_image_path;
     if (updates.status !== undefined) {
-      payload.status = updates.status;
-      if (payload.status === "published" && !updates.published_at) {
-        payload.published_at = new Date().toISOString();
+      basePayload.status = updates.status;
+      if (basePayload.status === "published" && !updates.published_at) {
+        basePayload.published_at = new Date().toISOString();
       }
     }
-    if (updates.published_at !== undefined) payload.published_at = updates.published_at;
-    if (updates.sort_order !== undefined) payload.sort_order = updates.sort_order;
-    if (updates.reading_time_mins !== undefined) payload.reading_time_mins = updates.reading_time_mins;
-    if (updates.seo_title !== undefined) payload.seo_title = updates.seo_title;
-    if (updates.seo_description !== undefined) payload.seo_description = updates.seo_description;
+    if (updates.published_at !== undefined) basePayload.published_at = updates.published_at;
+    if (updates.sort_order !== undefined) basePayload.sort_order = updates.sort_order;
+    if (updates.reading_time_mins !== undefined) basePayload.reading_time_mins = updates.reading_time_mins;
+    if (updates.seo_title !== undefined || updates.seo_title_en !== undefined) {
+      basePayload.seo_title = updates.seo_title_en || updates.seo_title;
+    }
+    if (updates.seo_description !== undefined || updates.seo_description_en !== undefined) {
+      basePayload.seo_description = updates.seo_description_en || updates.seo_description;
+    }
 
-    const { data: updatedPost, error } = await (adminSupabase.from("blog_posts") as any)
-      .update(payload)
+    const fullPayload: Record<string, any> = { ...basePayload };
+    if (updates.title_en !== undefined) fullPayload.title_en = updates.title_en;
+    if (updates.title_ta !== undefined) fullPayload.title_ta = updates.title_ta;
+    if (updates.excerpt_en !== undefined) fullPayload.excerpt_en = updates.excerpt_en;
+    if (updates.excerpt_ta !== undefined) fullPayload.excerpt_ta = updates.excerpt_ta;
+    if (updates.body_en !== undefined) fullPayload.body_en = updates.body_en;
+    if (updates.body_ta !== undefined) fullPayload.body_ta = updates.body_ta;
+    if (updates.author_en !== undefined) fullPayload.author_en = updates.author_en;
+    if (updates.author_ta !== undefined) fullPayload.author_ta = updates.author_ta;
+    if (updates.category_en !== undefined) fullPayload.category_en = updates.category_en;
+    if (updates.category_ta !== undefined) fullPayload.category_ta = updates.category_ta;
+    if (updates.seo_title_en !== undefined) fullPayload.seo_title_en = updates.seo_title_en;
+    if (updates.seo_title_ta !== undefined) fullPayload.seo_title_ta = updates.seo_title_ta;
+    if (updates.seo_description_en !== undefined) fullPayload.seo_description_en = updates.seo_description_en;
+    if (updates.seo_description_ta !== undefined) fullPayload.seo_description_ta = updates.seo_description_ta;
+    if (updates.cover_alt_en !== undefined) fullPayload.cover_alt_en = updates.cover_alt_en;
+    if (updates.cover_alt_ta !== undefined) fullPayload.cover_alt_ta = updates.cover_alt_ta;
+
+    let { data: updatedPost, error } = await (adminSupabase.from("blog_posts") as any)
+      .update(fullPayload)
       .eq("id", id)
       .select()
       .maybeSingle();
+
+    if (error && isMissingArticleColumnError(error)) {
+      const retry = await (adminSupabase.from("blog_posts") as any)
+        .update(basePayload)
+        .eq("id", id)
+        .select()
+        .maybeSingle();
+      updatedPost = retry.data;
+      error = retry.error;
+    }
 
     if (error || !updatedPost) {
       // Fallback to legacy blogs table

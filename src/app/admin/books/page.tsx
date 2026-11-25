@@ -30,18 +30,37 @@ import {
   resolveBookFrontCover,
   type BookGalleryImage,
 } from "@/lib/book-images";
+import {
+  buildBilingualSearchText,
+  generateAsciiSlug,
+  getLanguageCompleteness,
+  isAsciiSlug,
+  REQUIRE_BOTH_LANGUAGES_TO_PUBLISH,
+  resolveBilingualPair,
+  type AppLocale,
+} from "@/lib/i18n";
+import { BilingualListBadge, BilingualTabs } from "@/components/admin/BilingualTabs";
+
+const BOOK_REQUIRED_BILINGUAL_FIELDS = ["title", "author"];
 
 function mapSupabaseBook(b: any): AdminBook {
   const cat = b.categories || {};
   const cover = resolveBookFrontCover(b);
   const galleryImages = normalizeGalleryImages(b.gallery_images, b.cover_back, cover.url);
 
+  const titlePair = resolveBilingualPair({ en: b.title_en, ta: b.title_ta, legacy: b.title });
+  const authorPair = resolveBilingualPair({ en: b.author_en, ta: b.author_ta, legacy: b.author });
+  const descPair = resolveBilingualPair({ en: b.description_en, ta: b.description_ta, legacy: b.description });
+  const pubPair = resolveBilingualPair({ en: b.publisher_en, ta: b.publisher_ta, legacy: b.publisher });
+
   return {
     id: b.id,
-    title: b.title,
-    titleEn: b.title_en || (b.slug ? b.slug.replace(/-/g, " ") : b.title),
-    author: b.author,
-    authorEn: b.author_en || b.author,
+    title: titlePair.ta || titlePair.en || b.title,
+    titleTa: titlePair.ta || "",
+    titleEn: titlePair.en || (b.slug ? b.slug.replace(/-/g, " ") : ""),
+    author: authorPair.ta || authorPair.en || b.author,
+    authorTa: authorPair.ta || "",
+    authorEn: authorPair.en || "",
     price: Number(b.price || 0),
     discountPrice: b.discount_price ? Number(b.discount_price) : null,
     categoryTa: cat.name_ta || cat.name_en || "History",
@@ -59,9 +78,13 @@ function mapSupabaseBook(b: any): AdminBook {
     stock: Number(b.stock || 0),
     slug: b.slug,
     pages: b.pages,
-    publisher: b.publisher,
-    descriptionTa: b.description_ta || b.description || "",
-    descriptionEn: b.description_en || b.description || "",
+    publisher: pubPair.ta || pubPair.en || b.publisher || "",
+    publisherEn: pubPair.en || "",
+    publisherTa: pubPair.ta || "",
+    quoteEn: b.quote_en || "",
+    quoteTa: b.quote_ta || "",
+    descriptionTa: descPair.ta || "",
+    descriptionEn: descPair.en || "",
     status: (b.stock <= 0 ? "out_of_stock" : b.stock <= 5 ? "low_stock" : "in_stock") as BookStatus,
     salesCount: b.view_count || 0,
     createdAt: b.created_at || new Date().toISOString(),
@@ -123,12 +146,17 @@ export default function AdminBooksPage() {
   const [selectedCategory, setSelectedCategory] = React.useState("all");
   const [selectedStatus, setSelectedStatus] = React.useState("all");
   const [selectedCmsStatus, setSelectedCmsStatus] = React.useState("all");
-  const [selectedCoverFilter, setSelectedCoverFilter] = React.useState<"all" | "needs_cover">("all");
+  const [selectedCoverFilter, setSelectedCoverFilter] = React.useState<"all" | "needs_cover" | "missing_tamil">("all");
   const [toastMessage, setToastMessage] = React.useState<string | null>(null);
 
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [editingBook, setEditingBook] = React.useState<AdminBook | null>(null);
   const [saving, setSaving] = React.useState(false);
+  const [activeLangTab, setActiveLangTab] = React.useState<AppLocale>("en");
+  const initialLangSnapshotRef = React.useRef({
+    en: { titleEn: "", authorEn: "", descriptionEn: "", publisherEn: "", quoteEn: "", coverAltEn: "" },
+    ta: { titleTa: "", authorTa: "", descriptionTa: "", publisherTa: "", quoteTa: "", coverAltTa: "" },
+  });
 
   // Delete confirmation modal state
   const [deleteTarget, setDeleteTarget] = React.useState<AdminBook | null>(null);
@@ -143,10 +171,11 @@ export default function AdminBooksPage() {
   const galleryFileInputRef = React.useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = React.useState({
-    title: "",
+    slug: "",
     titleEn: "",
-    author: "",
+    titleTa: "",
     authorEn: "",
+    authorTa: "",
     price: 150,
     stock: 20,
     categorySlug: "history",
@@ -157,7 +186,12 @@ export default function AdminBooksPage() {
     coverAltEn: "",
     coverAltTa: "",
     galleryImages: [] as BookGalleryImage[],
-    description: "",
+    descriptionEn: "",
+    descriptionTa: "",
+    publisherEn: "Methagu Kalanjiyam",
+    publisherTa: "மேதகு களஞ்சியம்",
+    quoteEn: "",
+    quoteTa: "",
     whatsapp_link: "",
     cmsStatus: "published" as "published" | "draft",
   });
@@ -206,11 +240,12 @@ export default function AdminBooksPage() {
   };
 
   const resetForm = () => {
-    setFormData({
-      title: "",
+    const empty = {
+      slug: "",
       titleEn: "",
-      author: "",
+      titleTa: "",
       authorEn: "",
+      authorTa: "",
       price: 150,
       stock: 20,
       categorySlug: "history",
@@ -220,11 +255,36 @@ export default function AdminBooksPage() {
       cover_image_path: "",
       coverAltEn: "",
       coverAltTa: "",
-      galleryImages: [],
-      description: "",
+      galleryImages: [] as BookGalleryImage[],
+      descriptionEn: "",
+      descriptionTa: "",
+      publisherEn: "Methagu Kalanjiyam",
+      publisherTa: "மேதகு களஞ்சியம்",
+      quoteEn: "",
+      quoteTa: "",
       whatsapp_link: "",
-      cmsStatus: "published",
-    });
+      cmsStatus: "published" as "published" | "draft",
+    };
+    setFormData(empty);
+    initialLangSnapshotRef.current = {
+      en: {
+        titleEn: empty.titleEn,
+        authorEn: empty.authorEn,
+        descriptionEn: empty.descriptionEn,
+        publisherEn: empty.publisherEn,
+        quoteEn: empty.quoteEn,
+        coverAltEn: empty.coverAltEn,
+      },
+      ta: {
+        titleTa: empty.titleTa,
+        authorTa: empty.authorTa,
+        descriptionTa: empty.descriptionTa,
+        publisherTa: empty.publisherTa,
+        quoteTa: empty.quoteTa,
+        coverAltTa: empty.coverAltTa,
+      },
+    };
+    setActiveLangTab("en");
     setGalleryUrlInput("");
     setImagePreview(BOOK_PLACEHOLDER_IMAGE);
   };
@@ -238,11 +298,17 @@ export default function AdminBooksPage() {
   const handleOpenEditModal = (book: AdminBook) => {
     setEditingBook(book);
     const hasRealCover = Boolean(book.image && book.image !== BOOK_PLACEHOLDER_IMAGE);
-    setFormData({
-      title: book.title,
-      titleEn: book.titleEn,
-      author: book.author,
-      authorEn: book.authorEn,
+    const titleEnVal = book.titleEn || "";
+    const titleTaVal = book.titleTa || (book.title !== book.titleEn ? book.title : "");
+    const authorEnVal = book.authorEn || "";
+    const authorTaVal = book.authorTa || (book.author !== book.authorEn ? book.author : "");
+
+    const populated = {
+      slug: book.slug || "",
+      titleEn: titleEnVal,
+      titleTa: titleTaVal,
+      authorEn: authorEnVal,
+      authorTa: authorTaVal,
       price: book.price,
       stock: book.stock,
       categorySlug: book.categorySlug || "history",
@@ -253,10 +319,35 @@ export default function AdminBooksPage() {
       coverAltEn: book.coverAltEn || "",
       coverAltTa: book.coverAltTa || "",
       galleryImages: normalizeGalleryImages(book.galleryImages, null, book.image),
-      description: book.descriptionTa || book.descriptionEn || "",
+      descriptionEn: book.descriptionEn || "",
+      descriptionTa: book.descriptionTa || "",
+      publisherEn: book.publisherEn || "Methagu Kalanjiyam",
+      publisherTa: book.publisherTa || book.publisher || "மேதகு களஞ்சியம்",
+      quoteEn: book.quoteEn || "",
+      quoteTa: book.quoteTa || "",
       whatsapp_link: book.whatsappLink || "",
-      cmsStatus: book.cmsStatus || "published",
-    });
+      cmsStatus: book.cmsStatus || ("published" as "published" | "draft"),
+    };
+    setFormData(populated);
+    initialLangSnapshotRef.current = {
+      en: {
+        titleEn: populated.titleEn,
+        authorEn: populated.authorEn,
+        descriptionEn: populated.descriptionEn,
+        publisherEn: populated.publisherEn,
+        quoteEn: populated.quoteEn,
+        coverAltEn: populated.coverAltEn,
+      },
+      ta: {
+        titleTa: populated.titleTa,
+        authorTa: populated.authorTa,
+        descriptionTa: populated.descriptionTa,
+        publisherTa: populated.publisherTa,
+        quoteTa: populated.quoteTa,
+        coverAltTa: populated.coverAltTa,
+      },
+    };
+    setActiveLangTab("en");
     setGalleryUrlInput("");
     setImagePreview(book.image || BOOK_PLACEHOLDER_IMAGE);
     setIsModalOpen(true);
@@ -388,10 +479,52 @@ export default function AdminBooksPage() {
     setGalleryUrlInput("");
   };
 
+  const formCompleteness = React.useMemo(
+    () => getLanguageCompleteness(formData, BOOK_REQUIRED_BILINGUAL_FIELDS),
+    [formData]
+  );
+
+  const isActiveTabDirty = React.useMemo(() => {
+    const snap = initialLangSnapshotRef.current;
+    if (activeLangTab === "en") {
+      return (
+        formData.titleEn !== snap.en.titleEn ||
+        formData.authorEn !== snap.en.authorEn ||
+        formData.descriptionEn !== snap.en.descriptionEn ||
+        formData.publisherEn !== snap.en.publisherEn ||
+        formData.quoteEn !== snap.en.quoteEn ||
+        formData.coverAltEn !== snap.en.coverAltEn
+      );
+    }
+    return (
+      formData.titleTa !== snap.ta.titleTa ||
+      formData.authorTa !== snap.ta.authorTa ||
+      formData.descriptionTa !== snap.ta.descriptionTa ||
+      formData.publisherTa !== snap.ta.publisherTa ||
+      formData.quoteTa !== snap.ta.quoteTa ||
+      formData.coverAltTa !== snap.ta.coverAltTa
+    );
+  }, [activeLangTab, formData]);
+
   const handleSaveBook = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title.trim() || !formData.author.trim()) {
-      showToast("Title and Author are required.");
+    if (!formData.titleEn.trim() || !formData.authorEn.trim()) {
+      setActiveLangTab("en");
+      showToast("English title and English author are required.");
+      return;
+    }
+    if (
+      REQUIRE_BOTH_LANGUAGES_TO_PUBLISH &&
+      formData.cmsStatus === "published" &&
+      (!formData.titleTa.trim() || !formData.authorTa.trim())
+    ) {
+      setActiveLangTab("ta");
+      showToast("Tamil title and Tamil author are required before publishing.");
+      return;
+    }
+    const cleanSlug = (formData.slug.trim() || generateAsciiSlug(formData.titleEn, "book")).toLowerCase();
+    if (!isAsciiSlug(cleanSlug)) {
+      showToast("Slug must contain only ASCII lowercase letters, numbers, and hyphens.");
       return;
     }
     const cleanCoverUrl = formData.image.trim();
@@ -401,6 +534,34 @@ export default function AdminBooksPage() {
     }
     setSaving(true);
 
+    const requestPayload = {
+      slug: cleanSlug,
+      title: formData.titleTa.trim() || formData.titleEn.trim(),
+      title_en: formData.titleEn.trim(),
+      title_ta: formData.titleTa.trim() || null,
+      author: formData.authorTa.trim() || formData.authorEn.trim(),
+      author_en: formData.authorEn.trim(),
+      author_ta: formData.authorTa.trim() || null,
+      description: formData.descriptionTa.trim() || formData.descriptionEn.trim() || null,
+      description_en: formData.descriptionEn.trim() || null,
+      description_ta: formData.descriptionTa.trim() || null,
+      publisher: formData.publisherTa.trim() || formData.publisherEn.trim() || "மேதகு களஞ்சியம்",
+      publisher_en: formData.publisherEn.trim() || "Methagu Kalanjiyam",
+      publisher_ta: formData.publisherTa.trim() || "மேதகு களஞ்சியம்",
+      quote_en: formData.quoteEn.trim() || null,
+      quote_ta: formData.quoteTa.trim() || null,
+      price: Number(formData.price),
+      stock: Number(formData.stock),
+      cover_image_url: cleanCoverUrl,
+      cover_image_path: formData.cover_image_path || null,
+      cover_is_front: true,
+      cover_alt_en: formData.coverAltEn.trim() || null,
+      cover_alt_ta: formData.coverAltTa.trim() || null,
+      gallery_images: formData.galleryImages,
+      whatsapp_link: formData.whatsapp_link || null,
+      status: formData.cmsStatus,
+    };
+
     try {
       if (editingBook) {
         const res = await fetch("/api/admin/books", {
@@ -408,19 +569,7 @@ export default function AdminBooksPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             id: editingBook.id,
-            title: formData.title,
-            author: formData.author,
-            price: Number(formData.price),
-            stock: Number(formData.stock),
-            cover_image_url: cleanCoverUrl,
-            cover_image_path: formData.cover_image_path || null,
-            cover_is_front: true,
-            cover_alt_en: formData.coverAltEn || null,
-            cover_alt_ta: formData.coverAltTa || null,
-            gallery_images: formData.galleryImages,
-            description: formData.description,
-            whatsapp_link: formData.whatsapp_link || null,
-            status: formData.cmsStatus,
+            ...requestPayload,
           }),
         });
 
@@ -432,18 +581,26 @@ export default function AdminBooksPage() {
               b.id === editingBook.id
                 ? savedBook || {
                     ...b,
-                    title: formData.title,
-                    author: formData.author,
+                    slug: cleanSlug,
+                    title: requestPayload.title,
+                    titleEn: formData.titleEn.trim(),
+                    titleTa: formData.titleTa.trim(),
+                    author: requestPayload.author,
+                    authorEn: formData.authorEn.trim(),
+                    authorTa: formData.authorTa.trim(),
                     price: Number(formData.price),
                     stock: Number(formData.stock),
                     image: cleanCoverUrl,
                     coverImageUrl: cleanCoverUrl,
                     coverImagePath: formData.cover_image_path || null,
                     coverIsFront: true,
-                    coverAltEn: formData.coverAltEn || null,
-                    coverAltTa: formData.coverAltTa || null,
+                    coverAltEn: formData.coverAltEn.trim() || null,
+                    coverAltTa: formData.coverAltTa.trim() || null,
                     galleryImages: formData.galleryImages,
-                    descriptionTa: formData.description,
+                    descriptionTa: formData.descriptionTa.trim(),
+                    descriptionEn: formData.descriptionEn.trim(),
+                    publisherTa: formData.publisherTa.trim(),
+                    publisherEn: formData.publisherEn.trim(),
                     whatsappLink: formData.whatsapp_link,
                     cmsStatus: formData.cmsStatus,
                     status: (
@@ -464,21 +621,7 @@ export default function AdminBooksPage() {
         const res = await fetch("/api/admin/books", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: formData.title,
-            author: formData.author,
-            price: Number(formData.price),
-            stock: Number(formData.stock),
-            cover_image_url: cleanCoverUrl,
-            cover_image_path: formData.cover_image_path || null,
-            cover_is_front: true,
-            cover_alt_en: formData.coverAltEn || null,
-            cover_alt_ta: formData.coverAltTa || null,
-            gallery_images: formData.galleryImages,
-            description: formData.description,
-            whatsapp_link: formData.whatsapp_link || null,
-            status: formData.cmsStatus,
-          }),
+          body: JSON.stringify(requestPayload),
         });
 
         if (res.ok) {
@@ -551,14 +694,10 @@ export default function AdminBooksPage() {
   );
 
   const filteredBooks = React.useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
     return books.filter((b) => {
-      const matchesSearch =
-        searchQuery === "" ||
-        b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.titleEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.authorEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.slug.toLowerCase().includes(searchQuery.toLowerCase());
+      const searchCorpus = buildBilingualSearchText(b, ["title", "author", "description", "publisher"]);
+      const matchesSearch = !normalizedQuery || searchCorpus.includes(normalizedQuery);
 
       const matchesCategory =
         selectedCategory === "all" || b.categorySlug === selectedCategory;
@@ -571,8 +710,11 @@ export default function AdminBooksPage() {
 
       const needsFrontCover =
         b.coverIsFront === false || isFlaggedBookCoverSlug(b.slug) || b.image === BOOK_PLACEHOLDER_IMAGE;
+      const langState = getLanguageCompleteness(b, BOOK_REQUIRED_BILINGUAL_FIELDS);
       const matchesCoverFilter =
-        selectedCoverFilter === "all" || (selectedCoverFilter === "needs_cover" && needsFrontCover);
+        selectedCoverFilter === "all" ||
+        (selectedCoverFilter === "needs_cover" && needsFrontCover) ||
+        (selectedCoverFilter === "missing_tamil" && langState.missingTamil);
 
       return matchesSearch && matchesCategory && matchesStatus && matchesCmsStatus && matchesCoverFilter;
     });
@@ -658,13 +800,14 @@ export default function AdminBooksPage() {
 
           <select
             value={selectedCoverFilter}
-            onChange={(e) => setSelectedCoverFilter(e.target.value as "all" | "needs_cover")}
+            onChange={(e) => setSelectedCoverFilter(e.target.value as "all" | "needs_cover" | "missing_tamil")}
             className="px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px] cursor-pointer"
           >
-            <option value="all">All Covers</option>
+            <option value="all">All Covers & Languages</option>
             <option value="needs_cover">
               Needs Front Cover{flaggedCoverCount > 0 ? ` (${flaggedCoverCount})` : ""}
             </option>
+            <option value="missing_tamil">Missing Tamil</option>
           </select>
         </div>
       </div>
@@ -732,10 +875,18 @@ export default function AdminBooksPage() {
                           />
                         </div>
                         <div className="min-w-0 max-w-xs">
-                          <h4 className="font-semibold text-gray-900 truncate font-tamil">{book.title}</h4>
-                          <p className="text-[11px] text-gray-500 truncate mt-0.5">{book.author}</p>
-                          <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                          <h4 className="font-semibold text-gray-900 truncate font-tamil leading-[1.45]">
+                            {book.titleTa || book.titleEn || book.title}
+                          </h4>
+                          {book.titleEn && book.titleTa && book.titleEn !== book.titleTa && (
+                            <p className="text-[11px] text-gray-500 truncate mt-0.5">{book.titleEn}</p>
+                          )}
+                          <p className="text-[11px] text-gray-500 truncate mt-0.5 font-tamil">
+                            {book.authorTa || book.authorEn || book.author}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1">
                             <span className="text-[10px] text-gray-400 font-mono">/{book.slug}</span>
+                            <BilingualListBadge completeness={getLanguageCompleteness(book, BOOK_REQUIRED_BILINGUAL_FIELDS)} />
                             {(book.coverIsFront === false ||
                               isFlaggedBookCoverSlug(book.slug) ||
                               book.image === BOOK_PLACEHOLDER_IMAGE) && (
@@ -1076,30 +1227,159 @@ export default function AdminBooksPage() {
                 )}
               </div>
 
-              {/* Title & Author */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700">Book Title (Tamil / Primary) *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="கட்டுநாயக்கா தாக்குதல் வெற்றி"
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-base sm:text-xs focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[44px]"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-700">Author *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.author}
-                    onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                    placeholder="சாந்தி நேசக்கரம்"
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-base sm:text-xs focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[44px]"
-                  />
-                </div>
+              {/* Dual-Language Text Tabs (English | தமிழ்) */}
+              <div className="rounded-2xl border border-gray-200 p-4 space-y-4 bg-white">
+                <BilingualTabs
+                  activeTab={activeLangTab}
+                  onTabChange={setActiveLangTab}
+                  completeness={formCompleteness}
+                  isActiveTabDirty={isActiveTabDirty}
+                />
+
+                {activeLangTab === "en" ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-700">Book Title (English) *</label>
+                        <input
+                          type="text"
+                          value={formData.titleEn}
+                          onChange={(e) => {
+                            const nextTitle = e.target.value;
+                            setFormData((prev) => ({
+                              ...prev,
+                              titleEn: nextTitle,
+                              slug: editingBook
+                                ? prev.slug
+                                : prev.slug || generateAsciiSlug(nextTitle, "book"),
+                            }));
+                          }}
+                          placeholder="e.g. Katunayake Air Base Victory"
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-base sm:text-xs focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[44px]"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-700">Author (English) *</label>
+                        <input
+                          type="text"
+                          value={formData.authorEn}
+                          onChange={(e) => setFormData({ ...formData, authorEn: e.target.value })}
+                          placeholder="e.g. Saanthi Nesakaram"
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-base sm:text-xs focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[44px]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-700">Publisher (English)</label>
+                        <input
+                          type="text"
+                          value={formData.publisherEn}
+                          onChange={(e) => setFormData({ ...formData, publisherEn: e.target.value })}
+                          placeholder="Methagu Kalanjiyam"
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-base sm:text-xs focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[44px]"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-700">Cover Alt Text (English)</label>
+                        <input
+                          type="text"
+                          value={formData.coverAltEn}
+                          onChange={(e) => setFormData({ ...formData, coverAltEn: e.target.value })}
+                          placeholder="Front cover of Katunayake Air Base Victory"
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-base sm:text-xs focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[44px]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-gray-700">Description / Abstract (English)</label>
+                      <textarea
+                        rows={3}
+                        value={formData.descriptionEn}
+                        onChange={(e) => setFormData({ ...formData, descriptionEn: e.target.value })}
+                        placeholder="Enter English archival summary and context..."
+                        className="w-full px-3 py-2 rounded-xl border border-gray-200 text-base sm:text-xs focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-700 font-tamil">
+                          நூல் தலைப்பு (Tamil)
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.titleTa}
+                          onChange={(e) => setFormData({ ...formData, titleTa: e.target.value })}
+                          placeholder="கட்டுநாயக்கா தாக்குதல் வெற்றி"
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-base sm:text-xs font-tamil focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[44px]"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-700 font-tamil">
+                          ஆசிரியர் (Author in Tamil)
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.authorTa}
+                          onChange={(e) => setFormData({ ...formData, authorTa: e.target.value })}
+                          placeholder="சாந்தி நேசக்கரம்"
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-base sm:text-xs font-tamil focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[44px]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-700 font-tamil">பதிப்பகம் (Publisher in Tamil)</label>
+                        <input
+                          type="text"
+                          value={formData.publisherTa}
+                          onChange={(e) => setFormData({ ...formData, publisherTa: e.target.value })}
+                          placeholder="மேதகு களஞ்சியம்"
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-base sm:text-xs font-tamil focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[44px]"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-700 font-tamil">அட்டைப்பட விவரம் (Cover Alt in Tamil)</label>
+                        <input
+                          type="text"
+                          value={formData.coverAltTa}
+                          onChange={(e) => setFormData({ ...formData, coverAltTa: e.target.value })}
+                          placeholder="நூல் முன் அட்டைப்படம்"
+                          className="w-full px-3 py-2 rounded-xl border border-gray-200 text-base sm:text-xs font-tamil focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[44px]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-gray-700 font-tamil">நூல் குறிப்பு / சுருக்கம் (Description in Tamil)</label>
+                      <textarea
+                        rows={3}
+                        value={formData.descriptionTa}
+                        onChange={(e) => setFormData({ ...formData, descriptionTa: e.target.value })}
+                        placeholder="தமிழில் நூல் குறிப்பு மற்றும் வரலாற்றுப் பின்னணி..."
+                        className="w-full px-3 py-2 rounded-xl border border-gray-200 text-base sm:text-xs font-tamil leading-[1.65] focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ASCII URL Slug */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-gray-700">URL Slug (ASCII only — English-based)</label>
+                <input
+                  type="text"
+                  value={formData.slug}
+                  onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase() })}
+                  placeholder="katunayake-attack-victory"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-base sm:text-xs font-mono focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[44px]"
+                />
               </div>
 
               {/* Price, Stock, Visibility */}
@@ -1139,18 +1419,6 @@ export default function AdminBooksPage() {
                     <option value="draft">Draft (Hidden)</option>
                   </select>
                 </div>
-              </div>
-
-              {/* Description */}
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-gray-700">Book Description / Abstract</label>
-                <textarea
-                  rows={3}
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Enter archival treatise background, historical context, or publisher notes..."
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 text-base sm:text-xs focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none"
-                />
               </div>
 
               {/* Optional WhatsApp Direct Link */}

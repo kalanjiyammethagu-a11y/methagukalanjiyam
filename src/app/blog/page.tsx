@@ -4,6 +4,7 @@ import { BlogCatalogClient } from "@/components/blog/BlogCatalogClient";
 import { safeJsonLdStringify } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/server";
 import type { ArticleCardData } from "@/components/blog/ArticleCard";
+import { resolveBilingualPair } from "@/lib/i18n";
 
 export const revalidate = 60;
 
@@ -50,19 +51,26 @@ export default async function BlogPage() {
       .order("published_at", { ascending: false, nullsFirst: false });
 
     if (!blogPostsErr && dbPosts && dbPosts.length > 0) {
-      initialArticles = dbPosts.map((p: any) => ({
-        slug: p.slug,
-        titleTa: p.title,
-        titleEn: p.seo_title || p.title,
-        excerptTa: p.excerpt || "",
-        excerptEn: p.seo_description || p.excerpt || "",
-        coverImage: p.cover_image_url || p.cover_image || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp",
-        categoryTa: "வரலாற்று ஆவணம்",
-        categoryEn: "Historical Record",
-        publishedAt: p.published_at ? p.published_at.split("T")[0] : "2026-08-01",
-        readingTimeMinutes: p.reading_time_mins || 5,
-        featured: p.sort_order <= 1,
-      }));
+      initialArticles = dbPosts.map((p: any) => {
+        const titlePair = resolveBilingualPair({ en: p.title_en ?? p.seo_title, ta: p.title_ta, legacy: p.title });
+        const excerptPair = resolveBilingualPair({ en: p.excerpt_en ?? p.seo_description, ta: p.excerpt_ta, legacy: p.excerpt });
+        const catPair = resolveBilingualPair({ en: p.category_en, ta: p.category_ta, legacy: "Historical Record" });
+        return {
+          slug: p.slug,
+          titleTa: titlePair.ta || titlePair.en || p.title,
+          titleEn: titlePair.en || titlePair.ta || p.title,
+          excerptTa: excerptPair.ta || excerptPair.en || "",
+          excerptEn: excerptPair.en || excerptPair.ta || "",
+          coverImage: p.cover_image_url || p.cover_image || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp",
+          coverAltTa: p.cover_alt_ta || undefined,
+          coverAltEn: p.cover_alt_en || undefined,
+          categoryTa: catPair.ta || "வரலாற்று ஆவணம்",
+          categoryEn: catPair.en || "Historical Record",
+          publishedAt: p.published_at ? p.published_at.split("T")[0] : "2026-08-01",
+          readingTimeMinutes: p.reading_time_mins || 5,
+          featured: p.sort_order <= 1,
+        };
+      });
     } else {
       // Query blogs table
       const { data: legacyBlogs } = await (supabase.from("blogs") as any)
@@ -71,19 +79,23 @@ export default async function BlogPage() {
         .order("published_at", { ascending: false, nullsFirst: false });
 
       if (legacyBlogs && legacyBlogs.length > 0) {
-        initialArticles = legacyBlogs.map((b: any) => ({
-          slug: b.slug,
-          titleTa: b.title,
-          titleEn: b.meta_title || b.title,
-          excerptTa: b.excerpt || "",
-          excerptEn: b.meta_description || b.excerpt || "",
-          coverImage: b.cover_image || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp",
-          categoryTa: "வரலாற்று ஆவணம்",
-          categoryEn: "Historical Record",
-          publishedAt: b.published_at ? b.published_at.split("T")[0] : "2026-08-01",
-          readingTimeMinutes: b.reading_time_mins || 5,
-          featured: true,
-        }));
+        initialArticles = legacyBlogs.map((b: any) => {
+          const titlePair = resolveBilingualPair({ en: b.title_en ?? b.meta_title, ta: b.title_ta, legacy: b.title });
+          const excerptPair = resolveBilingualPair({ en: b.excerpt_en ?? b.meta_description, ta: b.excerpt_ta, legacy: b.excerpt });
+          return {
+            slug: b.slug,
+            titleTa: titlePair.ta || titlePair.en || b.title,
+            titleEn: titlePair.en || titlePair.ta || b.title,
+            excerptTa: excerptPair.ta || excerptPair.en || "",
+            excerptEn: excerptPair.en || excerptPair.ta || "",
+            coverImage: b.cover_image || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp",
+            categoryTa: "வரலாற்று ஆவணம்",
+            categoryEn: "Historical Record",
+            publishedAt: b.published_at ? b.published_at.split("T")[0] : "2026-08-01",
+            readingTimeMinutes: b.reading_time_mins || 5,
+            featured: true,
+          };
+        });
       }
     }
   } catch {
