@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth-service";
 import { getERPClient } from "@/lib/erp/erp-client";
 import { logERPAudit } from "@/lib/erp/sync-queue";
-import { allBooks, BookItem } from "@/data/books";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +17,7 @@ export async function POST(req: NextRequest) {
     const health = await client.checkHealth();
 
     if (!health.isReachable) {
-      logERPAudit({
+      await logERPAudit({
         action: "sync_item",
         status: "offline_queued",
         message: `Catalog sync deferred: ${health.tunnelMessage || "ERP offline"}`,
@@ -28,45 +27,33 @@ export async function POST(req: NextRequest) {
         success: false,
         isTunnelOffline: health.isTunnelOffline,
         error: health.tunnelMessage || "ERP server is not reachable right now.",
-        totalBooks: allBooks.length,
+        totalBooks: 0,
         syncedCount: 0,
       });
     }
 
-    // Try fetching from DB first, fallback to static allBooks
-    let booksToSync: Array<{
+    const adminSupabase = createAdminClient();
+    const { data, error: booksErr } = await (adminSupabase.from("books") as any).select(
+      "id, title, title_en, price, description, description_en, cover_image_url, cover_front"
+    );
+
+    if (booksErr) {
+      return NextResponse.json({ error: booksErr.message }, { status: 500 });
+    }
+
+    const booksToSync: Array<{
       id: string;
       title: string;
       price: number;
       description?: string;
       image?: string;
-    }> = [];
-
-    try {
-      const adminSupabase = createAdminClient();
-      const { data } = await (adminSupabase.from("books") as any).select(
-        "id, title, price, description, cover_image_url, cover_front"
-      );
-      if (data && data.length > 0) {
-        booksToSync = data.map((b: any) => ({
-          id: b.id,
-          title: b.title,
-          price: b.price,
-          description: b.description,
-          image: b.cover_image_url || b.cover_front,
-        }));
-      }
-    } catch {}
-
-    if (booksToSync.length === 0) {
-      booksToSync = allBooks.map((b: BookItem) => ({
-        id: b.id,
-        title: b.titleEn || b.title,
-        price: b.price,
-        description: b.descriptionEn || b.descriptionTa,
-        image: b.image,
-      }));
-    }
+    }> = (data || []).map((b: any) => ({
+      id: b.id,
+      title: b.title_en || b.title,
+      price: Number(b.price || 0),
+      description: b.description_en || b.description,
+      image: b.cover_image_url || b.cover_front,
+    }));
 
     let syncedCount = 0;
     const errors: string[] = [];
@@ -89,9 +76,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    logERPAudit({
+    await logERPAudit({
       action: "sync_item",
-      status: syncedCount > 0 ? "success" : "failed",
+      status: syncedCount > 0 || booksToSync.length === 0 ? "success" : "failed",
       message: `Synced ${syncedCount}/${booksToSync.length} books into ERP Item master.`,
       details: { syncedCount, total: booksToSync.length, errors },
     });

@@ -20,7 +20,6 @@ import {
   ArrowUp,
   ArrowDown,
 } from "lucide-react";
-import { mockAdminBooks } from "@/data/admin-mock";
 import type { AdminBook, BookStatus } from "@/types/admin";
 import { formatINR } from "@/lib/utils";
 import {
@@ -213,7 +212,7 @@ export default function AdminBooksPage() {
         }
       }
     } catch {}
-    setBooks(mockAdminBooks);
+    setBooks([]);
     setUsingFallback(true);
     setLoading(false);
   }, []);
@@ -810,7 +809,7 @@ export default function AdminBooksPage() {
         <div className="bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3 flex items-start gap-2.5 text-xs text-rose-900">
           <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
           <span>
-            Showing offline fallback books (<code className="font-mono">mockAdminBooks</code>) because <code className="font-mono">/api/admin/books</code> could not load from Supabase. Stock/book edits cannot persist to the database until the session &amp; Supabase connection are active.
+            Could not load books from Supabase (<code className="font-mono">/api/admin/books</code>). Verify your admin session and Supabase connection, then refresh.
           </span>
         </div>
       )}

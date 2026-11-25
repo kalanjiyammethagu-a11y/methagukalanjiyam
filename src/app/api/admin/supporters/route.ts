@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth-service";
-import { mockSupporters } from "@/data/admin-mock";
 import { adminSupporterCreateSchema, adminSupporterUpdateSchema } from "@/lib/validators/admin";
 import { deleteAdminAsset } from "@/lib/storage";
 import type { AdminSupporter } from "@/types/admin";
@@ -69,9 +68,6 @@ function mapSupabaseSupporterRow(row: any): AdminSupporter {
   };
 }
 
-// Fallback only when Supabase connection itself is unavailable
-const fallbackSupporters: AdminSupporter[] = [...mockSupporters];
-
 export async function GET(req: NextRequest) {
   try {
     const auth = await requireAdmin(req);
@@ -79,21 +75,17 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
-    try {
-      const adminSupabase = createAdminClient();
-      const { data, error } = await (adminSupabase.from("supporters") as any)
-        .select("*")
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: false });
+    const adminSupabase = createAdminClient();
+    const { data, error } = await (adminSupabase.from("supporters") as any)
+      .select("*")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
 
-      if (!error && data && data.length > 0) {
-        return NextResponse.json({ supporters: data.map(mapSupabaseSupporterRow) });
-      }
-    } catch {
-      // Supabase unavailable or table empty, fallback to static roster
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ supporters: fallbackSupporters });
+    return NextResponse.json({ supporters: (data || []).map(mapSupabaseSupporterRow) });
   } catch (err: any) {
     console.error("GET /api/admin/supporters error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -143,85 +135,55 @@ export async function POST(req: NextRequest) {
     const sortOrder = val.sort_order ?? 0;
     const websiteUrl = val.website_url || val.instagramUrl || null;
 
-    let createdRow: any = null;
+    const adminSupabase = createAdminClient();
+    const baseInsert = {
+      name,
+      role_en: roleEn,
+      role_ta: roleTa || null,
+      tagline: taglinePair.ta || taglinePair.en || null,
+      description: descPair.en || descPair.ta || roleEn,
+      logo_or_photo_path: photoPath,
+      logo_or_photo_url: photoUrl,
+      avatar_url: photoUrl,
+      website_url: websiteUrl,
+      sort_order: sortOrder,
+      status,
+      is_active: isActive,
+    };
+    const fullInsert = {
+      ...baseInsert,
+      name_en: namePair.en || null,
+      name_ta: namePair.ta || null,
+      tagline_en: taglinePair.en || null,
+      tagline_ta: taglinePair.ta || null,
+      description_en: descPair.en || null,
+      description_ta: descPair.ta || null,
+      photo_alt_en: val.photo_alt_en || null,
+      photo_alt_ta: val.photo_alt_ta || null,
+    };
 
-    // Try persisting to Supabase if connected
-    try {
-      const adminSupabase = createAdminClient();
-      const baseInsert = {
-        name,
-        role_en: roleEn,
-        role_ta: roleTa || null,
-        tagline: taglinePair.ta || taglinePair.en || null,
-        description: descPair.en || descPair.ta || roleEn,
-        logo_or_photo_path: photoPath,
-        logo_or_photo_url: photoUrl,
-        avatar_url: photoUrl,
-        website_url: websiteUrl,
-        sort_order: sortOrder,
-        status,
-        is_active: isActive,
-      };
-      const fullInsert = {
-        ...baseInsert,
-        name_en: namePair.en || null,
-        name_ta: namePair.ta || null,
-        tagline_en: taglinePair.en || null,
-        tagline_ta: taglinePair.ta || null,
-        description_en: descPair.en || null,
-        description_ta: descPair.ta || null,
-        photo_alt_en: val.photo_alt_en || null,
-        photo_alt_ta: val.photo_alt_ta || null,
-      };
+    let { data: createdRow, error: insertErr } = await (adminSupabase.from("supporters") as any)
+      .insert(fullInsert)
+      .select()
+      .single();
 
-      let { data, error } = await (adminSupabase.from("supporters") as any)
-        .insert(fullInsert)
+    if (insertErr && isMissingSupporterColumnError(insertErr)) {
+      const retry = await (adminSupabase.from("supporters") as any)
+        .insert(baseInsert)
         .select()
         .single();
-
-      if (error && isMissingSupporterColumnError(error)) {
-        const retry = await (adminSupabase.from("supporters") as any)
-          .insert(baseInsert)
-          .select()
-          .single();
-        data = retry.data;
-        error = retry.error;
-      }
-
-      if (!error && data) {
-        createdRow = data;
-      }
-    } catch {
-      // Fallback
+      createdRow = retry.data;
+      insertErr = retry.error;
     }
 
-    const newSupporter: AdminSupporter = createdRow
-      ? mapSupabaseSupporterRow(createdRow)
-      : {
-          id: `sup-${Date.now()}`,
-          nameEn: namePair.en || name,
-          nameTa: namePair.ta || "",
-          roleEn,
-          roleTa,
-          taglineEn: taglinePair.en || undefined,
-          taglineTa: taglinePair.ta || undefined,
-          descriptionEn: descPair.en || undefined,
-          descriptionTa: descPair.ta || undefined,
-          photoAltEn: val.photo_alt_en || undefined,
-          photoAltTa: val.photo_alt_ta || undefined,
-          image: photoUrl,
-          logo_or_photo_path: photoPath || undefined,
-          logo_or_photo_url: photoUrl,
-          website_url: websiteUrl || undefined,
-          tagline: taglinePair.en || taglinePair.ta || undefined,
-          description: descPair.en || descPair.ta || undefined,
-          sort_order: sortOrder,
-          status,
-          instagramUrl: websiteUrl || undefined,
-          whatsappUrl: val.whatsappUrl || undefined,
-          isActive,
-          joinedAt: new Date().toISOString().split("T")[0],
-        };
+    if (insertErr || !createdRow) {
+      return NextResponse.json(
+        { error: insertErr?.message || "Failed to create supporter in Supabase." },
+        { status: 500 }
+      );
+    }
+
+    const newSupporter: AdminSupporter = mapSupabaseSupporterRow(createdRow);
 
     try {
       revalidatePath("/supporters");
@@ -340,51 +302,27 @@ export async function PATCH(req: NextRequest) {
         updError = retry.error;
       }
 
-      if (!updError && updatedRow) {
-        try {
-          revalidatePath("/supporters");
-          revalidatePath("/");
-        } catch {}
-        return NextResponse.json({
-          supporter: mapSupabaseSupporterRow(updatedRow),
-          message: "Member updated successfully",
-        });
+      if (updError) {
+        return NextResponse.json({ error: updError.message || "Failed to update supporter." }, { status: 500 });
       }
-    } catch {
-      // Fallback
+      if (!updatedRow) {
+        return NextResponse.json({ error: "Supporter not found in database." }, { status: 404 });
+      }
+
+      try {
+        revalidatePath("/supporters");
+        revalidatePath("/");
+      } catch {}
+      return NextResponse.json({
+        supporter: mapSupabaseSupporterRow(updatedRow),
+        message: "Member updated successfully",
+      });
+    } catch (dbErr: any) {
+      return NextResponse.json(
+        { error: dbErr?.message || "Database error updating supporter." },
+        { status: 500 }
+      );
     }
-
-    const baseFallback = fallbackSupporters.find((s) => s.id === id);
-    const updated: AdminSupporter = {
-      ...(baseFallback || {
-        id,
-        nameEn: "",
-        nameTa: "",
-        roleEn: "",
-        roleTa: "",
-        image: "",
-        isActive: true,
-        joinedAt: new Date().toISOString().split("T")[0],
-      }),
-      nameEn: updates.name_en || updates.nameEn || baseFallback?.nameEn || "",
-      nameTa: updates.name_ta || updates.nameTa || baseFallback?.nameTa || "",
-      roleEn: updates.role_en || updates.roleEn || baseFallback?.roleEn || "",
-      roleTa: updates.role_ta || updates.roleTa || baseFallback?.roleTa || "",
-      image: updates.logo_or_photo_url || updates.image || baseFallback?.image || "",
-      isActive: updates.isActive ?? updates.is_active ?? baseFallback?.isActive ?? true,
-    };
-
-    try {
-      revalidatePath("/supporters");
-      revalidatePath("/");
-    } catch {
-      // Ignore cache revalidation errors
-    }
-
-    return NextResponse.json({
-      supporter: updated,
-      message: "Member updated successfully",
-    });
   } catch (err: any) {
     console.error("PATCH /api/admin/supporters error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -417,9 +355,12 @@ export async function DELETE(req: NextRequest) {
         await deleteAdminAsset("supporters", existing.logo_or_photo_path);
       }
 
-      await (adminSupabase.from("supporters") as any).delete().eq("id", id);
-    } catch {
-      // Fallback
+      const { error: delErr } = await (adminSupabase.from("supporters") as any).delete().eq("id", id);
+      if (delErr) {
+        return NextResponse.json({ error: delErr.message }, { status: 500 });
+      }
+    } catch (dbErr: any) {
+      return NextResponse.json({ error: dbErr?.message || "Failed to delete supporter." }, { status: 500 });
     }
 
     try {

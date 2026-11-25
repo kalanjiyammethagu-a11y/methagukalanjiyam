@@ -32,9 +32,11 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const items = getERPQueueItems();
-    const auditLogs = getERPAuditLogs();
-    const stats = getERPQueueStats();
+    const [items, auditLogs, stats] = await Promise.all([
+      getERPQueueItems(),
+      getERPAuditLogs(),
+      getERPQueueStats(),
+    ]);
 
     return NextResponse.json({ items, auditLogs, stats });
   } catch (err: any) {
@@ -56,8 +58,10 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await flushERPQueue();
-    const items = getERPQueueItems();
-    const stats = getERPQueueStats();
+    const [items, stats] = await Promise.all([
+      getERPQueueItems(),
+      getERPQueueStats(),
+    ]);
 
     return NextResponse.json({
       success: true,

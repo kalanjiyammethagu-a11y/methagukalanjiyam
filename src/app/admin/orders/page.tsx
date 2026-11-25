@@ -23,7 +23,6 @@ import {
   History,
   Package,
 } from "lucide-react";
-import { mockOrders } from "@/data/admin-mock";
 import type { AdminOrder, OrderStatus } from "@/types/admin";
 import { formatINR } from "@/lib/utils";
 import {
@@ -166,7 +165,7 @@ export default function AdminOrdersPage() {
         }
       }
     } catch {}
-    setOrders(mockOrders);
+    setOrders([]);
   }, []);
 
   React.useEffect(() => {

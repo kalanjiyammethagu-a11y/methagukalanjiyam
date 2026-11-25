@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
     const health = await testClient.checkHealth();
 
-    logERPAudit({
+    await logERPAudit({
       action: "health_check",
       status: health.isReachable ? "success" : (health.isTunnelOffline ? "offline_queued" : "failed"),
       message: `Diagnostic ping to ${health.erpUrl}: ${health.isReachable ? "Online (" + health.loggedUser + ")" : health.tunnelMessage}`,

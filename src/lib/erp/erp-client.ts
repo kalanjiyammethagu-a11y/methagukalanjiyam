@@ -374,12 +374,6 @@ export class ERPNextClient {
   }
 }
 
-// Global singleton instance
-let defaultClient: ERPNextClient | null = null;
-
 export function getERPClient(): ERPNextClient {
-  if (!defaultClient) {
-    defaultClient = new ERPNextClient();
-  }
-  return defaultClient;
+  return new ERPNextClient();
 }

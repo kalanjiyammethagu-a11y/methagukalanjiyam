@@ -45,8 +45,7 @@ export async function POST(req: NextRequest) {
         })),
       };
     } else {
-      // Check in mock queue
-      const existing = getERPQueueItems().find((q) => q.orderId === orderId || q.id === orderId);
+      const existing = (await getERPQueueItems()).find((q) => q.orderId === orderId || q.id === orderId);
       if (existing) {
         const processed = await processQueueItem(existing);
         return NextResponse.json({ success: true, item: processed });

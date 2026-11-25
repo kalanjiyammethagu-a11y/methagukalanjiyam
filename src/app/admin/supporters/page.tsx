@@ -18,7 +18,6 @@ import {
   UserCheck,
   UserX,
 } from "lucide-react";
-import { mockSupporters } from "@/data/admin-mock";
 import type { AdminSupporter } from "@/types/admin";
 import {
   buildBilingualSearchText,
@@ -72,7 +71,7 @@ const initialFormData: MemberFormData = {
 };
 
 export default function AdminSupportersPage() {
-  const [supporters, setSupporters] = React.useState<AdminSupporter[]>(mockSupporters);
+  const [supporters, setSupporters] = React.useState<AdminSupporter[]>([]);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<"all" | "active" | "inactive" | "missing_tamil">("all");
   const [toastMessage, setToastMessage] = React.useState<string | null>(null);
@@ -103,12 +102,14 @@ export default function AdminSupportersPage() {
         const res = await fetch("/api/admin/supporters");
         if (res.ok) {
           const data = await res.json();
-          if (data.supporters && data.supporters.length > 0) {
+          if (Array.isArray(data.supporters)) {
             setSupporters(data.supporters);
+            return;
           }
         }
+        showToast("Failed to load supporters from Supabase.");
       } catch {
-        // Fallback to initial mock state
+        showToast("Network error loading supporters.");
       }
     }
     loadSupporters();
@@ -162,11 +163,18 @@ export default function AdminSupportersPage() {
     showToast(nextActive ? "Member activated!" : "Member deactivated!");
 
     try {
-      await fetch("/api/admin/supporters", {
+      const res = await fetch("/api/admin/supporters", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: supporterId, isActive: nextActive }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setSupporters((prev) =>
+          prev.map((s) => (s.id === supporterId ? { ...s, isActive: !nextActive } : s))
+        );
+        showToast(err.error || "Failed to update status on server.");
+      }
     } catch {
       // Revert on error
       setSupporters((prev) =>

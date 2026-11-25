@@ -81,7 +81,15 @@ function LoginForm() {
     }
     if (field === "password") {
       if (!val) return isTa ? "கடவுச்சொல்லை உள்ளிடுக" : "Please enter password";
-      if (val.length < 6) return isTa ? "குறைந்தது 6 எழுத்துக்கள் தேவை" : "Password must be at least 6 characters";
+      if (tab === "register") {
+        if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(val)) {
+          return isTa
+            ? "குறைந்தது 8 எழுத்துகள் (பெரிய எழுத்து, சிறிய எழுத்து மற்றும் எண்) தேவை"
+            : "Password must be 8+ chars with uppercase, lowercase, and number";
+        }
+      } else if (val.length < 6) {
+        return isTa ? "குறைந்தது 6 எழுத்துக்கள் தேவை" : "Password must be at least 6 characters";
+      }
       return null;
     }
     if (field === "fullName" && tab === "register") {

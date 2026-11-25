@@ -18,7 +18,6 @@ import {
   ImageIcon,
   Loader2,
 } from "lucide-react";
-import { mockArticles } from "@/data/admin-mock";
 import type { AdminArticle, ArticleStatus } from "@/types/admin";
 import {
   buildBilingualSearchText,
@@ -147,42 +146,6 @@ function mapSupabaseBlog(b: any): ArticleItem {
   };
 }
 
-function mapMockArticle(a: AdminArticle): ArticleItem {
-  return {
-    id: a.id,
-    title: a.titleTa || a.titleEn,
-    titleEn: a.titleEn || "",
-    titleTa: a.titleTa || "",
-    slug: a.slug,
-    excerpt: a.subtitleTa || a.subtitleEn,
-    excerptEn: a.subtitleEn || "",
-    excerptTa: a.subtitleTa || "",
-    content: "Detailed historical archival documentation and contextual records.",
-    bodyEn: "Detailed historical archival documentation and contextual records.",
-    bodyTa: a.subtitleTa || "",
-    category: a.categoryEn || a.categoryTa,
-    categoryEn: a.categoryEn || "Historical Record",
-    categoryTa: a.categoryTa || "வரலாற்று ஆவணம்",
-    author: a.authorEn || a.author,
-    authorEn: a.authorEn || a.author || "Deepak Harvin",
-    authorTa: a.authorTa || "தீபக் ஹார்வின்",
-    seoTitleEn: a.titleEn || "",
-    seoTitleTa: a.titleTa || "",
-    seoDescriptionEn: a.subtitleEn || "",
-    seoDescriptionTa: a.subtitleTa || "",
-    coverAltEn: a.coverAltEn || "",
-    coverAltTa: a.coverAltTa || "",
-    status: a.status,
-    readingTimeMinutes: a.readingTimeMinutes,
-    publishedAt: a.publishedAt,
-    viewCount: a.viewCount,
-    coverImage: DEFAULT_COVER,
-    coverImagePath: "",
-    createdAt: a.createdAt,
-    updatedAt: a.updatedAt,
-  };
-}
-
 export default function AdminArticlesPage() {
   const [articles, setArticles] = React.useState<ArticleItem[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -234,13 +197,17 @@ export default function AdminArticlesPage() {
       const res = await fetch("/api/admin/articles");
       if (res.ok) {
         const data = await res.json();
-        if (data.articles && Array.isArray(data.articles) && data.articles.length > 0) {
+        if (data.articles && Array.isArray(data.articles)) {
           setArticles(data.articles.map(mapSupabaseBlog));
+          setLoading(false);
           return;
         }
       }
-    } catch { }
-    setArticles(mockArticles.map(mapMockArticle));
+      showToast("Failed to load articles from database.");
+    } catch {
+      showToast("Network error loading articles from database.");
+    }
+    setArticles([]);
     setLoading(false);
   }, []);
 

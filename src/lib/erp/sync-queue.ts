@@ -1,13 +1,11 @@
 /**
- * Resilient Outbox Sync Queue for ERPNext
+ * Supabase-Backed Outbox Sync Queue for ERPNext
  * Methagu Kalanjiyam Platform
  *
- * Guarantees zero order loss when external ERP or Cloudflare Tunnels are offline.
- * Automatically buffers orders and flushes upon reconnection or manual admin trigger.
+ * 100% Cloudflare Workers & serverless compatible (zero local filesystem / in-memory reliance).
+ * Persists queue state in `public.erp_sync_queue` and audit trail in `public.audit_logs`.
  */
 
-import fs from "node:fs";
-import path from "node:path";
 import { getERPClient } from "./erp-client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -17,133 +15,104 @@ import {
   ERPSalesOrder,
 } from "@/types/erp";
 
-const QUEUE_STORAGE_PATH = path.resolve(".erp-sync-queue.json");
-const AUDIT_STORAGE_PATH = path.resolve(".erp-audit-log.json");
-
-// In-memory active stores
-let queueItems: ERPSyncQueueItem[] = [];
-let auditLogs: ERPAuditLogEntry[] = [];
-let isInitialized = false;
-
-function loadStoredState() {
-  if (isInitialized) return;
-  try {
-    if (fs.existsSync(QUEUE_STORAGE_PATH)) {
-      const raw = fs.readFileSync(QUEUE_STORAGE_PATH, "utf8");
-      queueItems = JSON.parse(raw);
-    }
-  } catch (err) {
-    console.warn("Could not load ERP queue storage:", err);
-    queueItems = [];
-  }
-
-  try {
-    if (fs.existsSync(AUDIT_STORAGE_PATH)) {
-      const raw = fs.readFileSync(AUDIT_STORAGE_PATH, "utf8");
-      auditLogs = JSON.parse(raw);
-    }
-  } catch {
-    auditLogs = [];
-  }
-
-  // Pre-seed mock history if empty so admin UI is informative
-  if (queueItems.length === 0) {
-    queueItems = [
-      {
-        id: "queue-001",
-        orderId: "ord-mock-101",
-        orderNumber: "MK-849102-4912",
-        customerName: "Deepak Harvin",
-        customerPhone: "+91 918248654946",
-        customerEmail: "deepak@methagu.org",
-        totalAmount: 1450,
-        itemCount: 2,
-        status: "queued_tunnel_offline",
-        retryCount: 1,
-        lastError: "Cloudflare Tunnel Error 1033: Origin tunnel connector is currently offline.",
-        createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
-        updatedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-        payload: {
-          items: [
-            { item_code: "BK-KATUNAYAKE", item_name: "Katunayake Attack Victory", qty: 1, rate: 850, amount: 850 },
-            { item_code: "BK-NENJURAM", item_name: "Nenjuram", qty: 1, rate: 600, amount: 600 },
-          ],
-        },
-      },
-      {
-        id: "queue-002",
-        orderId: "ord-mock-102",
-        orderNumber: "MK-382910-8291",
-        customerName: "Kavitha Raman",
-        customerPhone: "+91 9444123456",
-        customerEmail: "kavitha.raman@gmail.com",
-        totalAmount: 950,
-        itemCount: 1,
-        status: "queued_tunnel_offline",
-        retryCount: 1,
-        lastError: "Cloudflare Tunnel Error 1033: Origin tunnel connector is currently offline.",
-        createdAt: new Date(Date.now() - 3600000 * 1).toISOString(),
-        updatedAt: new Date(Date.now() - 1800000).toISOString(),
-        payload: {
-          items: [
-            { item_code: "BK-DHISAI", item_name: "Dhisai Thavara Kanai", qty: 1, rate: 950, amount: 950 },
-          ],
-        },
-      },
-    ];
-  }
-
-  isInitialized = true;
+function mapDbRowToQueueItem(row: any): ERPSyncQueueItem {
+  return {
+    id: row.id,
+    orderId: row.order_id || row.id,
+    orderNumber: row.order_number,
+    customerName: row.customer_name || "Customer",
+    customerPhone: row.customer_phone || undefined,
+    customerEmail: row.customer_email || undefined,
+    totalAmount: Number(row.total_amount || 0),
+    itemCount: Number(row.item_count || 0),
+    status: (row.status || "pending") as ERPSyncQueueItem["status"],
+    retryCount: Number(row.attempts || 0),
+    lastError: row.last_error || undefined,
+    erpCustomerId: row.erp_customer_id || undefined,
+    erpSalesOrderId: row.erp_sales_order_id || undefined,
+    createdAt: row.created_at || new Date().toISOString(),
+    updatedAt: row.updated_at || new Date().toISOString(),
+    payload: row.payload || {},
+  };
 }
 
-function persistState() {
-  try {
-    fs.writeFileSync(QUEUE_STORAGE_PATH, JSON.stringify(queueItems, null, 2), "utf8");
-  } catch (err) {
-    // In serverless / read-only filesystem environments, file writes are safely caught
+function normalizeBookItemCode(item: { item_code?: string; book_id?: string | null }): string {
+  if (item.item_code && item.item_code.trim()) {
+    return item.item_code.trim();
   }
-
-  try {
-    fs.writeFileSync(AUDIT_STORAGE_PATH, JSON.stringify(auditLogs.slice(0, 100), null, 2), "utf8");
-  } catch (err) {
-    // Handled safely
+  if (item.book_id && String(item.book_id).trim()) {
+    return `BK-${String(item.book_id).trim().toUpperCase()}`;
   }
+  return "BOOK-DEFAULT";
 }
 
-async function syncItemToDatabase(item: ERPSyncQueueItem) {
+export async function logERPAudit(
+  entry: Omit<ERPAuditLogEntry, "id" | "timestamp">
+): Promise<void> {
   try {
     const adminSupabase = createAdminClient();
-    await (adminSupabase.from("erp_sync_queue") as any).upsert({
-      order_number: item.orderNumber,
-      customer_name: item.customerName || null,
-      customer_phone: item.customerPhone || null,
-      customer_email: item.customerEmail || null,
-      total_amount: item.totalAmount || 0,
-      item_count: item.itemCount || 0,
-      status: item.status,
-      attempts: item.retryCount || 0,
-      last_error: item.lastError || null,
-      payload: item.payload || {},
-      updated_at: new Date().toISOString(),
-    }, { onConflict: "order_number" });
-  } catch {
-    // Graceful fallback if database table is unavailable or offline
+    await (adminSupabase.from("audit_logs") as any).insert({
+      action: `erp_${entry.action}`,
+      resource_type: "erp",
+      resource_id: entry.status,
+      metadata: {
+        status: entry.status,
+        message: entry.message,
+        details: entry.details || null,
+      },
+    });
+  } catch (err) {
+    console.warn("[ERP Audit] Failed to record audit log:", err);
   }
 }
 
-export function logERPAudit(entry: Omit<ERPAuditLogEntry, "id" | "timestamp">) {
-  loadStoredState();
-  const log: ERPAuditLogEntry = {
-    id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-    timestamp: new Date().toISOString(),
-    ...entry,
+async function upsertQueueRow(item: ERPSyncQueueItem): Promise<ERPSyncQueueItem> {
+  const adminSupabase = createAdminClient();
+  const baseRow: Record<string, any> = {
+    order_id: item.orderId || null,
+    order_number: item.orderNumber,
+    customer_name: item.customerName || null,
+    customer_phone: item.customerPhone || null,
+    customer_email: item.customerEmail || null,
+    total_amount: item.totalAmount || 0,
+    item_count: item.itemCount || 0,
+    status: item.status,
+    attempts: item.retryCount || 0,
+    last_error: item.lastError || null,
+    payload: item.payload || {},
+    updated_at: item.updatedAt || new Date().toISOString(),
   };
-  auditLogs.unshift(log);
-  persistState();
+
+  const extendedRow: Record<string, any> = {
+    ...baseRow,
+    erp_customer_id: item.erpCustomerId || null,
+    erp_sales_order_id: item.erpSalesOrderId || null,
+  };
+
+  let { data, error } = await (adminSupabase.from("erp_sync_queue") as any)
+    .upsert(extendedRow, { onConflict: "order_number" })
+    .select("*")
+    .maybeSingle();
+
+  if (error && (error.code === "PGRST204" || error.code === "42703")) {
+    const retry = await (adminSupabase.from("erp_sync_queue") as any)
+      .upsert(baseRow, { onConflict: "order_number" })
+      .select("*")
+      .maybeSingle();
+    data = retry.data;
+    error = retry.error;
+  }
+
+  if (error) {
+    console.warn("[ERP Queue] upsertQueueRow error:", error.message);
+    return item;
+  }
+
+  return data ? mapDbRowToQueueItem(data) : item;
 }
 
 /**
- * Enqueue an order for ERP synchronization
+ * Enqueue an order for ERP synchronization in Supabase.
  */
 export async function enqueueOrderSync(orderPayload: {
   orderId: string;
@@ -161,151 +130,157 @@ export async function enqueueOrderSync(orderPayload: {
   }>;
   totalAmount: number;
 }): Promise<ERPSyncQueueItem> {
-  loadStoredState();
+  const adminSupabase = createAdminClient();
+  const { data: existingRow } = await (adminSupabase.from("erp_sync_queue") as any)
+    .select("*")
+    .eq("order_number", orderPayload.orderNumber)
+    .maybeSingle();
 
-  // Deduplicate
-  const existingIndex = queueItems.findIndex((q) => q.orderId === orderPayload.orderId || q.orderNumber === orderPayload.orderNumber);
-  if (existingIndex >= 0 && queueItems[existingIndex].status === "synced") {
-    return queueItems[existingIndex];
+  if (existingRow && existingRow.status === "synced") {
+    return mapDbRowToQueueItem(existingRow);
   }
 
-  const queueItem: ERPSyncQueueItem = {
-    id: `queue-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+  const nowIso = new Date().toISOString();
+  const normalizedItems = (orderPayload.items || []).map((it) => ({
+    ...it,
+    item_code: normalizeBookItemCode(it),
+  }));
+
+  const queueItem = await upsertQueueRow({
+    id: existingRow?.id || orderPayload.orderId,
     orderId: orderPayload.orderId,
     orderNumber: orderPayload.orderNumber,
     customerName: orderPayload.customerName,
     customerPhone: orderPayload.customerPhone,
     customerEmail: orderPayload.customerEmail,
     totalAmount: orderPayload.totalAmount,
-    itemCount: orderPayload.items.reduce((acc, it) => acc + (it.quantity || 1), 0),
+    itemCount: normalizedItems.reduce((acc, it) => acc + (it.quantity || 1), 0),
     status: "pending",
-    retryCount: 0,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    payload: orderPayload,
-  };
-
-  if (existingIndex >= 0) {
-    queueItems[existingIndex] = queueItem;
-  } else {
-    queueItems.unshift(queueItem);
-  }
-  persistState();
-  syncItemToDatabase(queueItem).catch(() => {});
-
-  // Attempt immediate synchronization in background
-  processQueueItem(queueItem).catch((err) => {
-    console.warn(`Immediate ERP sync deferred for ${orderPayload.orderNumber}:`, err.message);
+    retryCount: Number(existingRow?.attempts || 0),
+    createdAt: existingRow?.created_at || nowIso,
+    updatedAt: nowIso,
+    payload: {
+      ...orderPayload,
+      items: normalizedItems,
+    },
   });
+
+  const config = getERPClient().getConfig();
+  if (config.enabled && config.autoSyncOrders) {
+    processQueueItem(queueItem).catch((err) => {
+      console.warn(`Immediate ERP sync deferred for ${orderPayload.orderNumber}:`, err.message);
+    });
+  }
 
   return queueItem;
 }
 
 /**
- * Process a single queue item with ERP
+ * Process a single queue item against ERPNext and update Supabase state.
  */
 export async function processQueueItem(item: ERPSyncQueueItem): Promise<ERPSyncQueueItem> {
-  loadStoredState();
   const client = getERPClient();
-  item.updatedAt = new Date().toISOString();
-  item.retryCount += 1;
+  const config = client.getConfig();
+  const updated: ERPSyncQueueItem = {
+    ...item,
+    updatedAt: new Date().toISOString(),
+    retryCount: Number(item.retryCount || 0) + 1,
+  };
 
-  // First verify ERP connection & tunnel health
+  if (!config.enabled) {
+    updated.status = "pending";
+    updated.lastError = "ERP integration is disabled in runtime configuration (ERP_ENABLED=false).";
+    return await upsertQueueRow(updated);
+  }
+
   const health = await client.checkHealth();
 
   if (!health.isReachable) {
     if (health.isTunnelOffline) {
-      item.status = "queued_tunnel_offline";
-      item.lastError = health.tunnelMessage || "Cloudflare Tunnel Error 1033 (Origin unreachable)";
-      logERPAudit({
+      updated.status = "queued_tunnel_offline";
+      updated.lastError = health.tunnelMessage || "Cloudflare Tunnel Error 1033 (Origin unreachable)";
+      await logERPAudit({
         action: "create_sales_order",
         status: "offline_queued",
-        message: `Order ${item.orderNumber} deferred in outbox: Cloudflare Tunnel Error 1033.`,
-        details: { orderNumber: item.orderNumber, health },
+        message: `Order ${updated.orderNumber} deferred in outbox: ${updated.lastError}`,
+        details: { orderNumber: updated.orderNumber, health },
       });
     } else {
-      item.status = "failed";
-      item.lastError = health.tunnelMessage || "ERP service is unavailable.";
-      logERPAudit({
+      updated.status = "failed";
+      updated.lastError = health.tunnelMessage || "ERP service is unavailable.";
+      await logERPAudit({
         action: "create_sales_order",
         status: "failed",
-        message: `Order ${item.orderNumber} sync attempt failed: ${item.lastError}`,
-        details: { orderNumber: item.orderNumber, health },
+        message: `Order ${updated.orderNumber} sync attempt failed: ${updated.lastError}`,
+        details: { orderNumber: updated.orderNumber, health },
       });
     }
-    persistState();
-    return item;
+    return await upsertQueueRow(updated);
   }
 
-  // ERP is online! Proceed with sync
   try {
-    item.status = "processing";
+    updated.status = "processing";
 
-    // 1. Create or Match Customer
     const customerPayload: ERPCustomer = {
-      customer_name: item.customerName || `Customer ${item.orderNumber}`,
-      mobile_no: item.customerPhone,
-      email_id: item.customerEmail,
+      customer_name: updated.customerName || `Customer ${updated.orderNumber}`,
+      mobile_no: updated.customerPhone,
+      email_id: updated.customerEmail,
       customer_type: "Individual",
       customer_group: "Individual",
       territory: "India",
     };
 
     const erpCustomer = await client.findOrCreateCustomer(customerPayload);
-    item.erpCustomerId = erpCustomer.name || erpCustomer.customer_name;
+    updated.erpCustomerId = erpCustomer.name || erpCustomer.customer_name;
 
-    // 2. Map Items
-    const rawItems: any[] = item.payload?.items || [];
+    const rawItems: any[] = updated.payload?.items || [];
     const salesOrderItems = rawItems.map((it: any) => ({
-      item_code: it.item_code || it.book_id || "BOOK-DEFAULT",
+      item_code: normalizeBookItemCode(it),
       item_name: it.title || it.item_name || "Tamil Literature Book",
       qty: it.quantity || 1,
       rate: it.price || it.rate || 0,
       amount: (it.price || it.rate || 0) * (it.quantity || 1),
     }));
 
-    // 3. Create Sales Order
     const salesOrderPayload: ERPSalesOrder = {
-      customer: item.erpCustomerId,
+      customer: updated.erpCustomerId,
       transaction_date: new Date().toISOString().split("T")[0],
-      company: client.getConfig().company,
+      company: config.company,
       order_type: "Sales",
       currency: "INR",
-      po_no: item.orderNumber,
-      remarks: `Website Checkout: ${item.orderNumber} | Customer: ${item.customerName} | Phone: ${item.customerPhone || "N/A"}`,
+      po_no: updated.orderNumber,
+      remarks: `Website Checkout: ${updated.orderNumber} | Customer: ${updated.customerName} | Phone: ${updated.customerPhone || "N/A"}`,
       items: salesOrderItems,
-      grand_total: item.totalAmount,
+      grand_total: updated.totalAmount,
     };
 
     const erpSalesOrder = await client.createSalesOrder(salesOrderPayload);
-    item.erpSalesOrderId = erpSalesOrder.name || `SO-${item.orderNumber}`;
-    item.status = "synced";
-    item.lastError = undefined;
+    updated.erpSalesOrderId = erpSalesOrder.name || `SO-${updated.orderNumber}`;
+    updated.status = "synced";
+    updated.lastError = undefined;
 
-    logERPAudit({
+    await logERPAudit({
       action: "create_sales_order",
       status: "success",
-      message: `Order ${item.orderNumber} successfully synced to ERP (Sales Order: ${item.erpSalesOrderId}).`,
-      details: { erpSalesOrderId: item.erpSalesOrderId, erpCustomerId: item.erpCustomerId },
+      message: `Order ${updated.orderNumber} successfully synced to ERP (Sales Order: ${updated.erpSalesOrderId}).`,
+      details: { erpSalesOrderId: updated.erpSalesOrderId, erpCustomerId: updated.erpCustomerId },
     });
   } catch (syncErr: any) {
-    item.status = "failed";
-    item.lastError = syncErr.message || String(syncErr);
-    logERPAudit({
+    updated.status = "failed";
+    updated.lastError = syncErr.message || String(syncErr);
+    await logERPAudit({
       action: "create_sales_order",
       status: "failed",
-      message: `Failed to sync Order ${item.orderNumber} into ERP: ${item.lastError}`,
-      details: { error: item.lastError },
+      message: `Failed to sync Order ${updated.orderNumber} into ERP: ${updated.lastError}`,
+      details: { error: updated.lastError },
     });
   }
 
-  persistState();
-  syncItemToDatabase(item).catch(() => {});
-  return item;
+  return await upsertQueueRow(updated);
 }
 
 /**
- * Flush all pending or offline-queued items
+ * Flush all pending or failed/offline-queued items stored in Supabase.
  */
 export async function flushERPQueue(): Promise<{
   total: number;
@@ -315,12 +290,12 @@ export async function flushERPQueue(): Promise<{
   isTunnelOffline: boolean;
   tunnelMessage?: string;
 }> {
-  loadStoredState();
+  const queueItems = await getERPQueueItems();
   const client = getERPClient();
   const health = await client.checkHealth();
 
   if (!health.isReachable) {
-    logERPAudit({
+    await logERPAudit({
       action: "flush_queue",
       status: "offline_queued",
       message: `Flush queue halted: ${health.tunnelMessage || "ERP offline"}`,
@@ -346,9 +321,9 @@ export async function flushERPQueue(): Promise<{
     else failed++;
   }
 
-  logERPAudit({
+  await logERPAudit({
     action: "flush_queue",
-    status: succeeded > 0 ? "success" : "failed",
+    status: succeeded > 0 || eligibleItems.length === 0 ? "success" : "failed",
     message: `Flushed queue: ${succeeded} synced successfully, ${failed} failed.`,
   });
 
@@ -361,11 +336,46 @@ export async function flushERPQueue(): Promise<{
   };
 }
 
-/**
- * Get overall queue statistics
- */
-export function getERPQueueStats() {
-  loadStoredState();
+export async function getERPQueueItems(): Promise<ERPSyncQueueItem[]> {
+  try {
+    const adminSupabase = createAdminClient();
+    const { data, error } = await (adminSupabase.from("erp_sync_queue") as any)
+      .select("*")
+      .order("updated_at", { ascending: false })
+      .limit(200);
+
+    if (error || !Array.isArray(data)) return [];
+    return data.map(mapDbRowToQueueItem);
+  } catch {
+    return [];
+  }
+}
+
+export async function getERPAuditLogs(): Promise<ERPAuditLogEntry[]> {
+  try {
+    const adminSupabase = createAdminClient();
+    const { data, error } = await (adminSupabase.from("audit_logs") as any)
+      .select("id, action, resource_id, metadata, created_at")
+      .eq("resource_type", "erp")
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    if (error || !Array.isArray(data)) return [];
+    return data.map((row: any) => ({
+      id: row.id,
+      timestamp: row.created_at,
+      action: String(row.action || "").replace(/^erp_/, "") as ERPAuditLogEntry["action"],
+      status: (row.metadata?.status || row.resource_id || "success") as ERPAuditLogEntry["status"],
+      message: row.metadata?.message || row.action,
+      details: row.metadata?.details || undefined,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function getERPQueueStats() {
+  const queueItems = await getERPQueueItems();
   const total = queueItems.length;
   const pending = queueItems.filter((q) => q.status === "pending").length;
   const queuedOffline = queueItems.filter((q) => q.status === "queued_tunnel_offline").length;
@@ -380,14 +390,4 @@ export function getERPQueueStats() {
     failed,
     lastSyncAt: queueItems[0]?.updatedAt || null,
   };
-}
-
-export function getERPQueueItems(): ERPSyncQueueItem[] {
-  loadStoredState();
-  return [...queueItems];
-}
-
-export function getERPAuditLogs(): ERPAuditLogEntry[] {
-  loadStoredState();
-  return [...auditLogs];
 }

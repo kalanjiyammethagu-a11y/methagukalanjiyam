@@ -14,8 +14,7 @@ export async function GET(req: NextRequest) {
 
     const client = getERPClient();
     const config = client.getConfig();
-    const health = await client.checkHealth();
-    const stats = getERPQueueStats();
+    const [health, stats] = await Promise.all([client.checkHealth(), getERPQueueStats()]);
 
     // Mask API Secret for safety
     const maskedSecret = config.apiSecret

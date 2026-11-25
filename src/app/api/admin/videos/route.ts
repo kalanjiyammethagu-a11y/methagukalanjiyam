@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth-service";
-import { allVideos } from "@/data/videos";
 import { adminVideoSchema, adminVideoUpdateSchema } from "@/lib/validators/admin";
 import { deleteAdminAsset, verifyStorageObjectExists } from "@/lib/storage";
 import { generateAsciiSlug, resolveBilingualPair } from "@/lib/i18n";
@@ -96,28 +95,6 @@ function mapSupabaseVideoRow(row: any): AdminVideoItem {
   };
 }
 
-// Static fallback only when database is unreachable
-const fallbackVideos: AdminVideoItem[] = allVideos.map((v, i) => ({
-  id: v.id,
-  title: v.titleTa,
-  title_en: v.titleEn,
-  title_ta: v.titleTa,
-  slug: `video-${v.id}`,
-  description: v.descriptionTa,
-  description_en: v.descriptionEn,
-  description_ta: v.descriptionTa,
-  category_en: v.categoryEn,
-  category_ta: v.categoryTa,
-  embed_url: v.embedUrl,
-  poster_url: v.posterImage,
-  duration_formatted: v.duration,
-  sort_order: i + 1,
-  status: "published",
-  is_active: true,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-}));
-
 export async function GET(req: NextRequest) {
   try {
     const auth = await requireAdmin(req);
@@ -125,24 +102,17 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
-    try {
-      const adminSupabase = createAdminClient();
-      const { data, error } = await (adminSupabase.from("videos") as any)
-        .select("*")
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: false });
+    const adminSupabase = createAdminClient();
+    const { data, error } = await (adminSupabase.from("videos") as any)
+      .select("*")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
 
-      if (!error && data && data.length > 0) {
-        return NextResponse.json({ videos: data.map(mapSupabaseVideoRow), usingFallback: false });
-      }
-      if (error) {
-        console.warn("GET /api/admin/videos DB query warning:", error.message);
-      }
-    } catch (dbErr: any) {
-      console.warn("GET /api/admin/videos DB unreachable:", dbErr?.message);
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ videos: fallbackVideos, usingFallback: true });
+    return NextResponse.json({ videos: (data || []).map(mapSupabaseVideoRow), usingFallback: false });
   } catch (err: any) {
     console.error("GET /api/admin/videos error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -177,7 +147,6 @@ export async function POST(req: NextRequest) {
     const slug = val.slug || generateAsciiSlug(titlePair.en || val.title_en || val.title, "video");
     const embedUrl = val.embed_url || val.video_url || "";
 
-    // If a direct storage path was provided, verify it exists in the bucket
     if (val.video_path) {
       const exists = await verifyStorageObjectExists("videos", val.video_path);
       if (!exists) {
@@ -234,23 +203,19 @@ export async function POST(req: NextRequest) {
         {
           error:
             insertError?.message ||
-            "Failed to save video in Supabase database. Ensure videos schema migrations (015/019) are applied.",
+            "Failed to save video in Supabase database.",
         },
         { status: 500 }
       );
     }
 
-    const newVideo: AdminVideoItem = mapSupabaseVideoRow(createdRow);
-
     try {
       revalidatePath("/videos");
       revalidatePath("/");
-    } catch {
-      // Ignore cache revalidation errors
-    }
+    } catch {}
 
     return NextResponse.json(
-      { video: newVideo, message: "Video published successfully" },
+      { video: mapSupabaseVideoRow(createdRow), message: "Video published successfully" },
       { status: 201 }
     );
   } catch (err: any) {
@@ -276,112 +241,94 @@ export async function PATCH(req: NextRequest) {
     }
 
     const { id, ...updates } = parseResult.data;
+    const adminSupabase = createAdminClient();
 
-    try {
-      const adminSupabase = createAdminClient();
+    if (updates.video_path !== undefined || updates.poster_path !== undefined) {
+      const { data: existing } = await (adminSupabase.from("videos") as any)
+        .select("video_path, poster_path")
+        .eq("id", id)
+        .maybeSingle();
 
-      // Check for orphan assets to clean up if paths changed
-      if (updates.video_path !== undefined || updates.poster_path !== undefined) {
-        const { data: existing } = await (adminSupabase.from("videos") as any)
-          .select("video_path, poster_path")
-          .eq("id", id)
-          .single();
-
-        if (
-          existing?.video_path &&
-          updates.video_path &&
-          existing.video_path !== updates.video_path
-        ) {
-          await deleteAdminAsset("videos", existing.video_path);
-        }
-
-        if (
-          existing?.poster_path &&
-          updates.poster_path &&
-          existing.poster_path !== updates.poster_path
-        ) {
-          await deleteAdminAsset("video-posters", existing.poster_path);
-        }
+      if (existing?.video_path && updates.video_path && existing.video_path !== updates.video_path) {
+        await deleteAdminAsset("videos", existing.video_path);
       }
 
-      const baseUpdates: any = {
-        updated_at: new Date().toISOString(),
-      };
-      if (updates.title || updates.title_ta || updates.title_en) {
-        baseUpdates.title = updates.title_ta || updates.title || updates.title_en;
+      if (existing?.poster_path && updates.poster_path && existing.poster_path !== updates.poster_path) {
+        await deleteAdminAsset("video-posters", existing.poster_path);
       }
-      if (updates.slug) baseUpdates.slug = updates.slug;
-      if (updates.description !== undefined || updates.description_ta !== undefined || updates.description_en !== undefined) {
-        baseUpdates.description = updates.description_ta ?? updates.description ?? updates.description_en;
-      }
-      if (updates.embed_url !== undefined) baseUpdates.embed_url = updates.embed_url;
-      if (updates.video_path !== undefined) baseUpdates.video_path = updates.video_path;
-      if (updates.video_url !== undefined) baseUpdates.video_url = updates.video_url;
-      if (updates.poster_path !== undefined) baseUpdates.poster_path = updates.poster_path;
-      if (updates.poster_url !== undefined) baseUpdates.poster_url = updates.poster_url;
-      if (updates.duration_seconds !== undefined) baseUpdates.duration_seconds = updates.duration_seconds;
-      if (updates.file_size_bytes !== undefined) baseUpdates.file_size_bytes = updates.file_size_bytes;
-      if (updates.mime_type !== undefined) baseUpdates.mime_type = updates.mime_type;
-      if (updates.sort_order !== undefined) baseUpdates.sort_order = updates.sort_order;
-      if (updates.status !== undefined) baseUpdates.status = updates.status;
-      if (updates.is_active !== undefined) baseUpdates.is_active = updates.is_active;
+    }
 
-      const fullUpdates: any = { ...baseUpdates };
-      if (updates.title_en !== undefined) fullUpdates.title_en = updates.title_en;
-      if (updates.title_ta !== undefined) fullUpdates.title_ta = updates.title_ta;
-      if (updates.description_en !== undefined) fullUpdates.description_en = updates.description_en;
-      if (updates.description_ta !== undefined) fullUpdates.description_ta = updates.description_ta;
-      if (updates.category_en !== undefined) fullUpdates.category_en = updates.category_en;
-      if (updates.category_ta !== undefined) fullUpdates.category_ta = updates.category_ta;
-      if (updates.poster_alt_en !== undefined) fullUpdates.poster_alt_en = updates.poster_alt_en;
-      if (updates.poster_alt_ta !== undefined) fullUpdates.poster_alt_ta = updates.poster_alt_ta;
+    const baseUpdates: any = {
+      updated_at: new Date().toISOString(),
+    };
+    if (updates.title || updates.title_ta || updates.title_en) {
+      baseUpdates.title = updates.title_ta || updates.title || updates.title_en;
+    }
+    if (updates.slug) baseUpdates.slug = updates.slug;
+    if (updates.description !== undefined || updates.description_ta !== undefined || updates.description_en !== undefined) {
+      baseUpdates.description = updates.description_ta ?? updates.description ?? updates.description_en;
+    }
+    if (updates.embed_url !== undefined) baseUpdates.embed_url = updates.embed_url;
+    if (updates.video_path !== undefined) baseUpdates.video_path = updates.video_path;
+    if (updates.video_url !== undefined) baseUpdates.video_url = updates.video_url;
+    if (updates.poster_path !== undefined) baseUpdates.poster_path = updates.poster_path;
+    if (updates.poster_url !== undefined) baseUpdates.poster_url = updates.poster_url;
+    if (updates.duration_seconds !== undefined) baseUpdates.duration_seconds = updates.duration_seconds;
+    if (updates.file_size_bytes !== undefined) baseUpdates.file_size_bytes = updates.file_size_bytes;
+    if (updates.mime_type !== undefined) baseUpdates.mime_type = updates.mime_type;
+    if (updates.sort_order !== undefined) baseUpdates.sort_order = updates.sort_order;
+    if (updates.status !== undefined) baseUpdates.status = updates.status;
+    if (updates.is_active !== undefined) baseUpdates.is_active = updates.is_active;
 
-      let { data: updatedRow, error: updErr } = await (adminSupabase.from("videos") as any)
-        .update(fullUpdates)
+    const fullUpdates: any = { ...baseUpdates };
+    if (updates.title_en !== undefined) fullUpdates.title_en = updates.title_en;
+    if (updates.title_ta !== undefined) fullUpdates.title_ta = updates.title_ta;
+    if (updates.description_en !== undefined) fullUpdates.description_en = updates.description_en;
+    if (updates.description_ta !== undefined) fullUpdates.description_ta = updates.description_ta;
+    if (updates.category_en !== undefined) fullUpdates.category_en = updates.category_en;
+    if (updates.category_ta !== undefined) fullUpdates.category_ta = updates.category_ta;
+    if (updates.poster_alt_en !== undefined) fullUpdates.poster_alt_en = updates.poster_alt_en;
+    if (updates.poster_alt_ta !== undefined) fullUpdates.poster_alt_ta = updates.poster_alt_ta;
+
+    let { data: updatedRow, error: updErr } = await (adminSupabase.from("videos") as any)
+      .update(fullUpdates)
+      .eq("id", id)
+      .select()
+      .maybeSingle();
+
+    if (updErr && isMissingVideoColumnError(updErr)) {
+      const retry = await (adminSupabase.from("videos") as any)
+        .update(baseUpdates)
         .eq("id", id)
         .select()
         .maybeSingle();
+      updatedRow = retry.data;
+      updErr = retry.error;
+    }
 
-      if (updErr && isMissingVideoColumnError(updErr)) {
-        const retry = await (adminSupabase.from("videos") as any)
-          .update(baseUpdates)
-          .eq("id", id)
-          .select()
-          .maybeSingle();
-        updatedRow = retry.data;
-        updErr = retry.error;
-      }
-
-      if (updErr) {
-        console.error("PATCH /api/admin/videos update error:", updErr.message);
-        return NextResponse.json(
-          { error: updErr.message || "Failed to update video in Supabase." },
-          { status: 500 }
-        );
-      }
-
-      if (!updatedRow) {
-        return NextResponse.json(
-          { error: "Video record not found in Supabase database (static fallback items cannot be edited until seeded in DB)." },
-          { status: 404 }
-        );
-      }
-
-      try {
-        revalidatePath("/videos");
-        revalidatePath("/");
-      } catch {}
-      return NextResponse.json({
-        video: mapSupabaseVideoRow(updatedRow),
-        message: "Video updated successfully",
-      });
-    } catch (dbErr: any) {
-      console.error("PATCH /api/admin/videos exception:", dbErr?.message);
+    if (updErr) {
       return NextResponse.json(
-        { error: dbErr?.message || "Database error updating video" },
+        { error: updErr.message || "Failed to update video in Supabase." },
         { status: 500 }
       );
     }
+
+    if (!updatedRow) {
+      return NextResponse.json(
+        { error: "Video record not found in Supabase database." },
+        { status: 404 }
+      );
+    }
+
+    try {
+      revalidatePath("/videos");
+      revalidatePath("/");
+    } catch {}
+
+    return NextResponse.json({
+      video: mapSupabaseVideoRow(updatedRow),
+      message: "Video updated successfully",
+    });
   } catch (err: any) {
     console.error("PATCH /api/admin/videos error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -402,32 +349,23 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Video ID is required" }, { status: 400 });
     }
 
-    try {
-      const adminSupabase = createAdminClient();
-      const { data: existing } = await (adminSupabase.from("videos") as any)
-        .select("video_path, poster_path")
-        .eq("id", id)
-        .single();
+    const adminSupabase = createAdminClient();
+    const { data: existing } = await (adminSupabase.from("videos") as any)
+      .select("video_path, poster_path")
+      .eq("id", id)
+      .maybeSingle();
 
-      if (existing?.video_path) {
-        await deleteAdminAsset("videos", existing.video_path);
-      }
-      if (existing?.poster_path) {
-        await deleteAdminAsset("video-posters", existing.poster_path);
-      }
+    if (existing?.video_path) {
+      await deleteAdminAsset("videos", existing.video_path);
+    }
+    if (existing?.poster_path) {
+      await deleteAdminAsset("video-posters", existing.poster_path);
+    }
 
-      const { error: deleteErr } = await (adminSupabase.from("videos") as any).delete().eq("id", id);
-      if (deleteErr) {
-        console.error("DELETE /api/admin/videos DB error:", deleteErr.message);
-        return NextResponse.json(
-          { error: deleteErr.message || "Failed to delete video from Supabase." },
-          { status: 500 }
-        );
-      }
-    } catch (dbErr: any) {
-      console.error("DELETE /api/admin/videos exception:", dbErr?.message);
+    const { error: deleteErr } = await (adminSupabase.from("videos") as any).delete().eq("id", id);
+    if (deleteErr) {
       return NextResponse.json(
-        { error: dbErr?.message || "Database error deleting video." },
+        { error: deleteErr.message || "Failed to delete video from Supabase." },
         { status: 500 }
       );
     }
@@ -435,9 +373,7 @@ export async function DELETE(req: NextRequest) {
     try {
       revalidatePath("/videos");
       revalidatePath("/");
-    } catch {
-      // Ignore cache revalidation errors
-    }
+    } catch {}
 
     return NextResponse.json({ success: true, message: "Video deleted successfully" });
   } catch (err: any) {
