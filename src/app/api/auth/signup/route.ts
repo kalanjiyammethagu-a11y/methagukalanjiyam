@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { userSignUpSchema } from "@/lib/validators/auth";
-import { issueUserVerificationToken, recordAuthEvent } from "@/lib/auth-service";
+import {
+  findAuthUserByEmail,
+  issueUserVerificationToken,
+  recordAuthEvent,
+} from "@/lib/auth-service";
 import { sendVerificationEmail, sendAlreadyRegisteredEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +34,13 @@ export async function POST(req: NextRequest) {
   const startTime = Date.now();
 
   try {
-    const body = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      await equalizeTiming(startTime);
+      return NextResponse.json({ error: "Invalid JSON request body" }, { status: 400 });
+    }
 
     const parseResult = userSignUpSchema.safeParse(body);
     if (!parseResult.success) {
@@ -54,14 +64,8 @@ export async function POST(req: NextRequest) {
       "unknown";
     const userAgent = req.headers.get("user-agent") || null;
 
-    // 1. Check if account already exists (pagination-safe lookup across auth.users if small or filter)
-    const { data: existingUserList } = await adminSupabase.auth.admin.listUsers({
-      page: 1,
-      perPage: 1000,
-    });
-    const existingUser = existingUserList?.users?.find(
-      (u) => u.email?.toLowerCase() === normalizedEmail
-    );
+    // 1. Check if account already exists (RPC / paginated lookup across all auth.users pages)
+    const existingUser = await findAuthUserByEmail(adminSupabase, normalizedEmail);
 
     if (existingUser) {
       const isAlreadyVerified =
@@ -147,16 +151,42 @@ export async function POST(req: NextRequest) {
 
     const newUserId = newUserData.user.id;
 
-    // 3. Create customer profile in public.profiles
-    await (adminSupabase.from("profiles") as any).upsert({
+    // 3. Create customer profile in public.profiles (gracefully tolerate pre-024 schemas lacking email column)
+    const nowIso = new Date().toISOString();
+    let { error: profileError } = await (adminSupabase.from("profiles") as any).upsert({
       id: newUserId,
       email: normalizedEmail,
       full_name,
       role: "customer",
       locale,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: nowIso,
+      updated_at: nowIso,
     });
+
+    if (
+      profileError &&
+      (profileError.code === "42703" ||
+        profileError.code === "PGRST204" ||
+        String(profileError.message || "").toLowerCase().includes("email"))
+    ) {
+      ({ error: profileError } = await (adminSupabase.from("profiles") as any).upsert({
+        id: newUserId,
+        full_name,
+        role: "customer",
+        locale,
+        created_at: nowIso,
+        updated_at: nowIso,
+      }));
+    }
+
+    if (profileError) {
+      console.error("Failed to create profile on signup:", profileError.message);
+      await equalizeTiming(startTime);
+      return NextResponse.json(
+        { error: "Could not initialize user profile. Please contact support." },
+        { status: 500 }
+      );
+    }
 
     // 4. Issue 24-hour single-use Web Crypto verification token & send via Resend
     const tokenOutcome = await issueUserVerificationToken(newUserId, normalizedEmail, 0);

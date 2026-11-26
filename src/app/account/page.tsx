@@ -26,6 +26,7 @@ import {
   ShoppingBag,
   Heart,
   Loader2,
+  Trash2,
 } from "lucide-react";
 import {
   PostalSealIcon,
@@ -37,8 +38,9 @@ import { Badge } from "@/components/ui/Badge";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
-import { allBooks } from "@/data/books";
-import { localized } from "@/lib/i18n";
+import { allBooks, type BookItem } from "@/data/books";
+import { resolveBookFrontCover } from "@/lib/book-images";
+import { localized, resolveBilingualPair } from "@/lib/i18n";
 import {
   SHIPMENT_STATUS_LABELS,
   ST_COURIER_TRACKING_URL,
@@ -111,8 +113,60 @@ function AccountContent() {
   const [userOrders, setUserOrders] = React.useState<any[]>([]);
   const [ordersLoading, setOrdersLoading] = React.useState(false);
 
+  // Live Catalog for Dynamic Wishlist + Cloud Saved Addresses
+  const [catalogBooks, setCatalogBooks] = React.useState<BookItem[]>(allBooks);
+  const [savedAddresses, setSavedAddresses] = React.useState<any[]>([]);
+  const [savingAddress, setSavingAddress] = React.useState(false);
+
   React.useEffect(() => {
     let isMounted = true;
+    async function loadLiveCatalog() {
+      try {
+        const res = await fetch("/api/books?limit=100");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (isMounted && Array.isArray(data?.books) && data.books.length > 0) {
+          const mapped: BookItem[] = data.books.map((b: any) => {
+            const staticMatch = allBooks.find((sb) => sb.slug === b.slug);
+            const cover = resolveBookFrontCover(b, staticMatch?.image);
+            const titlePair = resolveBilingualPair({
+              en: b.title_en || b.titleEn || staticMatch?.titleEn,
+              ta: b.title_ta || b.titleTa,
+              legacy: b.title,
+            });
+            const authorPair = resolveBilingualPair({
+              en: b.author_en || b.authorEn || staticMatch?.authorEn,
+              ta: b.author_ta || b.authorTa,
+              legacy: b.author,
+            });
+            return {
+              ...(staticMatch || ({} as BookItem)),
+              id: String(b.id),
+              slug: b.slug,
+              title: titlePair.ta || b.title || staticMatch?.title || "",
+              titleEn: titlePair.en || staticMatch?.titleEn || b.title || "",
+              author: authorPair.ta || b.author || staticMatch?.author || "",
+              authorEn: authorPair.en || staticMatch?.authorEn || b.author || "",
+              price: Number(b.price),
+              discountPrice: b.discount_price ? Number(b.discount_price) : staticMatch?.discountPrice,
+              categoryTa: b.categories?.name_ta || staticMatch?.categoryTa || "வரலாறு",
+              categoryEn: b.categories?.name_en || staticMatch?.categoryEn || "History",
+              categorySlug: b.categories?.slug || staticMatch?.categorySlug || "history",
+              image: cover.url,
+              coverIsFront: cover.isFront,
+              stock: Number(b.stock ?? 10),
+              descriptionTa: b.description_ta || b.description || staticMatch?.descriptionTa || "",
+              descriptionEn: b.description_en || b.description || staticMatch?.descriptionEn || "",
+            };
+          });
+          setCatalogBooks(mapped);
+        }
+      } catch {
+        // Static fallback preserved
+      }
+    }
+    loadLiveCatalog();
+
     async function checkAuthAndLoadOrders() {
       setAuthLoading(true);
       try {
@@ -124,10 +178,33 @@ function AccountContent() {
           if (data.authenticated) {
             setOrdersLoading(true);
             try {
-              const ordersRes = await fetch("/api/orders/my-orders");
+              const [ordersRes, addrRes] = await Promise.all([
+                fetch("/api/orders/my-orders"),
+                fetch("/api/addresses"),
+              ]);
               if (ordersRes.ok) {
                 const ordersData = await ordersRes.json();
                 if (isMounted) setUserOrders(ordersData.orders || []);
+              }
+              if (addrRes.ok) {
+                const addrData = await addrRes.json();
+                const list = Array.isArray(addrData?.addresses) ? addrData.addresses : [];
+                if (isMounted) {
+                  setSavedAddresses(list);
+                  if (list.length > 0 && !deliveryAddress.fullName.trim()) {
+                    const def = list[0];
+                    const synced = {
+                      fullName: def.full_name || "",
+                      phone: def.phone || "",
+                      doorStreet: [def.house_name, def.street].filter(Boolean).join(", "),
+                      cityArea: def.city || "",
+                      districtState: def.state || "",
+                      pincode: def.pincode || "",
+                    };
+                    setAddressForm(synced);
+                    setDeliveryAddress(synced);
+                  }
+                }
               }
             } catch (orderErr) {
               console.warn("Failed to load user cloud orders:", orderErr);
@@ -170,16 +247,60 @@ function AccountContent() {
     setAddressForm(deliveryAddress);
   }, [deliveryAddress]);
 
-  // Filter saved books
+  // Filter saved books against live catalog
   const savedBooks = React.useMemo(() => {
-    return allBooks.filter((book) => wishlist.includes(book.id));
-  }, [wishlist]);
+    return catalogBooks.filter(
+      (book) => wishlist.includes(book.id) || wishlist.includes(book.slug)
+    );
+  }, [catalogBooks, wishlist]);
 
-  const handleSaveAddress = (e: React.FormEvent) => {
+  const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     setDeliveryAddress(addressForm);
+    if (session?.authenticated) {
+      setSavingAddress(true);
+      try {
+        const res = await fetch("/api/addresses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            label: "Home",
+            full_name: addressForm.fullName,
+            phone: addressForm.phone,
+            house_name: addressForm.doorStreet,
+            street: addressForm.doorStreet,
+            city: addressForm.cityArea || "Tamil Nadu",
+            state: addressForm.districtState || "Tamil Nadu",
+            pincode: addressForm.pincode,
+            is_default: true,
+          }),
+        });
+        if (res.ok) {
+          const listRes = await fetch("/api/addresses");
+          if (listRes.ok) {
+            const listData = await listRes.json();
+            setSavedAddresses(Array.isArray(listData?.addresses) ? listData.addresses : []);
+          }
+        }
+      } catch {
+        // Local storage already saved
+      } finally {
+        setSavingAddress(false);
+      }
+    }
     setIsSavedToast(true);
     setTimeout(() => setIsSavedToast(false), 2500);
+  };
+
+  const handleDeleteSavedAddress = async (id: string) => {
+    try {
+      const res = await fetch(`/api/addresses?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setSavedAddresses((prev) => prev.filter((a) => a.id !== id));
+      }
+    } catch {}
   };
 
   const user = session?.authenticated && session.user ? session.user : null;
@@ -561,6 +682,52 @@ function AccountContent() {
                   </div>
                 </div>
 
+                {savedAddresses.length > 0 && (
+                  <div className="mb-5 space-y-2">
+                    <p className="text-xs font-bold text-[#444444] dark:text-zinc-300 font-tamil">
+                      {isTa ? "சேமிக்கப்பட்ட முகவரிகள்:" : "Saved Addresses:"}
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {savedAddresses.slice(0, 4).map((addr) => (
+                        <div
+                          key={addr.id}
+                          className="p-3 rounded-xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.04] flex items-start justify-between gap-2 text-xs"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const next = {
+                                fullName: addr.full_name || "",
+                                phone: addr.phone || "",
+                                doorStreet: [addr.house_name, addr.street].filter(Boolean).join(", "),
+                                cityArea: addr.city || "",
+                                districtState: addr.state || "",
+                                pincode: addr.pincode || "",
+                              };
+                              setAddressForm(next);
+                              setDeliveryAddress(next);
+                            }}
+                            className="text-left flex-1 cursor-pointer hover:text-[#0A6847] dark:hover:text-emerald-400"
+                          >
+                            <p className="font-bold text-[#111111] dark:text-zinc-100">{addr.full_name}</p>
+                            <p className="text-[#555555] dark:text-zinc-400 line-clamp-1">
+                              {addr.city}, {addr.state} - {addr.pincode}
+                            </p>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteSavedAddress(addr.id)}
+                            aria-label="Delete saved address"
+                            className="p-1.5 text-zinc-400 hover:text-rose-600 cursor-pointer"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <form onSubmit={handleSaveAddress} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
@@ -679,10 +846,19 @@ function AccountContent() {
                       type="submit"
                       variant="primary"
                       size="md"
+                      disabled={savingAddress}
                       className="min-h-[44px] px-6 font-tamil"
                     >
                       <Save className="h-4 w-4" />
-                      <span>{isTa ? "முகவரியைச் சேமிக்க" : "Save Address"}</span>
+                      <span>
+                        {savingAddress
+                          ? isTa
+                            ? "சேமிக்கப்படுகிறது..."
+                            : "Saving..."
+                          : isTa
+                            ? "முகவரியைச் சேமிக்க"
+                            : "Save Address"}
+                      </span>
                     </Button>
 
                     {isSavedToast && (

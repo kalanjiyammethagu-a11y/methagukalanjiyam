@@ -10,6 +10,20 @@ export const BOOK_PLACEHOLDER_IMAGE = "/images/books/book-placeholder.webp";
 export const SITE_ORIGIN = "https://methagukalanjiyam.in";
 
 /**
+ * Resolves a public Supabase Storage object URL dynamically from NEXT_PUBLIC_SUPABASE_URL.
+ * Falls back cleanly to local placeholder when Supabase env is unset or placeholder.
+ */
+export function getSupabaseStorageUrl(bucket: string, objectPath: string): string {
+  const baseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim().replace(/\/$/, "");
+  if (!baseUrl || baseUrl.includes("placeholder")) {
+    return BOOK_PLACEHOLDER_IMAGE;
+  }
+  const cleanBucket = bucket.replace(/^\/+|\/+$/g, "");
+  const cleanPath = objectPath.replace(/^\/+/, "");
+  return `${baseUrl}/storage/v1/object/public/${cleanBucket}/${cleanPath}`;
+}
+
+/**
  * Books whose authentic outside front cover could not be auto-confirmed
  * against the seed/storage image files and require manual admin verification.
  */

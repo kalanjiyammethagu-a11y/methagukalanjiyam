@@ -284,7 +284,9 @@ export default function AdminERPPage() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-gray-900">ERP Host: erp.methagukalanjiyam.in</h3>
+                <h3 className="text-sm font-bold text-gray-900">
+                  ERP Host: {config?.url ? (() => { try { return new URL(config.url).host; } catch { return config.url; } })() : "Not configured"}
+                </h3>
                 {health?.isReachable ? (
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
@@ -302,7 +304,7 @@ export default function AdminERPPage() {
                 )}
               </div>
               <p className="text-xs text-gray-500 mt-0.5">
-                Target Endpoint: <code className="font-mono text-[11px] bg-gray-100 px-1.5 py-0.5 rounded">{config?.url || "https://erp.methagukalanjiyam.in"}</code>
+                Target Endpoint: <code className="font-mono text-[11px] bg-gray-100 px-1.5 py-0.5 rounded">{config?.url || "Not configured (set ERP_URL)"}</code>
               </p>
             </div>
           </div>
@@ -323,7 +325,7 @@ export default function AdminERPPage() {
                   Cloudflare Tunnel Connector is Offline on Origin Server (Error 1033)
                 </h4>
                 <p className="text-xs text-amber-800 mt-1 leading-relaxed">
-                  The domain <strong className="font-semibold">erp.methagukalanjiyam.in</strong> is configured through a Cloudflare Tunnel. Cloudflare is currently unable to reach the connector on your origin server.
+                  The configured ERP host (<strong className="font-semibold">{config?.url || "ERP_URL"}</strong>) is routed through a Cloudflare Tunnel. Cloudflare is currently unable to reach the connector on your origin server.
                 </p>
               </div>
             </div>
@@ -558,15 +560,15 @@ export default function AdminERPPage() {
           <div className="space-y-2.5 text-xs text-gray-600">
             <div className="flex justify-between py-1 border-b border-gray-50">
               <span className="text-gray-400 font-medium">ERP Base URL</span>
-              <span className="font-mono font-semibold text-gray-900">{config?.url || "https://erp.methagukalanjiyam.in"}</span>
+              <span className="font-mono font-semibold text-gray-900">{config?.url || "Not configured"}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-gray-50">
               <span className="text-gray-400 font-medium">API Key</span>
-              <span className="font-mono font-semibold text-gray-900">{config?.apiKey || "251d72274f50663"}</span>
+              <span className="font-mono font-semibold text-gray-900">{config?.apiKey || "Not configured"}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-gray-50">
               <span className="text-gray-400 font-medium">API Secret</span>
-              <span className="font-mono font-semibold text-gray-900">{config?.apiSecretMasked || "3a82••••••••db86"}</span>
+              <span className="font-mono font-semibold text-gray-900">{config?.apiSecretMasked || "Not configured"}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-gray-50">
               <span className="text-gray-400 font-medium">Company Name</span>

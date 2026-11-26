@@ -42,7 +42,7 @@ export function Modal({
             'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
           );
           if (focusables.length > 0) {
-            focusables[0].focus();
+            focusables[0]?.focus();
           } else {
             dialogRef.current.focus();
           }
@@ -63,6 +63,7 @@ export function Modal({
 
           const first = focusables[0];
           const last = focusables[focusables.length - 1];
+          if (!first || !last) return;
 
           if (e.shiftKey) {
             if (document.activeElement === first) {
@@ -87,6 +88,7 @@ export function Modal({
         }
       };
     }
+    return undefined;
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;

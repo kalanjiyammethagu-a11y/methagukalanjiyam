@@ -16,16 +16,16 @@ function VerifyEmailContent() {
     queryStatus === "success"
       ? "success"
       : queryStatus === "error"
-      ? "error"
-      : token
-      ? "loading"
-      : "prompt"
+        ? "error"
+        : token
+          ? "loading"
+          : "prompt"
   );
   const [message, setMessage] = React.useState<string>(
     queryMessage ||
-      (queryStatus === "success"
-        ? "உங்கள் மின்னஞ்சல் வெற்றிகரமாக உறுதிப்படுத்தப்பட்டது! இப்போது நீங்கள் உள்நுழையலாம். (Email verified successfully)"
-        : "")
+    (queryStatus === "success"
+      ? "உங்கள் மின்னஞ்சல் வெற்றிகரமாக உறுதிப்படுத்தப்பட்டது! இப்போது நீங்கள் உள்நுழையலாம். (Email verified successfully)"
+      : "")
   );
 
   const [resendEmail, setResendEmail] = React.useState("");
@@ -95,7 +95,7 @@ function VerifyEmailContent() {
       const data = await res.json();
       setResendMessage(
         data.message ||
-          "சரிபார்ப்பு இணைப்பு உங்கள் மின்னஞ்சலுக்கு அனுப்பப்பட்டது. (Verification link sent if eligible.)"
+        "சரிபார்ப்பு இணைப்பு உங்கள் மின்னஞ்சலுக்கு அனுப்பப்பட்டது. (Verification link sent if eligible.)"
       );
       setResendCooldown(60);
     } catch {
@@ -159,11 +159,10 @@ function VerifyEmailContent() {
         {(status === "error" || status === "prompt") && (
           <div className="space-y-5 py-4">
             <div
-              className={`h-14 w-14 rounded-full mx-auto flex items-center justify-center ring-8 ${
-                status === "error"
-                  ? "bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 ring-rose-50 dark:ring-rose-950/20"
-                  : "bg-emerald-100 dark:bg-emerald-950/60 text-[#0A6847] dark:text-emerald-400 ring-emerald-50 dark:ring-emerald-950/20"
-              }`}
+              className={`h-14 w-14 rounded-full mx-auto flex items-center justify-center ring-8 ${status === "error"
+                ? "bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 ring-rose-50 dark:ring-rose-950/20"
+                : "bg-emerald-100 dark:bg-emerald-950/60 text-[#0A6847] dark:text-emerald-400 ring-emerald-50 dark:ring-emerald-950/20"
+                }`}
             >
               {status === "error" ? (
                 <AlertCircle className="h-8 w-8" />

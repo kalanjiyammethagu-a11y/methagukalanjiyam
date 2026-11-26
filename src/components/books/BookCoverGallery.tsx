@@ -56,7 +56,7 @@ export function BookCoverGallery({ book }: BookCoverGalleryProps) {
     setFailedUrls({});
   }, [book.id, book.image]);
 
-  const activeSlide = slides[activeIndex] || slides[0];
+  const activeSlide = slides[activeIndex] ?? slides[0] ?? { url: BOOK_PLACEHOLDER_IMAGE, isFrontCover: true, kind: "front_cover" as const };
   const activeSrc =
     failedUrls[activeSlide.url] ? BOOK_PLACEHOLDER_IMAGE : activeSlide.url;
 

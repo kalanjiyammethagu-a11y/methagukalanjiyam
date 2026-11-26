@@ -162,6 +162,24 @@ export async function middleware(request: NextRequest) {
   ) {
     const origin = request.headers.get("origin");
     const host = request.headers.get("host");
+    const secFetchSite = request.headers.get("sec-fetch-site");
+
+    if (secFetchSite === "cross-site") {
+      return NextResponse.json(
+        {
+          error: "Forbidden: Cross-site request blocked",
+          message: "Cross-site requests to this API endpoint are not permitted.",
+        },
+        {
+          status: 403,
+          headers: {
+            "Cache-Control": "no-store, no-cache, must-revalidate",
+            "CDN-Cache-Control": "no-store",
+            "Cloudflare-CDN-Cache-Control": "no-store",
+          },
+        }
+      );
+    }
 
     if (origin && host) {
       try {

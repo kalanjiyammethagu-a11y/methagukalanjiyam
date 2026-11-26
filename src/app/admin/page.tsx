@@ -221,12 +221,16 @@ export default function AdminDashboardPage() {
               <h3 className="font-bold text-base text-gray-900">Monthly Sales (Last 6 Months)</h3>
               <p className="text-xs text-gray-500 mt-0.5">Live non-cancelled order revenue from Supabase</p>
             </div>
-            {revenueData.length > 0 && (
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#0A6847]/10 text-[#0A6847] text-xs font-bold">
-                {revenueData[revenueData.length - 1].month}: {formatINR(revenueData[revenueData.length - 1].revenue)} (
-                {revenueData[revenueData.length - 1].orders} orders)
-              </span>
-            )}
+            {(() => {
+              const latestMonth = revenueData[revenueData.length - 1];
+              if (!latestMonth) return null;
+              return (
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#0A6847]/10 text-[#0A6847] text-xs font-bold">
+                  {latestMonth.month}: {formatINR(latestMonth.revenue)} (
+                  {latestMonth.orders} orders)
+                </span>
+              );
+            })()}
           </div>
           <div className="pt-2">
             {loading ? (

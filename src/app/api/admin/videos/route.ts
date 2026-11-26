@@ -5,6 +5,12 @@ import { requireAdmin } from "@/lib/auth-service";
 import { adminVideoSchema, adminVideoUpdateSchema } from "@/lib/validators/admin";
 import { deleteAdminAsset, verifyStorageObjectExists } from "@/lib/storage";
 import { generateAsciiSlug, resolveBilingualPair } from "@/lib/i18n";
+import {
+  isEmbedPlatformUrl,
+  normalizeVideoEmbedUrl,
+  resolveVideoMedia,
+  resolveVideoPosterUrl,
+} from "@/lib/video-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +67,12 @@ function mapSupabaseVideoRow(row: any): AdminVideoItem {
     legacy: row.description,
   });
 
+  const media = resolveVideoMedia({
+    embed_url: row.embed_url,
+    video_url: row.video_url,
+    video_path: row.video_path,
+  });
+
   return {
     id: row.id,
     title: row.title || titlePair.ta || titlePair.en || "",
@@ -74,13 +86,14 @@ function mapSupabaseVideoRow(row: any): AdminVideoItem {
     category_ta: row.category_ta || undefined,
     poster_alt_en: row.poster_alt_en || undefined,
     poster_alt_ta: row.poster_alt_ta || undefined,
-    embed_url: row.embed_url || row.video_url || "",
-    video_path: row.video_path || undefined,
-    video_url: row.video_url || undefined,
+    embed_url: media.embedUrl,
+    video_path: media.mode === "upload" ? row.video_path || undefined : undefined,
+    video_url: media.videoUrl,
     poster_path: row.poster_path || undefined,
-    poster_url:
-      row.poster_url ||
-      "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/video-posters/1.webp",
+    poster_url: resolveVideoPosterUrl({
+      poster_url: row.poster_url,
+      poster_path: row.poster_path,
+    }),
     duration_seconds: row.duration_seconds || undefined,
     duration_formatted: row.duration_seconds
       ? `${Math.floor(row.duration_seconds / 60)}:${(row.duration_seconds % 60).toString().padStart(2, "0")}`
@@ -126,7 +139,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
-    const body = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON request body" }, { status: 400 });
+    }
     const parseResult = adminVideoSchema.safeParse(body);
     if (!parseResult.success) {
       return NextResponse.json(
@@ -145,12 +163,19 @@ export async function POST(req: NextRequest) {
     const primaryTitle = titlePair.ta || titlePair.en || val.title || "Archival Video";
     const primaryDesc = descPair.ta || descPair.en || val.description || null;
     const slug = val.slug || generateAsciiSlug(titlePair.en || val.title_en || val.title, "video");
-    const embedUrl = val.embed_url || val.video_url || "";
+    const media = resolveVideoMedia({
+      embed_url: val.embed_url,
+      video_url: val.video_url,
+      video_path: val.video_path,
+    });
+    const cleanVideoPath = media.mode === "upload" ? val.video_path?.trim() || null : null;
+    const cleanVideoUrl = media.mode === "upload" ? media.videoUrl || null : null;
+    const cleanEmbedUrl = media.embedUrl;
 
-    if (val.video_path) {
-      const exists = await verifyStorageObjectExists("videos", val.video_path);
+    if (cleanVideoPath) {
+      const exists = await verifyStorageObjectExists("videos", cleanVideoPath);
       if (!exists) {
-        console.warn(`[POST /api/admin/videos] Warning: video_path ${val.video_path} not yet verified in bucket`);
+        console.warn(`[POST /api/admin/videos] Warning: video_path ${cleanVideoPath} not yet verified in bucket`);
       }
     }
 
@@ -159,14 +184,14 @@ export async function POST(req: NextRequest) {
       title: primaryTitle,
       slug,
       description: primaryDesc,
-      embed_url: embedUrl,
-      video_path: val.video_path || null,
-      video_url: val.video_url || null,
-      poster_path: val.poster_path || null,
+      embed_url: cleanEmbedUrl,
+      video_path: cleanVideoPath,
+      video_url: cleanVideoUrl,
+      poster_path: val.poster_path?.trim() || null,
       poster_url: val.poster_url,
       duration_seconds: val.duration_seconds || null,
-      file_size_bytes: val.file_size_bytes || null,
-      mime_type: val.mime_type || null,
+      file_size_bytes: media.mode === "upload" ? val.file_size_bytes || null : null,
+      mime_type: media.mode === "upload" ? val.mime_type?.trim() || null : null,
       sort_order: val.sort_order ?? 0,
       status: val.status || "published",
       is_active: val.is_active ?? true,
@@ -231,7 +256,12 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
-    const body = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON request body" }, { status: 400 });
+    }
     const parseResult = adminVideoUpdateSchema.safeParse(body);
     if (!parseResult.success) {
       return NextResponse.json(
@@ -249,11 +279,13 @@ export async function PATCH(req: NextRequest) {
         .eq("id", id)
         .maybeSingle();
 
-      if (existing?.video_path && updates.video_path && existing.video_path !== updates.video_path) {
+      const nextVideoPath = updates.video_path?.trim() || null;
+      if (existing?.video_path && updates.video_path !== undefined && existing.video_path !== nextVideoPath) {
         await deleteAdminAsset("videos", existing.video_path);
       }
 
-      if (existing?.poster_path && updates.poster_path && existing.poster_path !== updates.poster_path) {
+      const nextPosterPath = updates.poster_path?.trim() || null;
+      if (existing?.poster_path && updates.poster_path !== undefined && existing.poster_path !== nextPosterPath) {
         await deleteAdminAsset("video-posters", existing.poster_path);
       }
     }
@@ -268,10 +300,25 @@ export async function PATCH(req: NextRequest) {
     if (updates.description !== undefined || updates.description_ta !== undefined || updates.description_en !== undefined) {
       baseUpdates.description = updates.description_ta ?? updates.description ?? updates.description_en;
     }
-    if (updates.embed_url !== undefined) baseUpdates.embed_url = updates.embed_url;
-    if (updates.video_path !== undefined) baseUpdates.video_path = updates.video_path;
-    if (updates.video_url !== undefined) baseUpdates.video_url = updates.video_url;
-    if (updates.poster_path !== undefined) baseUpdates.poster_path = updates.poster_path;
+    if (updates.embed_url !== undefined) {
+      baseUpdates.embed_url = updates.embed_url ? normalizeVideoEmbedUrl(updates.embed_url) : "";
+    }
+    if (updates.video_path !== undefined) {
+      baseUpdates.video_path = updates.video_path?.trim() || null;
+    }
+    if (updates.video_url !== undefined) {
+      const cleanVid = updates.video_url?.trim() || null;
+      if (cleanVid && isEmbedPlatformUrl(cleanVid)) {
+        baseUpdates.embed_url = normalizeVideoEmbedUrl(cleanVid);
+        baseUpdates.video_url = null;
+        baseUpdates.video_path = null;
+      } else {
+        baseUpdates.video_url = cleanVid;
+      }
+    }
+    if (updates.poster_path !== undefined) {
+      baseUpdates.poster_path = updates.poster_path?.trim() || null;
+    }
     if (updates.poster_url !== undefined) baseUpdates.poster_url = updates.poster_url;
     if (updates.duration_seconds !== undefined) baseUpdates.duration_seconds = updates.duration_seconds;
     if (updates.file_size_bytes !== undefined) baseUpdates.file_size_bytes = updates.file_size_bytes;

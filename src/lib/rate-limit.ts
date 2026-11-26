@@ -88,7 +88,7 @@ export function rateLimit(
   entry.timestamps = entry.timestamps.filter((t) => now - t < windowMs);
 
   // Calculate reset time based on oldest timestamp in window
-  const oldestInWindow = entry.timestamps.length > 0 ? entry.timestamps[0] : now;
+  const oldestInWindow = entry.timestamps[0] ?? now;
   const reset = oldestInWindow + windowMs;
 
   // Check if rate limit exceeded

@@ -5,6 +5,7 @@ import type { SupporterData } from "@/components/supporters/SupporterCard";
 import { safeJsonLdStringify } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/server";
 import { resolveBilingualPair } from "@/lib/i18n";
+import { getSupabaseStorageUrl } from "@/lib/book-images";
 
 export const dynamic = "force-dynamic";
 
@@ -66,7 +67,7 @@ export default async function SupportersPage() {
           nameEn: namePair.en || namePair.ta || row.name,
           roleTa: rolePair.ta || rolePair.en || "ஆவணப் பங்களிப்பாளர்",
           roleEn: rolePair.en || rolePair.ta || "Archival Contributor",
-          image: row.logo_or_photo_url || row.avatar_url || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/harvin.webp",
+          image: row.logo_or_photo_url || row.avatar_url || getSupabaseStorageUrl("supporters", "harvin.webp"),
           photoAltTa: row.photo_alt_ta || row.avatar_alt_ta || undefined,
           photoAltEn: row.photo_alt_en || row.avatar_alt_en || undefined,
           instagramUrl: row.website_url || undefined,

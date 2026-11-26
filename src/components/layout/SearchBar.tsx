@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, X, CornerDownLeft, ArrowRight } from "lucide-react";
-import { allBooks } from "@/data/books";
+import { allBooks, type BookItem } from "@/data/books";
 import { formatINR } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
 import { matchesSearchQuery } from "@/lib/search";
+import { resolveBookFrontCover } from "@/lib/book-images";
+import { resolveBilingualPair } from "@/lib/i18n";
 
 interface SearchBarProps {
   isOpen: boolean;
@@ -21,12 +23,60 @@ export function SearchBar({ isOpen, onClose }: SearchBarProps) {
   const isTa = locale === "ta";
 
   const [query, setQuery] = React.useState("");
+  const [searchableBooks, setSearchableBooks] = React.useState<BookItem[]>(allBooks);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const modalRef = React.useRef<HTMLDivElement>(null);
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+    let active = true;
+    fetch("/api/books?limit=100")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active || !Array.isArray(data?.books) || data.books.length === 0) return;
+        const mapped: BookItem[] = data.books.map((b: any) => {
+          const staticMatch = allBooks.find((sb) => sb.slug === b.slug);
+          const cover = resolveBookFrontCover(b, staticMatch?.image);
+          const titlePair = resolveBilingualPair({
+            en: b.title_en || staticMatch?.titleEn,
+            ta: b.title_ta,
+            legacy: b.title,
+          });
+          const authorPair = resolveBilingualPair({
+            en: b.author_en || staticMatch?.authorEn,
+            ta: b.author_ta,
+            legacy: b.author,
+          });
+          return {
+            ...(staticMatch || ({} as BookItem)),
+            id: String(b.id),
+            slug: b.slug,
+            title: titlePair.ta || b.title || staticMatch?.title || "",
+            titleEn: titlePair.en || staticMatch?.titleEn || b.title || "",
+            author: authorPair.ta || b.author || staticMatch?.author || "",
+            authorEn: authorPair.en || staticMatch?.authorEn || b.author || "",
+            price: Number(b.price),
+            discountPrice: b.discount_price ? Number(b.discount_price) : staticMatch?.discountPrice,
+            categoryTa: b.categories?.name_ta || staticMatch?.categoryTa || "வரலாறு",
+            categoryEn: b.categories?.name_en || staticMatch?.categoryEn || "History",
+            categorySlug: b.categories?.slug || staticMatch?.categorySlug || "history",
+            image: cover.url,
+            stock: Number(b.stock ?? 0),
+            descriptionTa: b.description_ta || b.description || staticMatch?.descriptionTa || "",
+            descriptionEn: b.description_en || b.description || staticMatch?.descriptionEn || "",
+          };
+        });
+        setSearchableBooks(mapped);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [isOpen]);
+
   const matchingBooks = React.useMemo(() => {
     if (!query.trim()) return [];
-    return allBooks
+    return searchableBooks
       .filter((b) =>
         matchesSearchQuery(query, [
           b.title,
@@ -40,7 +90,7 @@ export function SearchBar({ isOpen, onClose }: SearchBarProps) {
         ])
       )
       .slice(0, 4);
-  }, [query]);
+  }, [query, searchableBooks]);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -67,6 +117,7 @@ export function SearchBar({ isOpen, onClose }: SearchBarProps) {
 
           const firstEl = focusables[0];
           const lastEl = focusables[focusables.length - 1];
+          if (!firstEl || !lastEl) return;
 
           if (e.shiftKey && document.activeElement === firstEl) {
             e.preventDefault();
@@ -87,6 +138,7 @@ export function SearchBar({ isOpen, onClose }: SearchBarProps) {
     } else {
       setQuery("");
     }
+    return undefined;
   }, [isOpen, onClose]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {

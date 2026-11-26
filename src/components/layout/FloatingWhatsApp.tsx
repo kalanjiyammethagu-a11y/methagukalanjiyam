@@ -16,8 +16,8 @@ export function FloatingWhatsApp() {
   const isBookDetail = Boolean(pathname?.startsWith("/books/") && pathname !== "/books");
   const isCart = pathname === "/cart";
 
-  // Hide on admin console routes only
-  if (pathname?.startsWith("/admin")) {
+  // Hide on admin console and checkout cart (where sticky Pay CTA & inline WhatsApp live)
+  if (pathname?.startsWith("/admin") || isCart) {
     return null;
   }
 

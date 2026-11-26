@@ -1,4 +1,5 @@
 "use client";
+import { getSupabaseStorageUrl } from "@/lib/book-images";
 
 import * as React from "react";
 import Image from "next/image";
@@ -74,7 +75,7 @@ const CATEGORY_OPTIONS = [
   "Announcements & News",
 ];
 
-const DEFAULT_COVER = "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp";
+const DEFAULT_COVER = getSupabaseStorageUrl("blog", "thalapathi-vinayagam-banner.webp");
 
 function mapSupabaseBlog(b: any): ArticleItem {
   const rawBody =
@@ -356,7 +357,7 @@ export default function AdminArticlesPage() {
           ? {
             ...a,
             status: nextStatus,
-            publishedAt: nextPublished ? new Date().toISOString().split("T")[0] : "",
+            publishedAt: nextPublished ? (new Date().toISOString().split("T")[0] ?? "") : "",
             updatedAt: new Date().toISOString(),
           }
           : a
@@ -556,7 +557,7 @@ export default function AdminArticlesPage() {
                 coverAltTa: formData.coverAltTa.trim(),
                 status: formData.status,
                 readingTimeMinutes: Number(formData.readingTimeMinutes),
-                publishedAt: formData.status === "published" ? new Date().toISOString().split("T")[0] : "",
+                publishedAt: formData.status === "published" ? (new Date().toISOString().split("T")[0] ?? "") : "",
                 viewCount: 0,
                 coverImage: formData.coverImage,
                 coverImagePath: formData.cover_image_path,
@@ -1031,7 +1032,7 @@ export default function AdminArticlesPage() {
                       type="text"
                       value={formData.coverImage}
                       onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                      placeholder="https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp"
+                      placeholder={getSupabaseStorageUrl("blog", "thalapathi-vinayagam-banner.webp")}
                       className="w-full px-3 py-1.5 rounded-xl border border-gray-200 text-xs text-gray-700 font-mono focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
                     />
                   </div>

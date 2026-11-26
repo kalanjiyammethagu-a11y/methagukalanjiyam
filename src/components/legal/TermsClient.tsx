@@ -104,25 +104,36 @@ export function TermsClient() {
             </p>
           </section>
 
-          {/* Section 4: Replacement */}
+          {/* Section 4: Replacement, Cancellation & Refunds */}
           <section className="space-y-3">
             <div className="flex items-center gap-2.5 pb-2 border-b border-black/8 dark:border-white/10">
               <span className="h-6 w-6 rounded-lg bg-[#0A6847]/10 dark:bg-emerald-500/20 text-[#0A6847] dark:text-emerald-300 font-bold text-xs flex items-center justify-center">
                 4
               </span>
               <h2 className="text-lg font-bold text-[#111111] dark:text-zinc-100 font-tamil flex items-center gap-2">
-                <span>{isTa ? "நூல் மாற்றுக் கொள்கை (Replacement Policy)" : "4. Replacement Guarantee"}</span>
+                <span>
+                  {isTa
+                    ? "ஆர்டர் ரத்து, மாற்று மற்றும் பணம் திரும்பப் பெறும் கொள்கை"
+                    : "4. Cancellation, Replacement & Refund Policy"}
+                </span>
                 <ShieldAlert className="h-4 w-4 text-[#0A6847] dark:text-emerald-400" />
               </h2>
             </div>
-            <div className="p-4 rounded-2xl bg-amber-500/8 dark:bg-amber-950/60 border border-amber-500/20 dark:border-amber-700/60 text-xs sm:text-sm text-[#222222] dark:text-zinc-200 font-tamil space-y-2">
+            <div className="p-4 rounded-2xl bg-amber-500/8 dark:bg-amber-950/60 border border-amber-500/20 dark:border-amber-700/60 text-xs sm:text-sm text-[#222222] dark:text-zinc-200 font-tamil space-y-2.5">
               <p className="font-bold text-[#111111] dark:text-amber-200">
-                {isTa ? "சேதமடைந்த நூல்களுக்கு உடனடி மாற்று நூல்:" : "Hassle-Free Replacement for In-Transit Damage:"}
+                {isTa
+                  ? "சேதமடைந்த நூல்களுக்கு உடனடி மாற்று நூல் & கட்டணத் திரும்பப் பெறுதல்:"
+                  : "Hassle-Free Replacement & 5–7 Day Refund SLA:"}
               </p>
               <p className="leading-relaxed text-[#444444] dark:text-zinc-200">
                 {isTa
                   ? "உங்களுக்கு அனுப்பப்பட்ட நூல் ஏதேனும் சேதமடைந்திருந்தாலோ அல்லது தவறான நூல் அனுப்பப்பட்டிருந்தாலோ, அதைப் பொதி பிரிக்கும் முழுமையான காணொளி ஆதாரத்துடன் 3 நாட்களுக்குள் எங்களது தொடர்பு எண்ணிற்குத் தெரிவித்தால், புதிய நூல் எவ்வித கூடுதல் கட்டணமுமின்றி மாற்றித் தரப்படும்."
                   : "If a book arrives damaged or misdelivered, notify us within 3 days with a continuous unboxing video recording, and a replacement copy will be dispatched immediately free of charge."}
+              </p>
+              <p className="leading-relaxed text-[#444444] dark:text-zinc-200">
+                {isTa
+                  ? "பார்சல் அஞ்சலில் அனுப்பப்படுவதற்கு முன்பாக ஆர்டரை ரத்து செய்ய WhatsApp அல்லது தொலைபேசி மூலம் தொடர்பு கொள்ளலாம். அங்கீகரிக்கப்பட்ட ரத்து அல்லது கையிருப்பு இல்லாத ஆர்டர்களுக்கான முழுத் தொகையும் Razorpay வழியே உங்கள் அசல் UPI / வங்கிக் கணக்கிற்கு 5 முதல் 7 வேலை நாட்களுக்குள் திருப்பிச் செலுத்தப்படும்."
+                  : "Orders may be cancelled prior to postal dispatch via WhatsApp or phone support. Approved refunds (for pre-dispatch cancellations or unfulfillable stock) are credited back to your original UPI/card source via Razorpay within 5 to 7 business days."}
               </p>
             </div>
           </section>
@@ -134,17 +145,17 @@ export function TermsClient() {
                 5
               </span>
               <h2 className="text-lg font-bold text-[#111111] dark:text-zinc-100 font-tamil">
-                {isTa ? "அதிகாரப்பூர்வ தொடர்பு மையம்" : "5. Support & Inquiries"}
+                {isTa ? "அதிகாரப்பூர்வ தொடர்பு மையம் & பதிவு விவரம்" : "5. Support, Jurisdiction & Merchant Details"}
               </h2>
             </div>
 
             <div className="p-5 rounded-2xl bg-black/3 dark:bg-white/[0.04] border border-black/8 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="space-y-1">
                 <p className="text-sm font-bold text-[#111111] dark:text-zinc-100 font-tamil">
-                  {isTa ? "மேதகு களஞ்சியம் வாடிக்கையாளர் உதவி" : "Methagu Kalanjiyam Helpdesk"}
+                  {isTa ? "மேதகு களஞ்சியம் வாடிக்கையாளர் உதவி (MSME: UDYAM-TN-18-0101323)" : "Methagu Kalanjiyam Helpdesk (MSME: UDYAM-TN-18-0101323)"}
                 </p>
                 <p className="text-xs text-[#555555] dark:text-zinc-300 font-tamil">
-                  {isTa ? "நூல்கள் மற்றும் விநியோகம் குறித்த எந்த சந்தேகத்திற்கும் தொடர்பு கொள்ளலாம்." : "Feel free to reach out for order tracking or special requests."}
+                  {isTa ? "தமிழ்நாடு, இந்தியா • நூல்கள் மற்றும் விநியோகம் குறித்த எந்த சந்தேகத்திற்கும் தொடர்பு கொள்ளலாம்." : "Tamil Nadu, India • Reach out for order tracking, cancellations, or special requests."}
                 </p>
               </div>
 

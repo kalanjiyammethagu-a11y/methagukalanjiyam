@@ -12,7 +12,15 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON request body" },
+        { status: 400 }
+      );
+    }
 
     // 1. Strict boundary validation with Zod
     const parseResult = createOrderSchema.safeParse(body);
@@ -35,7 +43,28 @@ export async function POST(req: NextRequest) {
       guest_email,
     } = parseResult.data;
 
-    // 2. Server-side computation of prices, subtotal, shipping, and total amount in paise
+    // 2. Opportunistically release stale unpaid pending orders (>30 mins) so abandoned checkouts
+    // never permanently lock scarce book inventory even when external cron is unavailable.
+    try {
+      const isPlaceholderDb =
+        !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+        process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder") ||
+        !process.env.SUPABASE_SERVICE_ROLE_KEY ||
+        process.env.SUPABASE_SERVICE_ROLE_KEY.includes("placeholder");
+      if (!isPlaceholderDb) {
+        const adminSupabase = createAdminClient();
+        const { error: cleanupErr } = await (adminSupabase as any).rpc("cancel_stale_pending_orders", {
+          p_older_than_minutes: 30,
+        });
+        if (cleanupErr) {
+          console.warn("[orders/create] Stale pending order cleanup RPC warning:", cleanupErr.message);
+        }
+      }
+    } catch (cleanupEx: any) {
+      console.warn("[orders/create] Stale pending order cleanup exception:", cleanupEx?.message);
+    }
+
+    // 3. Server-side computation of prices, subtotal, shipping, and total amount in paise
     // NEVER trust prices from the client
     let summary;
     try {
@@ -105,6 +134,13 @@ export async function POST(req: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder") ||
       !process.env.SUPABASE_SERVICE_ROLE_KEY ||
       process.env.SUPABASE_SERVICE_ROLE_KEY.includes("placeholder");
+
+    if (isPlaceholderDb && process.env.ALLOW_MOCK_CHECKOUT !== "true") {
+      return NextResponse.json(
+        { error: "Order persistence unavailable: database configuration is missing" },
+        { status: 503 }
+      );
+    }
 
     let orderRecord: { id: string; order_number: string } = {
       id: `mock-order-${Date.now()}`,

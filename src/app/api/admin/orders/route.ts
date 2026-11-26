@@ -231,16 +231,8 @@ export async function PATCH(req: NextRequest) {
           ? input.adminNotes?.trim() || null
           : undefined;
 
-    // Trigger explicit stock restoration only if admin transitions status to cancelled/returned
-    if (mappedLegacyStatus === "cancelled" || mappedLegacyStatus === "returned") {
-      try {
-        await (adminSupabase.rpc as any)("restore_order_inventory", {
-          p_order_id: input.orderId,
-        });
-      } catch (restoreErr) {
-        console.warn("Direct restore_order_inventory RPC call noted:", restoreErr);
-      }
-    }
+    // Inventory restoration is handled once atomically by PostgreSQL trigger trg_orders_restore_stock
+    // when transitioning into 'cancelled' or 'returned'. Avoid double-restoring via direct RPC calls.
 
     const legacyUpdatePayload: Record<string, any> = {
       updated_at: nowIso,

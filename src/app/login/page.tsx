@@ -553,8 +553,8 @@ function LoginForm() {
                           ? "உள்நுழைக"
                           : "Sign In"
                         : isTa
-                          ? "கணக்கை உருவாக்கி உள்நுழைக"
-                          : "Create Account & Sign In"}
+                          ? "கணக்கை உருவாக்குக"
+                          : "Create Account"}
                     </span>
                     <ArrowRight className="h-4 w-4" />
                   </span>

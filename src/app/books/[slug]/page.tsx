@@ -109,7 +109,22 @@ export default async function BookDetailPage({ params }: BookPageProps) {
     notFound();
   }
 
-  const relatedBooks = getRelatedBooks(book);
+  let relatedBooks = getRelatedBooks(book);
+  try {
+    const supabase = await createClient();
+    const { data: dbRelated } = await (supabase.from("books") as any)
+      .select("*, categories(name_ta, name_en, slug)")
+      .eq("status", "published")
+      .neq("slug", book.slug)
+      .limit(4);
+    if (Array.isArray(dbRelated) && dbRelated.length > 0) {
+      relatedBooks = dbRelated.map((row: any) =>
+        mapDbBookToBookItem(row, allBooks.find((sb) => sb.slug === row.slug))
+      );
+    }
+  } catch {
+    // Fallback to static related books
+  }
   const isSoldOut = book.stock <= 0;
 
   const primaryImageUrl = toAbsoluteSiteImageUrl(book.image);

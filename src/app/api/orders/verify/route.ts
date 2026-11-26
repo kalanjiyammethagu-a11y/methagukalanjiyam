@@ -8,7 +8,15 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON request body" },
+        { status: 400 }
+      );
+    }
 
     // 1. Validate payload with strict Zod schema
     const parseResult = verifyPaymentSchema.safeParse(body);
@@ -37,6 +45,13 @@ export async function POST(req: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder") ||
       !process.env.SUPABASE_SERVICE_ROLE_KEY ||
       process.env.SUPABASE_SERVICE_ROLE_KEY.includes("placeholder");
+
+    if (isPlaceholderDb && process.env.ALLOW_MOCK_CHECKOUT !== "true") {
+      return NextResponse.json(
+        { error: "Payment verification unavailable: database configuration is missing" },
+        { status: 503 }
+      );
+    }
 
     if (!isValid) {
       console.warn(

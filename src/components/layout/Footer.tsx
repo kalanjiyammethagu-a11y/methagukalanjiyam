@@ -113,13 +113,18 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/books?category=literature" className="hover:text-[#0D5C3A] dark:hover:text-emerald-400 transition-colors py-1.5 block">
-                  தமிழ் நாவல்கள் & கவிதைகள்
+                <Link href="/books?category=archives" className="hover:text-[#0D5C3A] dark:hover:text-emerald-400 transition-colors py-1.5 block">
+                  அரிய ஆவணத் தொகுப்புகள்
                 </Link>
               </li>
               <li>
-                <Link href="/books?category=biography" className="hover:text-[#0D5C3A] dark:hover:text-emerald-400 transition-colors py-1.5 block">
+                <Link href="/books?category=biographies" className="hover:text-[#0D5C3A] dark:hover:text-emerald-400 transition-colors py-1.5 block">
                   தலைவர்கள் & வாழ்க்கை வரலாறு
+                </Link>
+              </li>
+              <li>
+                <Link href="/books?category=memoirs" className="hover:text-[#0D5C3A] dark:hover:text-emerald-400 transition-colors py-1.5 block">
+                  நினைவுக் குறிப்புகள்
                 </Link>
               </li>
               <li>

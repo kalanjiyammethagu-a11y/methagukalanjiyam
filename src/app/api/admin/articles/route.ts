@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/auth-service";
 import { adminBlogPostCreateSchema, adminBlogPostUpdateSchema } from "@/lib/validators/admin";
 import { deleteAdminAsset } from "@/lib/storage";
 import { generateAsciiSlug, resolveBilingualPair } from "@/lib/i18n";
+import { getSupabaseStorageUrl } from "@/lib/book-images";
 
 export const dynamic = "force-dynamic";
 
@@ -91,7 +92,7 @@ export async function POST(req: NextRequest) {
       data.slug || generateAsciiSlug(titlePair.en || data.title_en || data.title, "article");
 
     const adminSupabase = createAdminClient();
-    const coverUrl = data.cover_image_url || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp";
+    const coverUrl = data.cover_image_url || getSupabaseStorageUrl("blog", "thalapathi-vinayagam-banner.webp");
     const publishedAt = data.published_at || (data.status === "published" ? new Date().toISOString() : null);
 
     const basePayload = {

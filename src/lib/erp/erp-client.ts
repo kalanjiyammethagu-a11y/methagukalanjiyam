@@ -16,7 +16,7 @@ export class ERPNextClient {
 
   constructor(customConfig?: Partial<ERPConfig>) {
     this.config = {
-      url: customConfig?.url || process.env.ERP_URL || "https://erp.methagukalanjiyam.in",
+      url: customConfig?.url || process.env.ERP_URL || "",
       apiKey: customConfig?.apiKey || process.env.ERP_API_KEY || "",
       apiSecret: customConfig?.apiSecret || process.env.ERP_API_SECRET || "",
       company: customConfig?.company || process.env.ERP_COMPANY || "Methagu Kalanjiyam",
@@ -101,7 +101,7 @@ export class ERPNextClient {
         try {
           const data = await res.json();
           loggedUser = data.message || "Administrator";
-        } catch {}
+        } catch { }
 
         return {
           isConfigured: true,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth-service";
+import { rateLimit } from "@/lib/rate-limit";
 import {
   mapLegacyCourierToName,
   normalizeShipmentStatus,
@@ -146,9 +147,25 @@ export async function GET(
 
     const phoneQuery = req.nextUrl.searchParams.get("phone");
     if (!isAuthorized && phoneQuery && order.shipping_address?.phone) {
+      const clientIp =
+        req.headers.get("cf-connecting-ip") ||
+        req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        "unknown";
+      const rl = rateLimit(`order_phone_lookup:${clientIp}:${order.order_number}`, 10, 5 * 60_000);
+      if (!rl.success) {
+        return NextResponse.json(
+          { error: "Too many verification attempts. Please wait a few minutes and try again." },
+          { status: 429 }
+        );
+      }
+
       const cleanParam = phoneQuery.replace(/\D/g, "");
       const cleanOrderPhone = String(order.shipping_address.phone).replace(/\D/g, "");
-      if (cleanParam.length >= 4 && cleanOrderPhone.endsWith(cleanParam.slice(-4))) {
+      if (
+        cleanParam.length >= 10 &&
+        cleanOrderPhone.length >= 10 &&
+        cleanOrderPhone.slice(-10) === cleanParam.slice(-10)
+      ) {
         isAuthorized = true;
       }
     }

@@ -41,6 +41,7 @@ export function CertificateClient() {
         window.removeEventListener("keydown", handleKeyDown);
       };
     }
+    return undefined;
   }, [zoomOpen]);
 
   return (

@@ -1,4 +1,5 @@
 "use client";
+import { getSupabaseStorageUrl } from "@/lib/book-images";
 
 import * as React from "react";
 import Link from "next/link";
@@ -16,7 +17,7 @@ const allSupporters: SupporterData[] = [
     nameEn: "Deepak Harvin",
     roleTa: "நிறுவனத்தின் முதல்வர் மற்றும் நிறுவனர்",
     roleEn: "Founder & Principal Director",
-    image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/harvin.webp",
+    image: getSupabaseStorageUrl("supporters", "harvin.webp"),
     instagramUrl: "https://www.instagram.com/harvin_72?igsh=MTI2bGhienR2ZHhhOA==",
     whatsappUrl: "https://wa.me/918248654946",
   },
@@ -26,7 +27,7 @@ const allSupporters: SupporterData[] = [
     nameEn: "Subi Madhan",
     roleTa: "நிறுவனத்தின் முதல்வர் மற்றும் நிறுவனர்",
     roleEn: "Founder & Principal Director",
-    image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/subi.webp",
+    image: getSupabaseStorageUrl("supporters", "subi.webp"),
     instagramUrl: "https://www.instagram.com/thilo.subi?igsh=aTczbzR1bTF3dWxo",
     whatsappUrl: "https://wa.me/916374849095",
   },
@@ -36,7 +37,7 @@ const allSupporters: SupporterData[] = [
     nameEn: "Pacha Muthu",
     roleTa: "திட்ட நெறியாளர்",
     roleEn: "Project Coordinator & Operations",
-    image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/pachamuthu.webp",
+    image: getSupabaseStorageUrl("supporters", "pachamuthu.webp"),
     instagramUrl: "https://www.instagram.com/pachamuthu_2004?igsh=NjA2ZTZ0NmJycjY4",
   },
   {
@@ -45,7 +46,7 @@ const allSupporters: SupporterData[] = [
     nameEn: "Ranjith",
     roleTa: "களஞ்சிய மேலாண்மையாளர்",
     roleEn: "Archives & Fulfillment Manager",
-    image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/ranjith.webp",
+    image: getSupabaseStorageUrl("supporters", "ranjith.webp"),
     instagramUrl: "https://www.instagram.com/ranjith_tamileelam?igsh=NzhubzNvNHU3cnhz",
   },
   {
@@ -54,7 +55,7 @@ const allSupporters: SupporterData[] = [
     nameEn: "Madhan Babu",
     roleTa: "தொழில்நுட்ப வடிவமைப்பாளர்",
     roleEn: "Technical Systems Architect",
-    image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/selva.webp",
+    image: getSupabaseStorageUrl("supporters", "selva.webp"),
     instagramUrl: "https://www.instagram.com/madhan_babu__?igsh=MXF5dWJmaWZ2N2dmag==",
   },
   {
@@ -63,7 +64,7 @@ const allSupporters: SupporterData[] = [
     nameEn: "V. Tamil Selvan",
     roleTa: "புத்தக சேகரிப்பாளர் & ஒருங்கிணைப்பாளர்",
     roleEn: "Archivist & Acquisitions Lead",
-    image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/suriya.webp",
+    image: getSupabaseStorageUrl("supporters", "suriya.webp"),
     instagramUrl: "https://www.instagram.com/tamil_9443?igsh=dWJocGpsaHZ5Znh0",
   },
   {
@@ -72,7 +73,7 @@ const allSupporters: SupporterData[] = [
     nameEn: "P. Muthu Vignesh",
     roleTa: "ஆவணப் பாதுகாப்பு அலுவலர்",
     roleEn: "Preservation & Digitization Lead",
-    image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/muniswaran.webp",
+    image: getSupabaseStorageUrl("supporters", "muniswaran.webp"),
     instagramUrl: "https://www.instagram.com/mr_crazy_774?igsh=MThydmJqam1xN29mNw==",
   },
   {
@@ -81,7 +82,7 @@ const allSupporters: SupporterData[] = [
     nameEn: "E. Jegatheesan",
     roleTa: "தளவாட ஒருங்கிணைப்பாளர்",
     roleEn: "Postal Dispatch Coordinator",
-    image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/deelip.webp",
+    image: getSupabaseStorageUrl("supporters", "deelip.webp"),
     instagramUrl: "https://www.instagram.com/itz__me__jega__?igsh=NnVmbmx2bnRveHJ3",
   },
   {
@@ -90,7 +91,7 @@ const allSupporters: SupporterData[] = [
     nameEn: "Aravinthan",
     roleTa: "கள ஒருங்கிணைப்பாளர்",
     roleEn: "Field Relations & Outreach",
-    image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/ajay.webp",
+    image: getSupabaseStorageUrl("supporters", "ajay.webp"),
     instagramUrl: "https://www.instagram.com/aravinth_tamizhan?igsh=ZTVuMDQ3cnFhcXZz",
   },
 ];

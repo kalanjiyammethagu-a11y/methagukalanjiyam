@@ -13,10 +13,10 @@ if (fs.existsSync(envLocalPath)) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith("#")) continue;
     const match = trimmed.match(/^([^=]+)=(.*)$/);
-    if (match) {
+    if (match?.[1] !== undefined && match[2] !== undefined) {
       const key = match[1].trim();
       const val = match[2].trim().replace(/^["']|["']$/g, "");
-      if (!process.env[key]) {
+      if (key && !process.env[key]) {
         process.env[key] = val;
       }
     }

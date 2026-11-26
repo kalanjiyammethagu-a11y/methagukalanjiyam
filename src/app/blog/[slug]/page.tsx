@@ -6,6 +6,7 @@ import { getArticleBySlug, getAllArticleSlugs, type ArticleDetailData } from "@/
 import { safeJsonLdStringify } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/server";
 import { localized, resolveBilingualPair } from "@/lib/i18n";
+import { getSupabaseStorageUrl } from "@/lib/book-images";
 
 export const revalidate = 60;
 
@@ -86,7 +87,7 @@ async function resolveArticle(slug: string): Promise<ArticleDetailData | undefin
         titleEn: titlePair.en || staticArticle?.titleEn || post.title,
         subtitleTa: subtitlePair.ta || staticArticle?.subtitleTa || "",
         subtitleEn: subtitlePair.en || staticArticle?.subtitleEn || "",
-        coverImage: post.cover_image_url || staticArticle?.coverImage || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp",
+        coverImage: post.cover_image_url || staticArticle?.coverImage || getSupabaseStorageUrl("blog", "thalapathi-vinayagam-banner.webp"),
         coverAltTa: post.cover_alt_ta || undefined,
         coverAltEn: post.cover_alt_en || undefined,
         categoryTa: catPair.ta || "வரலாற்று ஆவணம்",

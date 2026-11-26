@@ -1,4 +1,5 @@
 import { allBooks, type BookItem } from "@/data/books";
+import { computeShippingFee, getShippingConfig } from "@/lib/shipping";
 import type {
   RazorpayOrder,
   RazorpayOrderCreateOptions,
@@ -92,10 +93,9 @@ export async function createRazorpayOrder(
 ): Promise<RazorpayOrder> {
   const { keyId, keySecret } = getRazorpayCredentials();
 
-  // Graceful development mode fallback for local testing with placeholder credentials
+  // Explicit mock order fallback only when ALLOW_MOCK_CHECKOUT=true or automated tests
   if (
-    keyId.includes("placeholder") ||
-    keySecret === "placeholder" ||
+    process.env.ALLOW_MOCK_CHECKOUT === "true" ||
     process.env.NODE_ENV === "test"
   ) {
     return {
@@ -112,6 +112,10 @@ export async function createRazorpayOrder(
       notes: options.notes || {},
       created_at: Math.floor(Date.now() / 1000),
     };
+  }
+
+  if (keyId.includes("placeholder") || keySecret === "placeholder") {
+    throw new Error("Razorpay live/test credentials cannot use placeholder values.");
   }
 
   const client = getRazorpayClient();
@@ -154,67 +158,68 @@ export async function calculateOrderSummaryAsync(
     throw new Error("Order must contain at least one item");
   }
 
-  // 1. Try to fetch from Supabase database first
+  // 1. Fetch books strictly from Supabase when DB is configured (never substitute static catalog prices/stock on DB failure)
   const dbBooksMap = new Map<string, BookItem>();
-  try {
-    const isPlaceholderDb =
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder");
+  const isPlaceholderDb =
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder") ||
+    !process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY.includes("placeholder");
 
-    if (!isPlaceholderDb) {
-      const { createAdminClient } = await import("@/lib/supabase/admin");
-      const adminSupabase = createAdminClient();
-      const rawIds = requestedItems.map((i) => i.book_id);
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      const uuidList = rawIds.filter((id) => uuidRegex.test(id));
-      const slugList = rawIds.filter((id) => !uuidRegex.test(id));
+  if (!isPlaceholderDb) {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const adminSupabase = createAdminClient();
+    const rawIds = requestedItems.map((i) => i.book_id);
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const uuidList = rawIds.filter((id) => uuidRegex.test(id));
+    const slugList = rawIds.filter((id) => !uuidRegex.test(id));
 
-      let query = (adminSupabase.from("books") as any).select("*");
-      if (uuidList.length > 0 && slugList.length > 0) {
-        query = query.or(`id.in.(${uuidList.join(",")}),slug.in.(${slugList.map((s) => `"${s}"`).join(",")})`);
-      } else if (uuidList.length > 0) {
-        query = query.in("id", uuidList);
-      } else if (slugList.length > 0) {
-        query = query.in("slug", slugList);
-      }
-
-      const { data: dbRows, error } = await query;
-
-      if (!error && dbRows && dbRows.length > 0) {
-        for (const row of dbRows) {
-          const item: BookItem = {
-            id: row.id,
-            title: row.title,
-            titleEn: row.title,
-            author: row.author,
-            authorEn: row.author,
-            price: Number(row.price),
-            discountPrice: row.discount_price ? Number(row.discount_price) : null,
-            categoryTa: "வரலாறு",
-            categoryEn: "History",
-            categorySlug: "history",
-            image: row.cover_front || "/images/books/book-placeholder.webp",
-            stock: Number(row.stock),
-            slug: row.slug,
-            descriptionTa: row.description || "",
-            descriptionEn: row.description || "",
-          };
-          dbBooksMap.set(row.id, item);
-          dbBooksMap.set(row.slug, item);
-        }
-      }
+    let query = (adminSupabase.from("books") as any).select("*");
+    if (uuidList.length > 0 && slugList.length > 0) {
+      query = query.or(`id.in.(${uuidList.join(",")}),slug.in.(${slugList.map((s) => `"${s}"`).join(",")})`);
+    } else if (uuidList.length > 0) {
+      query = query.in("id", uuidList);
+    } else if (slugList.length > 0) {
+      query = query.in("slug", slugList);
     }
-  } catch {
-    // Database lookup failed, fall back to allBooks
+
+    const { data: dbRows, error } = await query;
+    if (error) {
+      throw new Error(`Failed to verify catalog pricing and inventory: ${error.message}`);
+    }
+
+    for (const row of dbRows || []) {
+      const item: BookItem = {
+        id: row.id,
+        title: row.title,
+        titleEn: row.title,
+        author: row.author,
+        authorEn: row.author,
+        price: Number(row.price),
+        discountPrice: row.discount_price ? Number(row.discount_price) : null,
+        categoryTa: "வரலாறு",
+        categoryEn: "History",
+        categorySlug: "history",
+        image: row.cover_front || "/images/books/book-placeholder.webp",
+        stock: Number(row.stock),
+        slug: row.slug,
+        descriptionTa: row.description || "",
+        descriptionEn: row.description || "",
+      };
+      dbBooksMap.set(row.id, item);
+      dbBooksMap.set(row.slug, item);
+    }
+  } else if (process.env.ALLOW_MOCK_CHECKOUT !== "true") {
+    throw new Error("Order calculation unavailable: database configuration is missing");
   }
 
   const items: CalculatedOrderItem[] = [];
   let subtotal = 0;
 
   for (const item of requestedItems) {
-    const book =
-      dbBooksMap.get(item.book_id) ||
-      allBooks.find((b) => b.id === item.book_id || b.slug === item.book_id);
+    const book = isPlaceholderDb
+      ? allBooks.find((b) => b.id === item.book_id || b.slug === item.book_id)
+      : dbBooksMap.get(item.book_id);
 
     if (!book) {
       throw new Error(`Book with id '${item.book_id}' not found`);
@@ -240,14 +245,10 @@ export async function calculateOrderSummaryAsync(
     });
   }
 
-  // Shipping calculation: Tamil Nadu = ₹60, Other India = ₹100
-  const normalizedState = (state || "").trim().toLowerCase();
-  const isTamilNadu =
-    normalizedState.includes("tamil") ||
-    normalizedState.includes("தமிழ்நாடு") ||
-    normalizedState === "tn";
-
-  const shippingFee = isTamilNadu ? 60 : 100;
+  // Shipping calculation: dynamically sourced from Supabase `site_settings.shipping`
+  // Falls back cleanly to Tamil Nadu = ₹60, Other India = ₹100, Free shipping threshold = ₹1000
+  const shippingConfig = await getShippingConfig();
+  const shippingFee = computeShippingFee(subtotal, state, shippingConfig);
   const totalAmount = subtotal + shippingFee;
   const amountInPaise = Math.round(totalAmount * 100);
 
@@ -303,14 +304,8 @@ export function calculateOrderSummary(
     });
   }
 
-  // Shipping calculation: Tamil Nadu = ₹60, Other India = ₹100
-  const normalizedState = (state || "").trim().toLowerCase();
-  const isTamilNadu =
-    normalizedState.includes("tamil") ||
-    normalizedState.includes("தமிழ்நாடு") ||
-    normalizedState === "tn";
-
-  const shippingFee = isTamilNadu ? 60 : 100;
+  // Shipping calculation: fallback defaults (TN = ₹60, Other India = ₹100, Free >= ₹1000)
+  const shippingFee = computeShippingFee(subtotal, state);
   const totalAmount = subtotal + shippingFee;
   const amountInPaise = Math.round(totalAmount * 100);
 

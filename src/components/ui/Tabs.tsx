@@ -50,8 +50,9 @@ export function Tabs({
       targetIndex = tabs.length - 1;
     }
 
-    if (targetIndex >= 0 && !tabs[targetIndex].disabled) {
-      onChange(tabs[targetIndex].id);
+    const targetTab = tabs[targetIndex];
+    if (targetIndex >= 0 && targetTab && !targetTab.disabled) {
+      onChange(targetTab.id);
       const buttons = tabListRef.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]');
       buttons?.[targetIndex]?.focus();
     }

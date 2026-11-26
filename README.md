@@ -12,7 +12,7 @@
 **மேதகு களஞ்சியம்** is a specialized, mobile-first web application engineered for authentic Tamil historical literature, archival documentation, patron records, and video archives.
 
 ### Core Architectural Decisions:
-- **Zero-Cart WhatsApp Ordering:** By design and authentic business operations, the site does not use payment gateways or shopping cart databases. Every book CTA opens WhatsApp (`wa.me/916384654946`) with a prefilled, encoded Tamil purchase inquiry containing the book title, price, quantity, and permalink.
+- **Hybrid Checkout & Direct Inquiry:** Authenticated storefront checkout runs through server-validated orders backed by Supabase (`orders`, `order_items`, PostgreSQL inventory RPCs) and Razorpay signature/webhook verification, alongside optional WhatsApp direct purchase inquiry links (`wa.me/916384654946`).
 - **Persistent Floating Action:** A global floating WhatsApp action button is mounted on every page.
 - **Mobile-First Layouts:** Tested across 360px, 768px, and 1280px viewports.
 - **Tamil Typography:** Implemented with Google's `Noto_Sans_Tamil` (`font-display: swap`), strict `line-height: 1.6` for Tamil glyph legibility, and zero letter-spacing distortion.

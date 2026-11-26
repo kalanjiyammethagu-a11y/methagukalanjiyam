@@ -21,6 +21,7 @@ const envSchema = z.object({
   ERP_AUTO_SYNC_ORDERS: z.string().optional(),
   ERP_COMPANY: z.string().optional(),
   ERP_DEFAULT_ITEM_GROUP: z.string().optional(),
+  ERP_SYNC_TOKEN: z.string().optional(),
 
   AUTH_SECRET: z.string().min(16, "AUTH_SECRET must be at least 16 characters").optional(),
   RESEND_API_KEY: z.string().optional(),

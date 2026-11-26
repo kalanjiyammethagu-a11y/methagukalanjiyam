@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { getSupabaseStorageUrl } from "@/lib/book-images";
 
 export interface CartItem {
   id: string;
@@ -37,16 +38,40 @@ const CartContext = React.createContext<CartContextType>({
   isLoaded: false,
 });
 
+const CATALOG_SYNC_TTL_MS = 2 * 60 * 1000;
+let inFlightCatalogSync: Promise<any[] | null> | null = null;
+
+function fetchCatalogOnce(): Promise<any[] | null> {
+  if (!inFlightCatalogSync) {
+    inFlightCatalogSync = fetch("/api/books?limit=100")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => (Array.isArray(data?.books) ? data.books : null))
+      .catch(() => null)
+      .finally(() => {
+        inFlightCatalogSync = null;
+      });
+  }
+  return inFlightCatalogSync;
+}
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = React.useState<CartItem[]>([]);
   const [isLoaded, setIsLoaded] = React.useState(false);
 
-  // Load from localStorage on client mount (clean start if empty)
+  // Load from localStorage on client mount & reconcile prices/stock with live catalog
   React.useEffect(() => {
+    let active = true;
+    const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
+    if (currentPath.startsWith("/admin")) {
+      setIsLoaded(true);
+      return undefined;
+    }
+
+    let initialItems: CartItem[] = [];
     try {
       if (typeof window !== "undefined") {
         const params = new URLSearchParams(window.location.search);
-        if (params.get("preview") === "cart") {
+        if (process.env.NODE_ENV !== "production" && params.get("preview") === "cart") {
           setItems([
             {
               id: "b0000000-0000-0000-0000-000000000001",
@@ -55,7 +80,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               author: "சு. ரவி (எள்ளாளன்)",
               authorEn: "S. Ravi (Ellalan)",
               price: 180,
-              image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/book-20.webp",
+              image: getSupabaseStorageUrl("books", "book-20.webp"),
               slug: "katunayake-attack-victory",
               quantity: 2,
               maxStock: 50,
@@ -67,7 +92,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               author: "மு. வே. யோகநாதன்",
               authorEn: "M. V. Yoganathan",
               price: 250,
-              image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/book-16.webp",
+              image: getSupabaseStorageUrl("books", "book-16.webp"),
               slug: "nenjuram",
               quantity: 1,
               maxStock: 25,
@@ -79,32 +104,122 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
               author: "சேரன்",
               authorEn: "Cheran",
               price: 350,
-              image: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/books/book-13.webp",
+              image: getSupabaseStorageUrl("books", "book-13.webp"),
               slug: "dhisai-thavara-kanai",
               quantity: 1,
               maxStock: 10,
             },
           ]);
           setIsLoaded(true);
-          return;
+          return undefined;
         }
       }
       const savedCart = localStorage.getItem("mk_cart_items");
       if (savedCart) {
         const parsed = JSON.parse(savedCart);
         if (Array.isArray(parsed)) {
+          initialItems = parsed;
           setItems(parsed);
-          setIsLoaded(true);
-          return;
+        } else {
+          setItems([]);
         }
+      } else {
+        setItems([]);
       }
-      setItems([]);
     } catch (e) {
       console.error("Failed to load cart from localStorage:", e);
       setItems([]);
     } finally {
       setIsLoaded(true);
     }
+
+    const lastSyncedAt = (() => {
+      try {
+        return Number(sessionStorage.getItem("mk_cart_catalog_sync_ts") || 0);
+      } catch {
+        return 0;
+      }
+    })();
+    const isCartPage = currentPath.startsWith("/cart");
+    const shouldReconcile =
+      initialItems.length > 0 &&
+      (isCartPage || Date.now() - lastSyncedAt > CATALOG_SYNC_TTL_MS);
+
+    if (shouldReconcile) {
+      fetchCatalogOnce()
+        .then((books) => {
+          if (!active || !books) return;
+          try {
+            sessionStorage.setItem("mk_cart_catalog_sync_ts", String(Date.now()));
+          } catch {}
+          const liveById = new Map<string, any>();
+          const liveBySlug = new Map<string, any>();
+          for (const b of books) {
+            if (b?.id) liveById.set(String(b.id), b);
+            if (b?.slug) liveBySlug.set(String(b.slug), b);
+          }
+
+          setItems((current) => {
+            if (current.length === 0) return current;
+            let changed = false;
+            const reconciled: CartItem[] = [];
+
+            for (const item of current) {
+              const live = liveById.get(item.id) || liveBySlug.get(item.slug);
+              if (!live) {
+                reconciled.push(item);
+                continue;
+              }
+              const liveStock = Number(live.stock ?? item.maxStock);
+              if (liveStock <= 0) {
+                changed = true;
+                continue;
+              }
+              const livePrice = Number(live.discountPrice ?? live.discount_price ?? live.price ?? item.price);
+              const clampedQty = Math.min(item.quantity, liveStock);
+              const nextImage = live.image || live.cover_front || item.image;
+              const nextTitle = live.title || item.title;
+              const nextTitleEn = live.titleEn || live.title_en || item.titleEn;
+
+              if (
+                livePrice !== item.price ||
+                liveStock !== item.maxStock ||
+                clampedQty !== item.quantity ||
+                nextImage !== item.image ||
+                nextTitle !== item.title ||
+                nextTitleEn !== item.titleEn ||
+                live.id !== item.id
+              ) {
+                changed = true;
+                reconciled.push({
+                  ...item,
+                  id: String(live.id || item.id),
+                  title: nextTitle,
+                  titleEn: nextTitleEn,
+                  price: livePrice,
+                  image: nextImage,
+                  maxStock: liveStock,
+                  quantity: clampedQty,
+                });
+              } else {
+                reconciled.push(item);
+              }
+            }
+
+            if (changed) {
+              try {
+                localStorage.setItem("mk_cart_items", JSON.stringify(reconciled));
+              } catch {}
+              return reconciled;
+            }
+            return current;
+          });
+        });
+    }
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const addToCart = React.useCallback(

@@ -6,6 +6,7 @@ import { adminSupporterCreateSchema, adminSupporterUpdateSchema } from "@/lib/va
 import { deleteAdminAsset } from "@/lib/storage";
 import type { AdminSupporter } from "@/types/admin";
 import { resolveBilingualPair } from "@/lib/i18n";
+import { getSupabaseStorageUrl } from "@/lib/book-images";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +54,7 @@ function mapSupabaseSupporterRow(row: any): AdminSupporter {
     image:
       row.logo_or_photo_url ||
       row.avatar_url ||
-      "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/harvin.webp",
+      getSupabaseStorageUrl("supporters", "harvin.webp"),
     logo_or_photo_path: row.logo_or_photo_path || undefined,
     logo_or_photo_url: row.logo_or_photo_url || undefined,
     website_url: row.website_url || undefined,
@@ -128,7 +129,7 @@ export async function POST(req: NextRequest) {
     const name = namePair.en || namePair.ta || val.name || "Archive Supporter";
     const roleEn = val.role_en || val.roleEn || descPair.en || "Archival Contributor";
     const roleTa = val.role_ta || val.roleTa || "";
-    const photoUrl = val.logo_or_photo_url || val.image || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/supporters/harvin.webp";
+    const photoUrl = val.logo_or_photo_url || val.image || getSupabaseStorageUrl("supporters", "harvin.webp");
     const photoPath = val.logo_or_photo_path || null;
     const isActive = val.isActive ?? val.is_active ?? true;
     const status = val.status || (isActive ? "published" : "draft");
@@ -312,7 +313,7 @@ export async function PATCH(req: NextRequest) {
       try {
         revalidatePath("/supporters");
         revalidatePath("/");
-      } catch {}
+      } catch { }
       return NextResponse.json({
         supporter: mapSupabaseSupporterRow(updatedRow),
         message: "Member updated successfully",

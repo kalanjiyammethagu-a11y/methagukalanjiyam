@@ -454,7 +454,9 @@ export default function AdminBooksPage() {
       if (nextIndex < 0 || nextIndex >= prev.galleryImages.length) return prev;
       const copy = [...prev.galleryImages];
       const [moved] = copy.splice(index, 1);
-      copy.splice(nextIndex, 0, moved);
+      if (moved) {
+        copy.splice(nextIndex, 0, moved);
+      }
       return { ...prev, galleryImages: copy };
     });
   };

@@ -244,7 +244,7 @@ export async function processQueueItem(item: ERPSyncQueueItem): Promise<ERPSyncQ
 
     const salesOrderPayload: ERPSalesOrder = {
       customer: updated.erpCustomerId,
-      transaction_date: new Date().toISOString().split("T")[0],
+      transaction_date: new Date().toISOString().split("T")[0] ?? "",
       company: config.company,
       order_type: "Sales",
       currency: "INR",

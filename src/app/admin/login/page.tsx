@@ -108,7 +108,7 @@ export default function AdminLoginPage() {
 
     const newCode = [...otpCode];
     for (let i = 0; i < pasteData.length; i++) {
-      newCode[i] = pasteData[i];
+      newCode[i] = pasteData[i] ?? "";
     }
     setOtpCode(newCode);
 

@@ -62,6 +62,7 @@ export function MobileNav({
 
           const firstElement = focusableElements[0];
           const lastElement = focusableElements[focusableElements.length - 1];
+          if (!firstElement || !lastElement) return;
 
           if (e.shiftKey) {
             if (document.activeElement === firstElement) {
@@ -83,6 +84,7 @@ export function MobileNav({
         window.removeEventListener("keydown", handleKeyDown);
       };
     }
+    return undefined;
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;

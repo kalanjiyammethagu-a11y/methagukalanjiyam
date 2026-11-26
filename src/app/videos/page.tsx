@@ -6,6 +6,7 @@ import { allVideos } from "@/data/videos";
 import { safeJsonLdStringify } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/server";
 import { resolveBilingualPair } from "@/lib/i18n";
+import { resolveVideoMedia, resolveVideoPosterUrl } from "@/lib/video-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -57,23 +58,40 @@ export default async function VideosPage() {
       videosList = data.map((row: any) => {
         const titlePair = resolveBilingualPair({ en: row.title_en, ta: row.title_ta, legacy: row.title });
         const descPair = resolveBilingualPair({ en: row.description_en, ta: row.description_ta, legacy: row.description });
-        const catPair = resolveBilingualPair({ en: row.category_en, ta: row.category_ta, legacy: "History" });
+        const media = resolveVideoMedia({
+          embed_url: row.embed_url,
+          video_url: row.video_url,
+          video_path: row.video_path,
+        });
+        const staticMatch = allVideos.find(
+          (sv) =>
+            sv.embedUrl === media.embedUrl ||
+            `video-${sv.id}` === row.slug
+        );
+        const catPair = resolveBilingualPair({
+          en: row.category_en || staticMatch?.categoryEn,
+          ta: row.category_ta || staticMatch?.categoryTa,
+          legacy: staticMatch?.categoryEn || "History",
+        });
         return {
           id: row.id,
           titleTa: titlePair.ta || titlePair.en || row.title,
           titleEn: titlePair.en || titlePair.ta || row.title,
           descriptionTa: descPair.ta || descPair.en || "",
           descriptionEn: descPair.en || descPair.ta || "",
-          embedUrl: row.embed_url || row.video_url || "",
-          videoUrl: row.video_url || undefined,
-          posterImage: row.poster_url || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/video-posters/1.webp",
+          embedUrl: media.embedUrl,
+          videoUrl: media.videoUrl,
+          posterImage: resolveVideoPosterUrl({
+            poster_url: row.poster_url,
+            poster_path: row.poster_path,
+          }),
           posterAltTa: row.poster_alt_ta || undefined,
           posterAltEn: row.poster_alt_en || undefined,
-          categoryTa: catPair.ta || "வரலாற்று ஆவணம்",
-          categoryEn: catPair.en || "History",
+          categoryTa: catPair.ta || staticMatch?.categoryTa || "வரலாற்று ஆவணம்",
+          categoryEn: catPair.en || staticMatch?.categoryEn || "History",
           duration: row.duration_seconds
             ? `${Math.floor(row.duration_seconds / 60)}:${(row.duration_seconds % 60).toString().padStart(2, "0")}`
-            : undefined,
+            : staticMatch?.duration,
           publishedDate: row.created_at ? row.created_at.split("T")[0] : "2026",
         };
       });

@@ -11,11 +11,16 @@ import {
   ShoppingBag,
   Heart,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { MobileNav } from "./MobileNav";
-import { SearchBar } from "./SearchBar";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
 import { cn } from "@/lib/utils";
+
+const SearchBar = dynamic(
+  () => import("./SearchBar").then((m) => m.SearchBar),
+  { ssr: false }
+);
 
 interface HeaderProps {
   onOpenSearch?: () => void;
@@ -306,11 +311,13 @@ export function Header({ onOpenSearch }: HeaderProps) {
         onToggleLocale={() => setLocale(isTa ? "en" : "ta")}
       />
 
-      {/* Built-in Spotlight Search Modal */}
-      <SearchBar
-        isOpen={searchModalOpen}
-        onClose={() => setSearchModalOpen(false)}
-      />
+      {/* Built-in Spotlight Search Modal (loaded on demand) */}
+      {searchModalOpen && (
+        <SearchBar
+          isOpen={searchModalOpen}
+          onClose={() => setSearchModalOpen(false)}
+        />
+      )}
     </>
   );
 }

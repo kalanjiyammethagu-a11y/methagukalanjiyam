@@ -398,13 +398,13 @@ export default function AdminSettingsPage() {
           </div>
 
           <p className="text-xs text-gray-600 leading-relaxed">
-            Direct REST integration configured for <code className="font-mono text-[11px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-900">https://erp.methagukalanjiyam.in</code>. Automatically mirrors customer profiles, sales invoices, stock levels, and order dispatches with zero-loss outbox queueing.
+            Direct REST integration configured via server <code className="font-mono text-[11px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-900">ERP_URL</code>. Automatically mirrors customer profiles, sales invoices, stock levels, and order dispatches with zero-loss outbox queueing.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs">
             <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
               <div className="text-[11px] text-gray-400 font-medium">ERP Host</div>
-              <div className="font-mono font-bold text-gray-900 mt-0.5 truncate">erp.methagukalanjiyam.in</div>
+              <div className="font-mono font-bold text-gray-900 mt-0.5 truncate">Configured via ERP_URL</div>
             </div>
             <div className="p-3 rounded-xl bg-gray-50 border border-gray-200">
               <div className="text-[11px] text-gray-400 font-medium">API Key</div>

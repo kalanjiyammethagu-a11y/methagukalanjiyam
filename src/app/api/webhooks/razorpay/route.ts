@@ -65,65 +65,135 @@ export async function POST(req: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY.includes("placeholder");
 
     const adminSupabase = isPlaceholderDb ? null : createAdminClient();
+    if (!adminSupabase) {
+      return NextResponse.json(
+        { error: "Database service unavailable for webhook processing" },
+        { status: 503 }
+      );
+    }
 
-    if (adminSupabase) {
-      // 5. Check if event has already been processed (Idempotency guarantee)
-      const { data: existingEvent, error: checkError } = await (adminSupabase
-        .from("razorpay_events") as any)
-        .select("id, event_id")
-        .eq("event_id", eventId)
-        .maybeSingle();
+    // 5. Claim unique event row BEFORE mutating orders (atomic idempotency lock against concurrent retries)
+    let eventClaimed = false;
+    const { data: existingEvent, error: checkError } = await (adminSupabase
+      .from("razorpay_events") as any)
+      .select("id, event_id")
+      .eq("event_id", eventId)
+      .maybeSingle();
 
-      if (checkError) {
-        console.error("Error querying razorpay_events table:", checkError);
-      }
+    if (checkError) {
+      console.error("Error querying razorpay_events table:", checkError);
+      return NextResponse.json(
+        { error: "Failed to verify webhook idempotency state" },
+        { status: 500 }
+      );
+    }
 
-      if (existingEvent) {
-        // Event already processed; respond 200 OK immediately
+    if (existingEvent) {
+      return NextResponse.json(
+        {
+          received: true,
+          duplicate: true,
+          message: `Event ${eventId} has already been processed`,
+        },
+        { status: 200 }
+      );
+    }
+
+    const { error: claimError } = await (adminSupabase
+      .from("razorpay_events") as any)
+      .insert({
+        event_id: eventId,
+        event_type: payload.event,
+        payload: payload as any,
+        processed_at: new Date().toISOString(),
+      });
+
+    if (claimError) {
+      if (claimError.code === "23505") {
         return NextResponse.json(
           {
             received: true,
             duplicate: true,
-            message: `Event ${eventId} has already been processed`,
+            message: `Event ${eventId} is already processed`,
           },
           { status: 200 }
         );
       }
+      console.error("Failed to claim razorpay_events row:", claimError);
+      return NextResponse.json(
+        { error: "Failed to record webhook claim" },
+        { status: 500 }
+      );
     }
+    eventClaimed = true;
+
+    const releaseClaimForRetry = async () => {
+      if (!eventClaimed) return;
+      try {
+        await (adminSupabase.from("razorpay_events") as any)
+          .delete()
+          .eq("event_id", eventId);
+      } catch {
+        // Ignore release error
+      }
+    };
 
     // 6. Handle event domain state transitions
     const { event, payload: data } = payload;
 
-    if (adminSupabase) {
-      switch (event) {
-        case "payment.captured": {
-          const payment = data.payment?.entity;
-          if (payment && payment.order_id) {
-            const { data: order } = await (adminSupabase
-              .from("orders") as any)
-              .select("id, order_number, status, payment_status, total_amount, shipping_address, guest_phone, guest_email, order_items (*)")
-              .eq("razorpay_order_id", payment.order_id)
-              .maybeSingle();
+    switch (event) {
+      case "payment.captured": {
+        const payment = data.payment?.entity;
+        if (payment && payment.order_id) {
+          const { data: order } = await (adminSupabase
+            .from("orders") as any)
+            .select("id, order_number, status, payment_status, total_amount, shipping_address, guest_phone, guest_email, order_items (*)")
+            .eq("razorpay_order_id", payment.order_id)
+            .maybeSingle();
 
-            if (!order) {
-              console.warn(
-                `Webhook payment.captured received for unknown razorpay_order_id: ${payment.order_id}. Returning 404 for Razorpay retry.`
-              );
-              return NextResponse.json(
-                { error: "Order not found in database; awaiting retry" },
-                { status: 404 }
-              );
-            }
+          if (!order) {
+            await releaseClaimForRetry();
+            console.warn(
+              `Webhook payment.captured received for unknown razorpay_order_id: ${payment.order_id}. Returning 404 for Razorpay retry.`
+            );
+            return NextResponse.json(
+              { error: "Order not found in database; awaiting retry" },
+              { status: 404 }
+            );
+          }
 
-            await (adminSupabase.from("orders") as any)
-              .update({
-                payment_status: "paid",
-                status: order.status === "pending" ? "confirmed" : order.status,
-                razorpay_payment_id: payment.id,
-                updated_at: new Date().toISOString(),
-              })
-              .eq("id", order.id);
+          const expectedPaise = Math.round(Number(order.total_amount) * 100);
+          if (!Number.isFinite(payment.amount) || payment.amount < expectedPaise) {
+            await (adminSupabase.from("audit_logs") as any).insert({
+              action: "webhook_payment_amount_mismatch",
+              resource_type: "orders",
+              resource_id: order.id,
+              metadata: {
+                event_id: eventId,
+                payment_id: payment.id,
+                order_id: payment.order_id,
+                captured_paise: payment.amount,
+                expected_paise: expectedPaise,
+              },
+            });
+            return NextResponse.json(
+              { error: "Captured amount is less than order total" },
+              { status: 400 }
+            );
+          }
 
+          const { data: paidUpdated } = await (adminSupabase.from("orders") as any)
+            .update({
+              payment_status: "paid",
+              status: order.status === "pending" ? "confirmed" : order.status,
+              razorpay_payment_id: payment.id,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", order.id)
+            .neq("payment_status", "paid")
+            .select("id");
+
+          if (paidUpdated && paidUpdated.length > 0) {
             await (adminSupabase.from("audit_logs") as any).insert({
               action: "webhook_payment_captured",
               resource_type: "orders",
@@ -159,133 +229,141 @@ export async function POST(req: NextRequest) {
               console.warn("ERP auto-sync webhook enqueue notice:", erpQueueErr);
             }
           }
-          break;
         }
+        break;
+      }
 
-        case "payment.failed": {
-          const payment = data.payment?.entity;
-          if (payment && payment.order_id) {
-            // Guard: Never downgrade an already paid/confirmed order on late/out-of-order failure webhook
-            const { data: updatedOrders } = await (adminSupabase.from("orders") as any)
-              .update({
-                payment_status: "failed",
-                updated_at: new Date().toISOString(),
-              })
-              .eq("razorpay_order_id", payment.order_id)
-              .neq("payment_status", "paid")
-              .select("id");
+      case "payment.failed": {
+        const payment = data.payment?.entity;
+        if (payment && payment.order_id) {
+          // Guard: Never downgrade an already paid/confirmed order on late/out-of-order failure webhook
+          const { data: updatedOrders } = await (adminSupabase.from("orders") as any)
+            .update({
+              payment_status: "failed",
+              updated_at: new Date().toISOString(),
+            })
+            .eq("razorpay_order_id", payment.order_id)
+            .neq("payment_status", "paid")
+            .select("id");
 
-            if (updatedOrders && updatedOrders.length > 0) {
-              await (adminSupabase.from("audit_logs") as any).insert({
-                action: "webhook_payment_failed",
-                resource_type: "orders",
-                resource_id: payment.order_id,
-                metadata: {
-                  event_id: eventId,
-                  payment_id: payment.id,
-                  error_code: payment.error_code,
-                  error_description: payment.error_description,
-                },
-              });
-            } else {
-              console.info(
-                `Ignored payment.failed webhook for ${payment.order_id} because order is already paid or not found.`
-              );
-            }
+          if (updatedOrders && updatedOrders.length > 0) {
+            await (adminSupabase.from("audit_logs") as any).insert({
+              action: "webhook_payment_failed",
+              resource_type: "orders",
+              resource_id: payment.order_id,
+              metadata: {
+                event_id: eventId,
+                payment_id: payment.id,
+                error_code: payment.error_code,
+                error_description: payment.error_description,
+              },
+            });
+          } else {
+            console.info(
+              `Ignored payment.failed webhook for ${payment.order_id} because order is already paid or not found.`
+            );
           }
-          break;
         }
+        break;
+      }
 
-        case "refund.created":
-        case "refund.processed": {
-          const refund = data.refund?.entity;
-          const payment = data.payment?.entity;
-          const paymentId = refund?.payment_id || payment?.id;
+      case "refund.created":
+      case "refund.processed": {
+        const refund = data.refund?.entity;
+        const payment = data.payment?.entity;
+        const paymentId = refund?.payment_id || payment?.id;
 
-          if (paymentId) {
-            const { data: order } = await (adminSupabase
-              .from("orders") as any)
-              .select("id, total_amount, payment_status")
-              .eq("razorpay_payment_id", paymentId)
-              .maybeSingle();
+        if (paymentId) {
+          const { data: order } = await (adminSupabase
+            .from("orders") as any)
+            .select("id, total_amount, payment_status")
+            .eq("razorpay_payment_id", paymentId)
+            .maybeSingle();
 
-            if (order) {
-              const refundAmountPaise = refund?.amount || 0;
-              const orderTotalPaise = Math.round(Number(order.total_amount) * 100);
-              const isFullRefund = refundAmountPaise >= orderTotalPaise;
-              const newStatus = isFullRefund ? "refunded" : "partially_refunded";
-
-              await (adminSupabase.from("orders") as any)
-                .update({
-                  payment_status: newStatus,
-                  updated_at: new Date().toISOString(),
-                })
-                .eq("id", order.id);
-
-              await (adminSupabase.from("audit_logs") as any).insert({
-                action: "webhook_refund_processed",
-                resource_type: "orders",
-                resource_id: order.id,
-                metadata: {
-                  event_id: eventId,
-                  refund_id: refund?.id,
-                  refund_amount_paise: refundAmountPaise,
-                  order_total_paise: orderTotalPaise,
-                  is_full_refund: isFullRefund,
-                },
-              });
-            }
-          }
-          break;
-        }
-
-        case "order.paid": {
-          const orderEntity = data.order?.entity;
-          if (orderEntity && orderEntity.id) {
-            const { data: order } = await (adminSupabase
-              .from("orders") as any)
-              .select("id, status, payment_status")
-              .eq("razorpay_order_id", orderEntity.id)
-              .maybeSingle();
-
-            if (!order) {
-              console.warn(
-                `Webhook order.paid received for unknown razorpay_order_id: ${orderEntity.id}. Returning 404 for Razorpay retry.`
-              );
-              return NextResponse.json(
-                { error: "Order not found in database; awaiting retry" },
-                { status: 404 }
-              );
-            }
+          if (order) {
+            const refundAmountPaise = refund?.amount || 0;
+            const orderTotalPaise = Math.round(Number(order.total_amount) * 100);
+            const isFullRefund = refundAmountPaise >= orderTotalPaise;
+            const newStatus = isFullRefund ? "refunded" : "partially_refunded";
 
             await (adminSupabase.from("orders") as any)
               .update({
-                payment_status: "paid",
-                status: order.status === "pending" ? "confirmed" : order.status,
+                payment_status: newStatus,
                 updated_at: new Date().toISOString(),
               })
               .eq("id", order.id);
+
+            await (adminSupabase.from("audit_logs") as any).insert({
+              action: "webhook_refund_processed",
+              resource_type: "orders",
+              resource_id: order.id,
+              metadata: {
+                event_id: eventId,
+                refund_id: refund?.id,
+                refund_amount_paise: refundAmountPaise,
+                order_total_paise: orderTotalPaise,
+                is_full_refund: isFullRefund,
+              },
+            });
           }
-          break;
         }
-
-        default:
-          break;
+        break;
       }
 
-      // 7. Persist event to razorpay_events table for idempotency and audit logs
-      const { error: insertEventError } = await (adminSupabase
-        .from("razorpay_events") as any)
-        .insert({
-          event_id: eventId,
-          event_type: event,
-          payload: payload as any,
-          processed_at: new Date().toISOString(),
-        });
+      case "order.paid": {
+        const orderEntity = data.order?.entity;
+        if (orderEntity && orderEntity.id) {
+          const { data: order } = await (adminSupabase
+            .from("orders") as any)
+            .select("id, status, payment_status, total_amount")
+            .eq("razorpay_order_id", orderEntity.id)
+            .maybeSingle();
 
-      if (insertEventError) {
-        console.error("Failed to record webhook event in audit table:", insertEventError);
+          if (!order) {
+            await releaseClaimForRetry();
+            console.warn(
+              `Webhook order.paid received for unknown razorpay_order_id: ${orderEntity.id}. Returning 404 for Razorpay retry.`
+            );
+            return NextResponse.json(
+              { error: "Order not found in database; awaiting retry" },
+              { status: 404 }
+            );
+          }
+
+          const expectedPaise = Math.round(Number(order.total_amount) * 100);
+          const paidPaise = Number((orderEntity as any).amount_paid ?? (orderEntity as any).amount ?? 0);
+          if (!Number.isFinite(paidPaise) || paidPaise < expectedPaise) {
+            await (adminSupabase.from("audit_logs") as any).insert({
+              action: "webhook_order_paid_amount_mismatch",
+              resource_type: "orders",
+              resource_id: order.id,
+              metadata: {
+                event_id: eventId,
+                order_id: orderEntity.id,
+                paid_paise: paidPaise,
+                expected_paise: expectedPaise,
+              },
+            });
+            return NextResponse.json(
+              { error: "Order paid amount is less than expected total" },
+              { status: 400 }
+            );
+          }
+
+          await (adminSupabase.from("orders") as any)
+            .update({
+              payment_status: "paid",
+              status: order.status === "pending" ? "confirmed" : order.status,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", order.id)
+            .neq("payment_status", "paid");
+        }
+        break;
       }
+
+      default:
+        break;
     }
 
     return NextResponse.json(

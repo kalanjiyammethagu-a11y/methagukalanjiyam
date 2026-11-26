@@ -20,7 +20,7 @@ export function getAuthSecret(explicitSecret?: string): string {
 export function bytesToHex(bytes: Uint8Array): string {
   let out = "";
   for (let i = 0; i < bytes.length; i++) {
-    out += bytes[i].toString(16).padStart(2, "0");
+    out += (bytes[i] ?? 0).toString(16).padStart(2, "0");
   }
   return out;
 }
@@ -36,8 +36,8 @@ export function constantTimeEqual(a: string, b: string): boolean {
   let diff = bytesA.length ^ bytesB.length;
 
   for (let i = 0; i < maxLen; i++) {
-    const ba = i < bytesA.length ? bytesA[i] : 0;
-    const bb = i < bytesB.length ? bytesB[i] : 0;
+    const ba = bytesA[i] ?? 0;
+    const bb = bytesB[i] ?? 0;
     diff |= ba ^ bb;
   }
 
@@ -55,7 +55,7 @@ export function generateSecureOtp(): string {
 
   while (true) {
     globalThis.crypto.getRandomValues(buf);
-    const sample = buf[0];
+    const sample = buf[0] ?? maxUnbiased;
     if (sample < maxUnbiased) {
       return String(100_000 + (sample % range));
     }
@@ -141,7 +141,8 @@ export function generateBackupCodes(count = 8): string[] {
     globalThis.crypto.getRandomValues(buf);
     let raw = "";
     for (let j = 0; j < 8; j++) {
-      raw += BACKUP_CODE_ALPHABET[buf[j] % alphabetLen];
+      const idx = (buf[j] ?? 0) % alphabetLen;
+      raw += BACKUP_CODE_ALPHABET[idx] ?? "A";
     }
     codes.push(`${raw.slice(0, 4)}-${raw.slice(4, 8)}`);
   }

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resendVerificationSchema } from "@/lib/validators/auth";
-import { issueUserVerificationToken, recordAuthEvent } from "@/lib/auth-service";
+import {
+  findAuthUserByEmail,
+  issueUserVerificationToken,
+  recordAuthEvent,
+} from "@/lib/auth-service";
 import { sendVerificationEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
@@ -40,13 +44,7 @@ export async function POST(req: NextRequest) {
       "unknown";
     const userAgent = req.headers.get("user-agent") || null;
 
-    const { data: userList } = await adminSupabase.auth.admin.listUsers({
-      page: 1,
-      perPage: 1000,
-    });
-    const user = userList?.users?.find(
-      (u) => u.email?.toLowerCase() === normalizedEmail
-    );
+    const user = await findAuthUserByEmail(adminSupabase, normalizedEmail);
 
     if (
       user &&

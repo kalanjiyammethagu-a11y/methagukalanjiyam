@@ -104,7 +104,7 @@ function getShipmentBadgeStyle(status: ShipmentStatus): string {
 function toDateInputValue(iso?: string | null): string {
   if (!iso) return "";
   const match = String(iso).match(/^(\d{4}-\d{2}-\d{2})/);
-  return match ? match[1] : "";
+  return match?.[1] ?? "";
 }
 
 export default function AdminOrdersPage() {
@@ -370,6 +370,7 @@ export default function AdminOrdersPage() {
     { id: "confirmed", label: "Confirmed", count: orders.filter((o) => o.status === "confirmed").length },
     { id: "shipped", label: "Shipped", count: orders.filter((o) => o.status === "shipped").length },
     { id: "delivered", label: "Delivered", count: orders.filter((o) => o.status === "delivered").length },
+    { id: "cancelled", label: "Cancelled", count: orders.filter((o) => o.status === "cancelled").length },
   ];
 
   return (
@@ -399,10 +400,7 @@ export default function AdminOrdersPage() {
             <Server className="h-4 w-4" />
           </span>
           <span className="text-gray-700">
-            <strong className="text-gray-900 font-bold">ERPNext Auto-Sync Active:</strong> Sales orders and customer accounts are synchronized with{" "}
-            <code className="bg-emerald-100/60 text-emerald-900 px-1.5 py-0.5 rounded font-mono text-[11px]">
-              erp.methagukalanjiyam.in
-            </code>.
+            <strong className="text-gray-900 font-bold">ERPNext Auto-Sync Active:</strong> Sales orders and customer accounts are synchronized with your configured ERPNext instance.
           </span>
         </div>
         <Link

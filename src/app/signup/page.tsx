@@ -123,7 +123,7 @@ function SignUpContent() {
         return;
       }
 
-      // Step 3: Auto Signed In with active session & Resend verification dispatched
+      // Step 3: Registration created (unverified) & verification email dispatched
       setCurrentStep(3);
       setCooldown(60);
       setLoading(false);

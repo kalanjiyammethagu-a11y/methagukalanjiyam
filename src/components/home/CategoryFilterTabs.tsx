@@ -55,11 +55,10 @@ export function CategoryFilterTabs({ books }: CategoryFilterTabsProps) {
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => setSelectedCategory(tab.id)}
-                className={`min-h-[44px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all shrink-0 cursor-pointer font-tamil leading-[1.45] active:scale-[0.98] ${
-                  isActive
-                    ? "bg-[#0A6847] dark:bg-[#0D5C3A] text-white shadow-xs font-bold"
-                    : "text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
-                }`}
+                className={`min-h-[44px] px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all shrink-0 cursor-pointer font-tamil leading-[1.45] active:scale-[0.98] ${isActive
+                  ? "bg-[#0A6847] dark:bg-[#0D5C3A] text-white shadow-xs font-bold"
+                  : "text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.06]"
+                  }`}
               >
                 {locale === "ta" ? tab.labelTa : tab.labelEn}
               </button>

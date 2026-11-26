@@ -5,6 +5,7 @@ import { safeJsonLdStringify } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/server";
 import type { ArticleCardData } from "@/components/blog/ArticleCard";
 import { resolveBilingualPair } from "@/lib/i18n";
+import { getSupabaseStorageUrl } from "@/lib/book-images";
 
 export const revalidate = 60;
 
@@ -61,7 +62,7 @@ export default async function BlogPage() {
           titleEn: titlePair.en || titlePair.ta || p.title,
           excerptTa: excerptPair.ta || excerptPair.en || "",
           excerptEn: excerptPair.en || excerptPair.ta || "",
-          coverImage: p.cover_image_url || p.cover_image || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp",
+          coverImage: p.cover_image_url || p.cover_image || getSupabaseStorageUrl("blog", "thalapathi-vinayagam-banner.webp"),
           coverAltTa: p.cover_alt_ta || undefined,
           coverAltEn: p.cover_alt_en || undefined,
           categoryTa: catPair.ta || "வரலாற்று ஆவணம்",
@@ -88,7 +89,7 @@ export default async function BlogPage() {
             titleEn: titlePair.en || titlePair.ta || b.title,
             excerptTa: excerptPair.ta || excerptPair.en || "",
             excerptEn: excerptPair.en || excerptPair.ta || "",
-            coverImage: b.cover_image || "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp",
+            coverImage: b.cover_image || getSupabaseStorageUrl("blog", "thalapathi-vinayagam-banner.webp"),
             categoryTa: "வரலாற்று ஆவணம்",
             categoryEn: "Historical Record",
             publishedAt: b.published_at ? b.published_at.split("T")[0] : "2026-08-01",

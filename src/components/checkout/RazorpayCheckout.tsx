@@ -255,7 +255,7 @@ export function RazorpayCheckout({
         setStatus("failed");
         setErrorMessage(
           res.error.description ||
-            "பணம் செலுத்துதல் தோல்வியடைந்தது. தயவுசெய்து மீண்டும் முயற்சிக்கவும்."
+          "பணம் செலுத்துதல் தோல்வியடைந்தது. தயவுசெய்து மீண்டும் முயற்சிக்கவும்."
         );
         if (onFailure) {
           onFailure(res);
@@ -298,10 +298,9 @@ export function RazorpayCheckout({
           aria-busy={isLoading}
           className={
             buttonClassName ||
-            `w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl text-white font-medium text-base shadow-md transition-all duration-200 active:scale-[0.99] focus:outline-none focus:ring-4 focus:ring-red-900/20 touch-manipulation min-h-[48px] ${
-              disabled || isLoading
-                ? "bg-stone-400 cursor-not-allowed opacity-80"
-                : "bg-[#8B1E0F] hover:bg-[#72180C] hover:shadow-lg"
+            `w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl text-white font-medium text-base shadow-md transition-all duration-200 active:scale-[0.99] focus:outline-none focus:ring-4 focus:ring-red-900/20 touch-manipulation min-h-[48px] ${disabled || isLoading
+              ? "bg-stone-400 cursor-not-allowed opacity-80"
+              : "bg-[#8B1E0F] hover:bg-[#72180C] hover:shadow-lg"
             }`
           }
         >

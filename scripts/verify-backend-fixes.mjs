@@ -2,6 +2,7 @@
  * Verification test script for backend, database, and CRUD hardening
  */
 import assert from "node:assert";
+import "../tests/unit/ts-alias-loader.mjs";
 
 async function runTests() {
   console.log("=================================================");

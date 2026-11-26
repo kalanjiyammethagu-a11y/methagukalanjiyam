@@ -24,6 +24,7 @@ import { GlassPanel } from "@/components/ui/GlassPanel";
 import { formatINR } from "@/lib/utils";
 import { useLanguage } from "@/context/LanguageContext";
 import { localized } from "@/lib/i18n";
+import { WHATSAPP_NUMBER } from "@/lib/whatsapp";
 import {
   SHIPMENT_STATUS_LABELS,
   ST_COURIER_TRACKING_URL,
@@ -129,7 +130,7 @@ export default function OrderConfirmationPage() {
       await navigator.clipboard.writeText(tid);
       setCopiedTracking(true);
       setTimeout(() => setCopiedTracking(false), 2000);
-    } catch {}
+    } catch { }
   };
 
   const handlePrint = () => {
@@ -220,7 +221,7 @@ export default function OrderConfirmationPage() {
               </button>
 
               <a
-                href={`https://wa.me/918248654946?text=${encodeURIComponent(
+                href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
                   `வணக்கம் மேதகு களஞ்சியம்,\nஎனது ஆர்டர் எண்: ${order.order_number} குறித்து விசாரிக்க விரும்புகிறேன்.`
                 )}`}
                 target="_blank"
@@ -269,16 +270,16 @@ export default function OrderConfirmationPage() {
                     </h3>
                     <p className="text-xs text-neutral-700 dark:text-zinc-200 font-tamil leading-relaxed">
                       {isTa
-                        ? `ஆர்டர் நிலை: ${statusLabel}. முழு கண்காணிப்பு எண் மற்றும் நிகழ்வுகளைக் காண உங்கள் தொலைபேசி எண்ணின் கடைசி 4 இலக்கங்களை உள்ளிடவும்.`
-                        : `Current shipment status: ${statusLabel}. Enter the last 4 digits of your order phone number (or sign in) to unlock tracking details.`}
+                        ? `ஆர்டர் நிலை: ${statusLabel}. முழு கண்காணிப்பு எண் மற்றும் நிகழ்வுகளைக் காண ஆர்டரின் போது வழங்கிய 10 இலக்க கைபேசி எண்ணை உள்ளிடவும்.`
+                        : `Current shipment status: ${statusLabel}. Enter your 10-digit order phone number (or sign in) to unlock tracking details.`}
                     </p>
                   </div>
                 </div>
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
-                    if (phoneVerifyInput.trim().length >= 4) {
-                      loadOrder(phoneVerifyInput.trim());
+                    if (phoneVerifyInput.replace(/\D/g, "").length >= 10) {
+                      loadOrder(phoneVerifyInput.replace(/\D/g, ""));
                     }
                   }}
                   className="flex flex-wrap gap-2"
@@ -288,12 +289,12 @@ export default function OrderConfirmationPage() {
                     inputMode="numeric"
                     value={phoneVerifyInput}
                     onChange={(e) => setPhoneVerifyInput(e.target.value)}
-                    placeholder={isTa ? "கடைசி 4 இலக்கங்கள் (எ.கா. 4321)" : "Last 4 digits of phone"}
+                    placeholder={isTa ? "10 இலக்க கைபேசி எண் (எ.கா. 9876543210)" : "10-digit mobile number"}
                     className="flex-1 min-w-[180px] px-3 py-2 rounded-xl border border-black/15 dark:border-white/15 bg-white dark:bg-zinc-900 text-[#111111] dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 text-xs font-mono min-h-[44px]"
                   />
                   <button
                     type="submit"
-                    disabled={verifyingPhone || phoneVerifyInput.trim().length < 4}
+                    disabled={verifyingPhone || phoneVerifyInput.replace(/\D/g, "").length < 10}
                     className="px-4 py-2 rounded-xl bg-[#0A6847] hover:bg-[#085237] disabled:opacity-60 text-white text-xs font-bold min-h-[44px] cursor-pointer"
                   >
                     {verifyingPhone

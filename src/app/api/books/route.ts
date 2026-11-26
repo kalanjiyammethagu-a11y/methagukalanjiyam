@@ -17,8 +17,13 @@ export async function GET(req: NextRequest) {
     try {
       const supabase = await createClient();
       const buildQuery = (bilingualSearch: boolean) => {
+        const categorySelect =
+          category && category !== "all"
+            ? "*, categories!inner(name_ta, name_en, slug)"
+            : "*, categories(name_ta, name_en, slug)";
+
         let qBuilder = (supabase.from("books") as any)
-          .select("*, categories(name_ta, name_en, slug)")
+          .select(categorySelect)
           .eq("status", "published");
 
         if (category && category !== "all") {

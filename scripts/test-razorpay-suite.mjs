@@ -10,56 +10,19 @@
 
 import assert from "node:assert";
 import crypto from "node:crypto";
-import {
+import "../tests/unit/ts-alias-loader.mjs";
+
+const { calculateOrderSummary } = await import("../src/lib/razorpay.ts");
+const {
   verifyPaymentSignature,
   verifyWebhookSignature,
-} from "../src/lib/crypto.ts";
-import { allBooks } from "../src/data/books.ts";
-
-// Server-side calculation mirror from src/lib/razorpay.ts
-function calculateOrderSummary(requestedItems, state) {
-  if (!requestedItems || requestedItems.length === 0) {
-    throw new Error("Order must contain at least one item");
-  }
-
-  const items = [];
-  let subtotal = 0;
-
-  for (const item of requestedItems) {
-    const book = allBooks.find((b) => b.id === item.book_id || b.slug === item.book_id);
-    if (!book) {
-      throw new Error(`Book with id '${item.book_id}' not found`);
-    }
-    if (item.quantity <= 0) {
-      throw new Error(`Invalid quantity for book '${book.title}'`);
-    }
-    if (book.stock < item.quantity) {
-      throw new Error(`Insufficient stock for '${book.title}'. Available: ${book.stock}`);
-    }
-
-    const unitPrice = book.discountPrice ?? book.price;
-    const lineTotal = unitPrice * item.quantity;
-    subtotal += lineTotal;
-    items.push({ book, quantity: item.quantity, unitPrice, lineTotal });
-  }
-
-  const normalizedState = (state || "").trim().toLowerCase();
-  const isTamilNadu =
-    normalizedState.includes("tamil nadu") ||
-    normalizedState.includes("tamilnadu") ||
-    normalizedState.includes("தமிழ்நாடு") ||
-    normalizedState === "tn";
-
-  const shippingFee = isTamilNadu ? 60 : 100;
-  const totalAmount = subtotal + shippingFee;
-  const amountInPaise = Math.round(totalAmount * 100);
-
-  return { items, subtotal, shippingFee, totalAmount, amountInPaise };
-}
-import {
+} = await import("../src/lib/crypto.ts");
+const {
   createOrderSchema,
   verifyPaymentSchema,
-} from "../src/lib/validators/order.ts";
+} = await import("../src/lib/validators/order.ts");
+
+const SAMPLE_BOOK_ID = "b0000000-0000-0000-0000-000000000001";
 
 console.log("==========================================================");
 console.log(" METHAGU KALANJIYAM — RAZORPAY PAYMENTS TEST MATRIX");
@@ -86,9 +49,9 @@ function test(title, fn) {
 console.log("[SUITE 1] Server-Side Price & Amount Calculation in Paise:");
 
 test("1.1 Calculates subtotal correctly ignoring client prices", () => {
-  // book id "1" (Katunayake) is ₹100 in data/books.ts
+  // book id "b0000000-0000-0000-0000-000000000001" (Katunayake) is ₹100 in data/books.ts
   const summary = calculateOrderSummary(
-    [{ book_id: "1", quantity: 2 }],
+    [{ book_id: SAMPLE_BOOK_ID, quantity: 2 }],
     "Tamil Nadu"
   );
   assert.strictEqual(summary.subtotal, 200);
@@ -98,18 +61,18 @@ test("1.1 Calculates subtotal correctly ignoring client prices", () => {
 });
 
 test("1.2 Charges ₹60 shipping for Tamil Nadu variations (English, Tamil, TN)", () => {
-  const tnEn = calculateOrderSummary([{ book_id: "1", quantity: 1 }], "Tamil Nadu");
+  const tnEn = calculateOrderSummary([{ book_id: SAMPLE_BOOK_ID, quantity: 1 }], "Tamil Nadu");
   assert.strictEqual(tnEn.shippingFee, 60);
 
-  const tnTa = calculateOrderSummary([{ book_id: "1", quantity: 1 }], "தமிழ்நாடு");
+  const tnTa = calculateOrderSummary([{ book_id: SAMPLE_BOOK_ID, quantity: 1 }], "தமிழ்நாடு");
   assert.strictEqual(tnTa.shippingFee, 60);
 
-  const tnShort = calculateOrderSummary([{ book_id: "1", quantity: 1 }], "TN");
+  const tnShort = calculateOrderSummary([{ book_id: SAMPLE_BOOK_ID, quantity: 1 }], "TN");
   assert.strictEqual(tnShort.shippingFee, 60);
 });
 
 test("1.3 Charges ₹100 shipping for non-Tamil Nadu states", () => {
-  const summary = calculateOrderSummary([{ book_id: "1", quantity: 1 }], "Karnataka");
+  const summary = calculateOrderSummary([{ book_id: SAMPLE_BOOK_ID, quantity: 1 }], "Karnataka");
   assert.strictEqual(summary.subtotal, 100);
   assert.strictEqual(summary.shippingFee, 100);
   assert.strictEqual(summary.totalAmount, 200);
@@ -125,11 +88,11 @@ test("1.4 Rejects empty items array on server", () => {
 
 test("1.5 Rejects negative or zero item quantities", () => {
   assert.throws(
-    () => calculateOrderSummary([{ book_id: "1", quantity: 0 }], "Tamil Nadu"),
+    () => calculateOrderSummary([{ book_id: SAMPLE_BOOK_ID, quantity: 0 }], "Tamil Nadu"),
     /Invalid quantity/
   );
   assert.throws(
-    () => calculateOrderSummary([{ book_id: "1", quantity: -5 }], "Tamil Nadu"),
+    () => calculateOrderSummary([{ book_id: SAMPLE_BOOK_ID, quantity: -5 }], "Tamil Nadu"),
     /Invalid quantity/
   );
 });
@@ -308,7 +271,7 @@ test("4.3 VerifyPaymentSchema rejects short/invalid signature length", () => {
 
 test("4.4 CreateOrderSchema rejects order without phone number", () => {
   const noPhone = {
-    items: [{ book_id: "1", quantity: 1 }],
+    items: [{ book_id: SAMPLE_BOOK_ID, quantity: 1 }],
     shipping_address: {
       full_name: "Test Reader",
       phone: "", // Missing

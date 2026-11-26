@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ orders: [], message: "Not authenticated" }, { status: 200 });
+      return NextResponse.json({ orders: [], error: "Authentication required" }, { status: 401 });
     }
 
     // Explicitly project customer-safe tracking fields (NEVER select internal_note or admin_notes)
@@ -124,8 +124,8 @@ export async function GET(req: NextRequest) {
       const trackingUrl = o.tracking_url || resolveCourierTrackingUrl(courierName);
       const events = Array.isArray(o.order_shipment_events)
         ? [...o.order_shipment_events].sort(
-            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-          )
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        )
         : [];
 
       return {

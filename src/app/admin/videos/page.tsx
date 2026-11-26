@@ -1,4 +1,5 @@
 "use client";
+import { getSupabaseStorageUrl } from "@/lib/book-images";
 
 import * as React from "react";
 import Image from "next/image";
@@ -25,11 +26,17 @@ import {
   generateAsciiSlug,
   getLanguageCompleteness,
   isAsciiSlug,
+  isTamilText,
   REQUIRE_BOTH_LANGUAGES_TO_PUBLISH,
   resolveBilingualPair,
   type AppLocale,
 } from "@/lib/i18n";
 import { BilingualListBadge, BilingualTabs } from "@/components/admin/BilingualTabs";
+import {
+  VIDEO_CATEGORY_OPTIONS,
+  normalizeVideoEmbedUrl,
+  resolveVideoMedia,
+} from "@/lib/video-utils";
 
 const VIDEO_REQUIRED_BILINGUAL_FIELDS = ["title"];
 
@@ -73,7 +80,7 @@ const initialFormData: VideoFormData = {
   video_url: "",
   embed_url: "",
   poster_path: "",
-  poster_url: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/video-posters/1.webp",
+  poster_url: getSupabaseStorageUrl("video-posters", "1.webp"),
   duration_seconds: 0,
   file_size_bytes: 0,
   mime_type: "video/mp4",
@@ -105,6 +112,8 @@ export default function AdminVideosPage() {
   // Upload progress states
   const [videoUploadProgress, setVideoUploadProgress] = React.useState<number | null>(null);
   const [posterUploadProgress, setPosterUploadProgress] = React.useState(false);
+  const [resolvingOdysee, setResolvingOdysee] = React.useState(false);
+  const [showOdyseePreview, setShowOdyseePreview] = React.useState(false);
   const [uploadWarning, setUploadWarning] = React.useState<string | null>(null);
 
   const posterInputRef = React.useRef<HTMLInputElement>(null);
@@ -242,7 +251,7 @@ export default function AdminVideosPage() {
         ...prev,
         video_path: path,
         video_url: publicUrl,
-        embed_url: publicUrl,
+        embed_url: "",
         file_size_bytes: file.size,
         mime_type: file.type || "video/mp4",
       }));
@@ -253,6 +262,71 @@ export default function AdminVideosPage() {
       showToast(err.message || "Failed to upload video file.");
     } finally {
       setTimeout(() => setVideoUploadProgress(null), 1500);
+    }
+  };
+
+  // Resolve Odysee URL metadata + thumbnail into Admin form
+  const handleResolveOdysee = async () => {
+    const rawInput = formData.embed_url.trim();
+    if (!rawInput) {
+      showToast("Paste an Odysee link or lbry:// URI first.");
+      return;
+    }
+    setResolvingOdysee(true);
+    try {
+      const res = await fetch("/api/admin/videos/odysee-resolve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: rawInput }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showToast(data.error || "Could not resolve Odysee URL.");
+        return;
+      }
+
+      const resolvedTitle = String(data.title || "").trim();
+      const resolvedDesc = String(data.description || "").trim();
+      const titleIsTamil = isTamilText(resolvedTitle);
+      const descIsTamil = isTamilText(resolvedDesc);
+
+      setFormData((prev) => ({
+        ...prev,
+        embed_url: data.embedUrl || prev.embed_url,
+        title_en:
+          !prev.title_en.trim() && resolvedTitle && !titleIsTamil
+            ? resolvedTitle
+            : prev.title_en,
+        title_ta:
+          !prev.title_ta.trim() && resolvedTitle && titleIsTamil
+            ? resolvedTitle
+            : prev.title_ta,
+        description_en:
+          !prev.description_en.trim() && resolvedDesc && !descIsTamil
+            ? resolvedDesc
+            : prev.description_en,
+        description_ta:
+          !prev.description_ta.trim() && resolvedDesc && descIsTamil
+            ? resolvedDesc
+            : prev.description_ta,
+        slug: !prev.slug.trim() && data.slug ? data.slug : prev.slug,
+        duration_seconds:
+          !prev.duration_seconds && Number(data.durationSeconds) > 0
+            ? Number(data.durationSeconds)
+            : prev.duration_seconds,
+        poster_url: data.posterUrl || prev.poster_url,
+        poster_path: data.posterPath || prev.poster_path,
+      }));
+      setShowOdyseePreview(true);
+      showToast(
+        resolvedTitle
+          ? "Odysee embed & metadata auto-filled!"
+          : "Odysee embed URL normalized."
+      );
+    } catch {
+      showToast("Network error resolving Odysee link.");
+    } finally {
+      setResolvingOdysee(false);
     }
   };
 
@@ -283,6 +357,16 @@ export default function AdminVideosPage() {
   const handleOpenEdit = (v: AdminVideoItem) => {
     const titlePair = resolveBilingualPair({ en: v.title_en, ta: v.title_ta, legacy: v.title });
     const descPair = resolveBilingualPair({ en: v.description_en, ta: v.description_ta, legacy: v.description });
+    const media = resolveVideoMedia({
+      embed_url: v.embed_url,
+      video_url: v.video_url,
+      video_path: v.video_path,
+    });
+    const matchedCat = VIDEO_CATEGORY_OPTIONS.find(
+      (c) =>
+        c.labelEn.toLowerCase() === (v.category_en || "").toLowerCase() ||
+        c.labelTa.toLowerCase() === (v.category_ta || "").toLowerCase()
+    );
     const populated: VideoFormData = {
       id: v.id,
       title_en: titlePair.en,
@@ -290,14 +374,14 @@ export default function AdminVideosPage() {
       slug: v.slug,
       description_en: descPair.en,
       description_ta: descPair.ta,
-      category_en: v.category_en || "Book Showcase",
-      category_ta: v.category_ta || "புத்தகக் காணொளி",
+      category_en: matchedCat?.labelEn || v.category_en || "Book Showcase",
+      category_ta: matchedCat?.labelTa || v.category_ta || "புத்தகக் காணொளி",
       poster_alt_en: v.poster_alt_en || "",
       poster_alt_ta: v.poster_alt_ta || "",
-      sourceType: v.video_url ? "upload" : "embed",
-      video_path: v.video_path || "",
-      video_url: v.video_url || "",
-      embed_url: v.embed_url || "",
+      sourceType: media.mode,
+      video_path: media.mode === "upload" ? v.video_path || "" : "",
+      video_url: media.mode === "upload" ? media.videoUrl || "" : "",
+      embed_url: media.mode === "embed" ? media.embedUrl : "",
       poster_path: v.poster_path || "",
       poster_url: v.poster_url,
       duration_seconds: v.duration_seconds || 0,
@@ -366,6 +450,16 @@ export default function AdminVideosPage() {
       showToast("Slug must contain only ASCII lowercase letters, numbers, and hyphens.");
       return null;
     }
+    const isUpload = formData.sourceType === "upload";
+    if (isUpload && !formData.video_url.trim() && !formData.video_path.trim()) {
+      showToast("Please upload a video file to Supabase Storage or switch to External Embed.");
+      return null;
+    }
+    if (!isUpload && !formData.embed_url.trim()) {
+      showToast("Please enter an Odysee, YouTube, or Vimeo video URL.");
+      return null;
+    }
+    const normalizedEmbed = !isUpload ? normalizeVideoEmbedUrl(formData.embed_url) : "";
     return {
       ...formData,
       title: formData.title_ta.trim() || formData.title_en.trim(),
@@ -375,6 +469,11 @@ export default function AdminVideosPage() {
       description_en: formData.description_en.trim() || null,
       description_ta: formData.description_ta.trim() || null,
       slug: cleanSlug,
+      video_path: isUpload ? formData.video_path.trim() : "",
+      video_url: isUpload ? formData.video_url.trim() : "",
+      embed_url: isUpload ? formData.video_url.trim() : normalizedEmbed,
+      file_size_bytes: isUpload ? formData.file_size_bytes : 0,
+      mime_type: isUpload ? formData.mime_type : "",
     };
   };
 
@@ -625,7 +724,11 @@ export default function AdminVideosPage() {
                       </div>
                     </td>
                     <td className="py-3.5 px-4">
-                      {v.video_url ? (
+                      {resolveVideoMedia({
+                        embed_url: v.embed_url,
+                        video_url: v.video_url,
+                        video_path: v.video_path,
+                      }).mode === "upload" ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
                           <HardDrive className="h-3 w-3" />
                           Supabase Storage
@@ -633,7 +736,7 @@ export default function AdminVideosPage() {
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
                           <Globe className="h-3 w-3" />
-                          External Embed
+                          {v.embed_url?.includes("odysee.com") ? "Odysee Embed" : "External Embed"}
                         </span>
                       )}
                     </td>
@@ -685,8 +788,8 @@ export default function AdminVideosPage() {
           ADD / EDIT VIDEO MODAL
           ========================================================================= */}
       {(isAddOpen || isEditOpen) && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-xl w-full shadow-2xl border border-gray-200 overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-xl w-full shadow-2xl border border-gray-200 overflow-hidden my-4 sm:my-8 max-h-[92dvh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
             <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between">
               <h2 className="text-base font-bold text-gray-900">
                 {isAddOpen ? "Add Archival Video" : "Edit Video Entry"}
@@ -893,17 +996,70 @@ export default function AdminVideosPage() {
                   )}
                 </div>
               ) : (
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Embed URL (Odysee / YouTube / Vimeo) *
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.embed_url}
-                    onChange={(e) => setFormData({ ...formData, embed_url: e.target.value })}
-                    placeholder="https://odysee.com/$/embed/@Methagu_kalanjiyam:7/..."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
-                  />
+                <div className="space-y-2.5 p-3.5 rounded-2xl bg-blue-50/40 border border-blue-200/80">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <label className="block text-xs font-bold text-gray-800">
+                      Odysee / Embed Link (Watch, Embed, or lbry://) *
+                    </label>
+                    <a
+                      href="https://odysee.com/$/upload"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-blue-200 text-[11px] font-bold text-blue-700 hover:bg-blue-50 transition-colors"
+                    >
+                      <UploadCloud className="h-3.5 w-3.5" />
+                      Upload on Odysee
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="text"
+                      value={formData.embed_url}
+                      onChange={(e) => setFormData({ ...formData, embed_url: e.target.value })}
+                      onBlur={() => {
+                        const norm = normalizeVideoEmbedUrl(formData.embed_url);
+                        if (norm && norm !== formData.embed_url) {
+                          setFormData((prev) => ({ ...prev, embed_url: norm }));
+                        }
+                      }}
+                      placeholder="https://odysee.com/@Methagu_kalanjiyam:7/... or lbry://..."
+                      className="flex-1 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleResolveOdysee}
+                      disabled={resolvingOdysee || !formData.embed_url.trim()}
+                      className="px-3.5 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 disabled:opacity-50 text-white text-xs font-bold transition-colors cursor-pointer min-h-[44px] whitespace-nowrap"
+                    >
+                      {resolvingOdysee ? "Fetching..." : "Auto-Fill from Odysee"}
+                    </button>
+                  </div>
+                  {formData.embed_url.trim() && (
+                    <div className="flex items-center justify-between gap-2 text-[11px]">
+                      <span className="font-mono text-blue-800 truncate flex-1">
+                        Embed: {normalizeVideoEmbedUrl(formData.embed_url)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowOdyseePreview((v) => !v)}
+                        className="font-bold text-blue-700 hover:underline shrink-0 cursor-pointer"
+                      >
+                        {showOdyseePreview ? "Hide Preview" : "Preview Player"}
+                      </button>
+                    </div>
+                  )}
+                  {showOdyseePreview && formData.embed_url.trim() && (
+                    <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-black border border-blue-200">
+                      <iframe
+                        src={normalizeVideoEmbedUrl(formData.embed_url)}
+                        title="Odysee Preview"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="absolute inset-0 w-full h-full border-0"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -954,8 +1110,29 @@ export default function AdminVideosPage() {
                 )}
               </div>
 
-              {/* Duration and Sort Order */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Category, Duration, Sort Order & Status */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Category</label>
+                  <select
+                    value={formData.category_en}
+                    onChange={(e) => {
+                      const opt = VIDEO_CATEGORY_OPTIONS.find((c) => c.labelEn === e.target.value);
+                      setFormData({
+                        ...formData,
+                        category_en: opt?.labelEn || e.target.value,
+                        category_ta: opt?.labelTa || formData.category_ta,
+                      });
+                    }}
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
+                  >
+                    {VIDEO_CATEGORY_OPTIONS.map((opt) => (
+                      <option key={opt.slug} value={opt.labelEn}>
+                        {opt.labelEn} ({opt.labelTa})
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">
                     Duration (Seconds)
@@ -970,22 +1147,36 @@ export default function AdminVideosPage() {
                     className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Status</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        status: e.target.value as "draft" | "published",
-                        is_active: e.target.value === "published",
-                      })
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
-                  >
-                    <option value="published">Published</option>
-                    <option value="draft">Draft</option>
-                  </select>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Order</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={formData.sort_order}
+                      onChange={(e) =>
+                        setFormData({ ...formData, sort_order: parseInt(e.target.value) || 0 })
+                      }
+                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Status</label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          status: e.target.value as "draft" | "published",
+                          is_active: e.target.value === "published",
+                        })
+                      }
+                      className="w-full px-2.5 py-2.5 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
+                    >
+                      <option value="published">Published</option>
+                      <option value="draft">Draft</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 

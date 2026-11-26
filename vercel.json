@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "schedules": {
+    "cleanup-orders": {
+      "path": "/api/cron/cleanup-orders",
+      "requestMethod": "GET",
+      "schedule": "*/15 * * * *"
+    }
+  }
+}

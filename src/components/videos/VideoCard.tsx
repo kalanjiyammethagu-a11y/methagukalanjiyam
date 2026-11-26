@@ -6,6 +6,7 @@ import { Play, Clock, Maximize2, Square, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { localized } from "@/lib/i18n";
+import { getAutoplayEmbedUrl, resolveVideoMedia } from "@/lib/video-utils";
 
 export interface VideoData {
   id: string;
@@ -32,19 +33,6 @@ export interface VideoCardProps {
   onStop?: () => void;
   onExpand?: (video: VideoData) => void;
   className?: string;
-}
-
-function getAutoplayUrl(url: string): string {
-  try {
-    const u = new URL(url);
-    u.searchParams.set("autoplay", "true");
-    u.searchParams.set("muted", "0");
-    u.searchParams.set("playsinline", "1");
-    return u.toString();
-  } catch {
-    const sep = url.includes("?") ? "&" : "?";
-    return `${url}${sep}autoplay=true&muted=0&playsinline=1`;
-  }
 }
 
 export function VideoCard({
@@ -76,9 +64,14 @@ export function VideoCard({
     }
   };
 
+  const resolvedMedia = React.useMemo(
+    () => resolveVideoMedia({ embed_url: video.embedUrl, video_url: video.videoUrl }),
+    [video.embedUrl, video.videoUrl]
+  );
+
   const autoplaySrc = React.useMemo(() => {
-    return isPlaying ? getAutoplayUrl(video.embedUrl) : video.embedUrl;
-  }, [isPlaying, video.embedUrl]);
+    return isPlaying ? getAutoplayEmbedUrl(resolvedMedia.embedUrl) : resolvedMedia.embedUrl;
+  }, [isPlaying, resolvedMedia.embedUrl]);
 
   return (
     <article
@@ -96,9 +89,9 @@ export function VideoCard({
       <div className="relative aspect-video w-full overflow-hidden bg-black/90">
         {isPlaying ? (
           <div className="relative w-full h-full">
-            {video.videoUrl ? (
+            {resolvedMedia.mode === "upload" && resolvedMedia.videoUrl ? (
               <video
-                src={video.videoUrl}
+                src={resolvedMedia.videoUrl}
                 controls
                 autoPlay
                 playsInline

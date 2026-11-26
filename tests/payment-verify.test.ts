@@ -1,21 +1,26 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import crypto from "crypto";
-import { verifyPaymentSignature } from "../src/lib/crypto";
-import { verifyPaymentSchema } from "../src/lib/validators/order";
+import crypto from "node:crypto";
+import { verifyPaymentSignature, verifyWebhookSignature } from "../src/lib/crypto.ts";
+import { calculateOrderSummary } from "../src/lib/razorpay.ts";
+import {
+  addressSchema,
+  createOrderSchema,
+  verifyPaymentSchema,
+} from "../src/lib/validators/order.ts";
 
-describe("Payment Verification & Idempotency Unit Tests", () => {
+describe("Payment Verification, Webhook Crypto & Order Summary Tests", () => {
   const testSecret = "test_razorpay_secret_key_123456789";
+  const webhookSecret = "whsec_test_secret_987654321";
   const validOrderId = "order_EKfMRJln2Gj30A";
   const validPaymentId = "pay_29QQoUBi66xm2f";
 
-  // Generate valid HMAC SHA256 signature
   const validSignature = crypto
     .createHmac("sha256", testSecret)
     .update(`${validOrderId}|${validPaymentId}`)
     .digest("hex");
 
-  it("1. Valid signature verifies successfully with timing-safe HMAC SHA-256", () => {
+  it("1. Valid payment signature verifies successfully with timing-safe HMAC SHA-256", () => {
     const isValid = verifyPaymentSignature({
       order_id: validOrderId,
       payment_id: validPaymentId,
@@ -25,180 +30,189 @@ describe("Payment Verification & Idempotency Unit Tests", () => {
     assert.equal(isValid, true);
   });
 
-  it("2. Invalid signature is strictly rejected", () => {
-    const badSignature = "a".repeat(64);
-    const isValid = verifyPaymentSignature({
-      order_id: validOrderId,
-      payment_id: validPaymentId,
-      signature: badSignature,
-      secret: testSecret,
-    });
-    assert.equal(isValid, false);
+  it("2. Rejects tampered, mismatched-length, or missing-secret payment signatures", () => {
+    assert.equal(
+      verifyPaymentSignature({
+        order_id: validOrderId,
+        payment_id: validPaymentId,
+        signature: "a".repeat(64),
+        secret: testSecret,
+      }),
+      false
+    );
 
-    // Mismatched length
-    const shortSignature = "abc123";
-    const isShortValid = verifyPaymentSignature({
-      order_id: validOrderId,
-      payment_id: validPaymentId,
-      signature: shortSignature,
-      secret: testSecret,
-    });
-    assert.equal(isShortValid, false);
-  });
+    assert.equal(
+      verifyPaymentSignature({
+        order_id: validOrderId,
+        payment_id: validPaymentId,
+        signature: "abc123",
+        secret: testSecret,
+      }),
+      false
+    );
 
-  it("3. Missing or malformed payload fields fail Zod validation with 400 status", () => {
-    // Missing all fields
-    const emptyResult = verifyPaymentSchema.safeParse({});
-    assert.equal(emptyResult.success, false);
-
-    // Missing signature
-    const missingSig = verifyPaymentSchema.safeParse({
-      razorpay_order_id: validOrderId,
-      razorpay_payment_id: validPaymentId,
-    });
-    assert.equal(missingSig.success, false);
-
-    // Invalid format (not matching regex)
-    const malformed = verifyPaymentSchema.safeParse({
-      razorpay_order_id: "invalid_id",
-      razorpay_payment_id: "invalid_pay",
-      razorpay_signature: "invalid_sig",
-    });
-    assert.equal(malformed.success, false);
-  });
-
-  it("4. Idempotent replay of same verification returns 200 with existing order", () => {
-    // Simulate database state for an already paid order
-    const existingOrderInDb = {
-      id: "ord_1001",
-      order_number: "MK-2026-0001",
-      payment_status: "paid",
-      status: "confirmed",
-      razorpay_payment_id: validPaymentId,
-    };
-
-    const incomingPayment = {
-      order_id: validOrderId,
-      payment_id: validPaymentId,
-    };
-
-    // Idempotency check logic from route handler:
-    let responseStatus: number;
-    let responseBody: any;
-
-    if (existingOrderInDb.payment_status === "paid") {
-      if (existingOrderInDb.razorpay_payment_id === incomingPayment.payment_id) {
-        responseStatus = 200;
-        responseBody = {
-          success: true,
-          message: "Payment already verified and order confirmed.",
-          order_id: existingOrderInDb.id,
-          order_number: existingOrderInDb.order_number,
-        };
-      } else {
-        responseStatus = 409;
-        responseBody = { error: "Order is already paid with a different payment reference" };
-      }
-    } else {
-      responseStatus = 200;
-      responseBody = { success: true };
-    }
-
-    assert.equal(responseStatus, 200);
-    assert.equal(responseBody.success, true);
-    assert.equal(responseBody.order_id, "ord_1001");
-    assert.equal(responseBody.order_number, "MK-2026-0001");
-  });
-
-  it("5. Concurrent second submission (simulated 0 updated rows + replay check) returns 200", () => {
-    // Thread 1 previously updated the order.
-    // Thread 2 runs: UPDATE orders ... WHERE payment_status != 'paid' -> matches 0 rows!
-    const updatedRows = [] as any[]; // 0 rows updated because status is already 'paid'
-
-    const existingOrderInDb = {
-      id: "ord_1001",
-      order_number: "MK-2026-0001",
-      payment_status: "paid",
-      status: "confirmed",
-      razorpay_payment_id: validPaymentId,
-    };
-
-    let responseStatus: number;
-    let responseBody: any;
-
-    if (updatedRows.length === 0) {
-      if (existingOrderInDb.payment_status === "paid") {
-        if (existingOrderInDb.razorpay_payment_id === validPaymentId) {
-          responseStatus = 200;
-          responseBody = {
-            success: true,
-            message: "Payment already verified and order confirmed.",
-            order_id: existingOrderInDb.id,
-            order_number: existingOrderInDb.order_number,
-          };
-        } else {
-          responseStatus = 409;
-          responseBody = { error: "Order is already paid with a different payment reference" };
-        }
-      } else {
-        responseStatus = 400;
-        responseBody = { error: "Order could not be transitioned" };
-      }
-    } else {
-      responseStatus = 200;
-      responseBody = { success: true };
-    }
-
-    assert.equal(responseStatus, 200);
-    assert.equal(responseBody.success, true);
-    assert.equal(responseBody.order_id, "ord_1001");
-  });
-
-  it("6. Mismatched payment ID on an already-paid order returns 409 Conflict", () => {
-    const existingOrderInDb = {
-      id: "ord_1001",
-      order_number: "MK-2026-0001",
-      payment_status: "paid",
-      status: "confirmed",
-      razorpay_payment_id: "pay_different_payment_id_9999",
-    };
-
-    const incomingPaymentId = validPaymentId;
-
-    let responseStatus = 200;
-    let responseBody: any;
-
-    if (existingOrderInDb.payment_status === "paid") {
-      if (existingOrderInDb.razorpay_payment_id === incomingPaymentId) {
-        responseStatus = 200;
-      } else {
-        responseStatus = 409;
-        responseBody = { error: "Order is already paid with a different payment reference" };
+    const prevEnvSecret = process.env.RAZORPAY_KEY_SECRET;
+    delete process.env.RAZORPAY_KEY_SECRET;
+    try {
+      assert.equal(
+        verifyPaymentSignature({
+          order_id: validOrderId,
+          payment_id: validPaymentId,
+          signature: validSignature,
+          secret: "",
+        }),
+        false
+      );
+      assert.equal(
+        verifyPaymentSignature({
+          order_id: "",
+          payment_id: validPaymentId,
+          signature: validSignature,
+          secret: testSecret,
+        }),
+        false
+      );
+      assert.equal(
+        verifyPaymentSignature({
+          order_id: validOrderId,
+          payment_id: "",
+          signature: validSignature,
+          secret: testSecret,
+        }),
+        false
+      );
+      assert.equal(
+        verifyPaymentSignature({
+          order_id: validOrderId,
+          payment_id: validPaymentId,
+          signature: "",
+          secret: testSecret,
+        }),
+        false
+      );
+    } finally {
+      if (prevEnvSecret !== undefined) {
+        process.env.RAZORPAY_KEY_SECRET = prevEnvSecret;
       }
     }
-
-    assert.equal(responseStatus, 409);
-    assert.equal(responseBody.error, "Order is already paid with a different payment reference");
   });
 
-  it("7. Terminal order status (cancelled/refunded) rejects verification with 400", () => {
-    const cancelledOrder = {
-      id: "ord_1002",
-      order_number: "MK-2026-0002",
-      payment_status: "pending",
-      status: "cancelled",
-      razorpay_payment_id: null,
-    };
+  it("3. verifyWebhookSignature validates exact raw bodies and rejects tampering, wrong length, or missing secret", () => {
+    const rawBody = JSON.stringify({ event: "payment.captured", payload: { payment: { entity: { id: validPaymentId, order_id: validOrderId, amount: 26000 } } } });
+    const sig = crypto.createHmac("sha256", webhookSecret).update(rawBody).digest("hex");
 
-    let responseStatus = 200;
-    let responseBody: any;
+    assert.equal(verifyWebhookSignature(rawBody, sig, webhookSecret), true);
+    assert.equal(verifyWebhookSignature(rawBody + " ", sig, webhookSecret), false);
+    assert.equal(verifyWebhookSignature(rawBody, "a".repeat(64), webhookSecret), false);
+    assert.equal(verifyWebhookSignature(rawBody, "short_sig", webhookSecret), false);
+    assert.equal(verifyWebhookSignature("", sig, webhookSecret), false);
+    assert.equal(verifyWebhookSignature(rawBody, "", webhookSecret), false);
+    assert.equal(verifyWebhookSignature(rawBody, sig, ""), false);
+  });
 
-    if (cancelledOrder.status === "cancelled" || cancelledOrder.status === "refunded") {
-      responseStatus = 400;
-      responseBody = { error: `Cannot verify payment for order with status: ${cancelledOrder.status}` };
-    }
+  it("4. verifyPaymentSchema, addressSchema, and createOrderSchema reject invalid inputs", () => {
+    assert.equal(verifyPaymentSchema.safeParse({}).success, false);
+    assert.equal(
+      verifyPaymentSchema.safeParse({
+        razorpay_order_id: validOrderId,
+        razorpay_payment_id: validPaymentId,
+      }).success,
+      false
+    );
+    assert.equal(
+      verifyPaymentSchema.safeParse({
+        razorpay_order_id: "invalid_id",
+        razorpay_payment_id: "invalid_pay",
+        razorpay_signature: "invalid_sig",
+      }).success,
+      false
+    );
 
-    assert.equal(responseStatus, 400);
-    assert.ok(responseBody.error.includes("cancelled"));
+    assert.equal(
+      verifyPaymentSchema.safeParse({
+        razorpay_order_id: validOrderId,
+        razorpay_payment_id: validPaymentId,
+        razorpay_signature: validSignature,
+      }).success,
+      true
+    );
+
+    // Address validation enforces pincode, phone, and .strict()
+    assert.equal(
+      addressSchema.safeParse({
+        full_name: "Arun",
+        phone: "9876543210",
+        house_name: "12 Gandhi Street",
+        city: "Chennai",
+        state: "Tamil Nadu",
+        pincode: "012345",
+      }).success,
+      false
+    );
+    assert.equal(
+      addressSchema.safeParse({
+        full_name: "Arun",
+        phone: "+91 98765 43210",
+        house_name: "12 Gandhi Street",
+        city: "Chennai",
+        state: "Tamil Nadu",
+        pincode: "600001",
+      }).success,
+      true
+    );
+    assert.equal(
+      createOrderSchema.safeParse({
+        items: [{ book_id: "b0000000-0000-0000-0000-000000000001", quantity: 1 }],
+        shipping_address: {
+          full_name: "Arun",
+          phone: "9876543210",
+          house_name: "12 Gandhi Street",
+          city: "Chennai",
+          state: "Tamil Nadu",
+          pincode: "600001",
+        },
+        unexpected_field: "blocked_by_strict",
+      }).success,
+      false
+    );
+  });
+
+  it("5. calculateOrderSummary computes real book totals and regional shipping accurately", () => {
+    const tn = calculateOrderSummary(
+      [{ book_id: "b0000000-0000-0000-0000-000000000001", quantity: 2 }],
+      "Tamil Nadu"
+    );
+    assert.equal(tn.subtotal, 200);
+    assert.equal(tn.shippingFee, 60);
+    assert.equal(tn.totalAmount, 260);
+    assert.equal(tn.amountInPaise, 26000);
+
+    const other = calculateOrderSummary(
+      [{ book_id: "b0000000-0000-0000-0000-000000000001", quantity: 2 }],
+      "Kerala"
+    );
+    assert.equal(other.shippingFee, 100);
+    assert.equal(other.totalAmount, 300);
+
+    const freeShip = calculateOrderSummary(
+      [{ book_id: "b0000000-0000-0000-0000-000000000001", quantity: 10 }],
+      "Kerala"
+    );
+    assert.equal(freeShip.subtotal, 1000);
+    assert.equal(freeShip.shippingFee, 0);
+    assert.equal(freeShip.amountInPaise, 100000);
+
+    assert.throws(
+      () => calculateOrderSummary([], "Tamil Nadu"),
+      /Order must contain at least one item/
+    );
+    assert.throws(
+      () =>
+        calculateOrderSummary(
+          [{ book_id: "b0000000-0000-0000-0000-000000000001", quantity: 0 }],
+          "Tamil Nadu"
+        ),
+      /Invalid quantity/
+    );
   });
 });

@@ -9,27 +9,14 @@ import { VideoCard, type VideoData } from "@/components/videos/VideoCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useLanguage } from "@/context/LanguageContext";
 import { allVideos } from "@/data/videos";
+import {
+  VIDEO_CATEGORY_OPTIONS,
+  getAutoplayEmbedUrl,
+  matchVideoCategorySlug,
+  resolveVideoMedia,
+} from "@/lib/video-utils";
 
-const categoryOptions: CategoryOption[] = [
-  { slug: "book-showcase", labelTa: "புத்தகக் காணொளி", labelEn: "Book Showcase" },
-  { slug: "memorial", labelTa: "நினைவேந்தல்", labelEn: "Memorials" },
-  { slug: "history", labelTa: "வரலாற்று ஆவணம்", labelEn: "History" },
-  { slug: "tactical", labelTa: "கள ஆவணம்", labelEn: "Tactical" },
-  { slug: "overview", labelTa: "அறிமுகம்", labelEn: "Overview" },
-];
-
-function getAutoplayUrl(url: string): string {
-  try {
-    const u = new URL(url);
-    u.searchParams.set("autoplay", "true");
-    u.searchParams.set("muted", "0");
-    u.searchParams.set("playsinline", "1");
-    return u.toString();
-  } catch {
-    const sep = url.includes("?") ? "&" : "?";
-    return `${url}${sep}autoplay=true&muted=0&playsinline=1`;
-  }
-}
+const categoryOptions: CategoryOption[] = VIDEO_CATEGORY_OPTIONS;
 
 interface VideosCatalogClientProps {
   initialVideos?: VideoData[];
@@ -65,14 +52,9 @@ export function VideosCatalogClient({ initialVideos }: VideosCatalogClientProps 
     }
 
     if (selectedCategory !== "all") {
-      const catObj = categoryOptions.find((c) => c.slug === selectedCategory);
-      if (catObj) {
-        list = list.filter(
-          (v) =>
-            v.categoryTa.toLowerCase() === catObj.labelTa.toLowerCase() ||
-            v.categoryEn.toLowerCase() === catObj.labelEn.toLowerCase()
-        );
-      }
+      list = list.filter(
+        (v) => matchVideoCategorySlug(v.categoryEn, v.categoryTa) === selectedCategory
+      );
     }
 
     return list;
@@ -107,6 +89,7 @@ export function VideosCatalogClient({ initialVideos }: VideosCatalogClientProps 
         window.removeEventListener("keydown", handleKeyDown);
       };
     }
+    return undefined;
   }, [modalVideo]);
 
   return (
@@ -261,23 +244,32 @@ export function VideosCatalogClient({ initialVideos }: VideosCatalogClientProps 
 
             {/* Video Player (Native HTML5 Video or Embed Iframe) */}
             <div className="relative aspect-video w-full bg-black">
-              {modalVideo.videoUrl ? (
-                <video
-                  src={modalVideo.videoUrl}
-                  controls
-                  autoPlay
-                  playsInline
-                  className="absolute inset-0 w-full h-full object-contain"
-                />
-              ) : (
-                <iframe
-                  src={getAutoplayUrl(modalVideo.embedUrl)}
-                  title={isTa ? modalVideo.titleTa : modalVideo.titleEn}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  className="absolute inset-0 w-full h-full border-0"
-                />
-              )}
+              {(() => {
+                const modalMedia = resolveVideoMedia({
+                  embed_url: modalVideo.embedUrl,
+                  video_url: modalVideo.videoUrl,
+                });
+                if (modalMedia.mode === "upload" && modalMedia.videoUrl) {
+                  return (
+                    <video
+                      src={modalMedia.videoUrl}
+                      controls
+                      autoPlay
+                      playsInline
+                      className="absolute inset-0 w-full h-full object-contain"
+                    />
+                  );
+                }
+                return (
+                  <iframe
+                    src={getAutoplayEmbedUrl(modalMedia.embedUrl)}
+                    title={isTa ? modalVideo.titleTa : modalVideo.titleEn}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="absolute inset-0 w-full h-full border-0"
+                  />
+                );
+              })()}
             </div>
 
             {/* Modal Footer Description */}

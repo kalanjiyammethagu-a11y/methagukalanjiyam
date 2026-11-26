@@ -11,7 +11,7 @@ import {
 export const dynamic = "force-dynamic";
 
 function isValidErpSyncToken(syncToken: string | null): boolean {
-  const secret = process.env.AUTH_SECRET;
+  const secret = process.env.ERP_SYNC_TOKEN || process.env.CRON_SECRET;
   if (!secret || !syncToken) return false;
   return (
     constantTimeEqual(syncToken, secret) ||

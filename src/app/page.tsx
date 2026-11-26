@@ -14,7 +14,11 @@ import {
 import { Button } from "@/components/ui/Button";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { HeroSlider } from "@/components/home/HeroSlider";
-import { defaultHeroSlides } from "@/data/hero-slides";
+import {
+  buildDynamicHeroSlides,
+  defaultHeroSlides,
+  type BlogPostSlideSource,
+} from "@/data/hero-slides";
 import { CategoryFilterTabs } from "@/components/home/CategoryFilterTabs";
 import { allBooks, type BookItem } from "@/data/books";
 import { createClient } from "@/lib/supabase/server";
@@ -89,40 +93,60 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   let books: BookItem[] = allBooks;
+  let blogPosts: BlogPostSlideSource[] = [];
 
   try {
     const supabase = await createClient();
-    const { data: dbBooks } = await (supabase.from("books") as any)
-      .select("*, categories(name_ta, name_en, slug)")
-      .eq("status", "published")
-      .order("sort_order", { ascending: true });
+    const [{ data: dbBooks }, { data: dbPosts }] = await Promise.all([
+      (supabase.from("books") as any)
+        .select("*, categories(name_ta, name_en, slug)")
+        .eq("status", "published")
+        .order("sort_order", { ascending: true }),
+      (supabase.from("blog_posts") as any)
+        .select("slug, cover_image_url, cover_image")
+        .eq("status", "published"),
+    ]);
 
     if (dbBooks && dbBooks.length > 0) {
       books = dbBooks.map((b: any) =>
         mapDbBookToBookItem(b, allBooks.find((sb) => sb.slug === b.slug))
       );
     }
+    if (Array.isArray(dbPosts)) {
+      blogPosts = dbPosts;
+    }
   } catch (err) {
     console.error("Failed to fetch books on HomePage:", err);
   }
+
+  const heroSlides =
+    books.length > 0 || blogPosts.length > 0
+      ? buildDynamicHeroSlides(books, blogPosts)
+      : defaultHeroSlides;
 
   const spotlightBook =
     books.find((b) => b.slug === "katunayake-attack-victory") ||
     books.find((b) => b.featured) ||
     books[0];
 
-  const spotlightImage =
-    spotlightBook.image.startsWith("http") || spotlightBook.image.startsWith("/")
+  const categoryCounts = books.reduce<Record<string, number>>((acc, item) => {
+    const slug = item.categorySlug || "history";
+    acc[slug] = (acc[slug] || 0) + 1;
+    return acc;
+  }, {});
+
+  const spotlightImage = spotlightBook
+    ? spotlightBook.image.startsWith("http") || spotlightBook.image.startsWith("/")
       ? spotlightBook.image
-      : `/${spotlightBook.image}`;
+      : `/${spotlightBook.image}`
+    : "/images/books/book-placeholder.webp";
 
   return (
     <div className="space-y-16 sm:space-y-24 pb-24">
       {/* ============================================================
-          1. SLIDE-BASED HERO CAROUSEL WITH REAL ARCHIVAL BANNERS
-          (Public / Static Brand Assets as Specified)
+          1. SLIDE-BASED HERO CAROUSEL CONNECTED DYNAMICALLY TO SUPABASE
           ============================================================ */}
-      <HeroSlider slides={defaultHeroSlides} priorityIndex={0} />
+      <HeroSlider slides={heroSlides} priorityIndex={0} />
 
       {/* ============================================================
           2. ASYMMETRICAL EDITORIAL BENTO GRID (Complex Unique Layout)
@@ -149,6 +173,7 @@ export default async function HomePage() {
         {/* Bento Grid */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6">
           {/* Bento Tile 1: Primary Spotlight Book (Span 7) */}
+          {spotlightBook && (
           <GlassPanel
             interactive
             className="md:col-span-7 p-6 sm:p-8 flex flex-col justify-between group rounded-3xl"
@@ -204,6 +229,7 @@ export default async function HomePage() {
               </span>
             </div>
           </GlassPanel>
+          )}
 
           {/* Bento Tile 2: Postal Tracking & Shipping Integrity (Span 5) */}
           <GlassPanel
@@ -338,29 +364,32 @@ export default async function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          {categories.map((cat) => (
-            <Link
-              key={cat.slug}
-              href={`/books?category=${cat.slug}`}
-              className="group block p-6 rounded-3xl border border-black/8 dark:border-white/10 bg-white/75 dark:bg-zinc-900/80 hover:bg-white dark:hover:bg-zinc-900 hover:border-[#0A6847]/40 dark:hover:border-emerald-500/50 hover:shadow-lg transition-all duration-300 min-h-[44px]"
-            >
-              <div className="flex items-start justify-between">
-                <span className="text-xs font-bold text-[#0A6847] dark:text-emerald-300 bg-[#0A6847]/10 dark:bg-emerald-950/80 px-2.5 py-1 rounded-full font-tamil">
-                  {cat.countTa}
-                </span>
-                <ChevronRight className="h-4 w-4 text-zinc-500 dark:text-zinc-400 group-hover:text-[#0A6847] dark:group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
-              </div>
-              <h3 className="mt-4 text-base font-bold text-[#111111] dark:text-zinc-100 group-hover:text-[#0A6847] dark:group-hover:text-emerald-400 transition-colors font-tamil leading-snug">
-                {cat.nameTa}
-              </h3>
-              <p className="text-xs text-[#666666] dark:text-zinc-400 font-medium mt-0.5 line-clamp-1">
-                {cat.nameEn}
-              </p>
-              <p className="mt-2.5 text-xs text-[#555555] dark:text-zinc-300 font-tamil leading-relaxed line-clamp-2">
-                {cat.descTa}
-              </p>
-            </Link>
-          ))}
+          {categories.map((cat) => {
+            const count = categoryCounts[cat.slug] ?? 0;
+            return (
+              <Link
+                key={cat.slug}
+                href={`/books?category=${cat.slug}`}
+                className="group block p-6 rounded-3xl border border-black/8 dark:border-white/10 bg-white/75 dark:bg-zinc-900/80 hover:bg-white dark:hover:bg-zinc-900 hover:border-[#0A6847]/40 dark:hover:border-emerald-500/50 hover:shadow-lg transition-all duration-300 min-h-[44px]"
+              >
+                <div className="flex items-start justify-between">
+                  <span className="text-xs font-bold text-[#0A6847] dark:text-emerald-300 bg-[#0A6847]/10 dark:bg-emerald-950/80 px-2.5 py-1 rounded-full font-tamil">
+                    {count > 0 ? `${count} நூல்கள்` : cat.countTa}
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-zinc-500 dark:text-zinc-400 group-hover:text-[#0A6847] dark:group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
+                </div>
+                <h3 className="mt-4 text-base font-bold text-[#111111] dark:text-zinc-100 group-hover:text-[#0A6847] dark:group-hover:text-emerald-400 transition-colors font-tamil leading-snug">
+                  {cat.nameTa}
+                </h3>
+                <p className="text-xs text-[#666666] dark:text-zinc-400 font-medium mt-0.5 line-clamp-1">
+                  {cat.nameEn}
+                </p>
+                <p className="mt-2.5 text-xs text-[#555555] dark:text-zinc-300 font-tamil leading-relaxed line-clamp-2">
+                  {cat.descTa}
+                </p>
+              </Link>
+            );
+          })}
         </div>
       </section>
     </div>

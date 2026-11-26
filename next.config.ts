@@ -1,9 +1,39 @@
 import type { NextConfig } from "next";
 
+const supabaseParsed = (() => {
+  try {
+    const raw = (process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim();
+    if (!raw || raw.includes("placeholder")) return null;
+    const u = new URL(raw);
+    const protocol = u.protocol.replace(":", "");
+    if (protocol !== "http" && protocol !== "https") return null;
+    return {
+      protocol: protocol as "http" | "https",
+      hostname: u.hostname,
+      port: u.port || "",
+      origin: u.origin,
+    };
+  } catch {
+    return null;
+  }
+})();
+
+const supabaseOrigin = supabaseParsed?.origin ?? null;
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+  },
+  webpack: (config) => {
+    config.infrastructureLogging = {
+      ...config.infrastructureLogging,
+      level: "error",
+    };
+    return config;
+  },
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 31536000,
@@ -22,7 +52,28 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "yxghkhizyjsfrevtekbc.supabase.co",
+        pathname: "/**",
+      },
+      ...(supabaseParsed && supabaseParsed.hostname !== "yxghkhizyjsfrevtekbc.supabase.co"
+        ? [
+            {
+              protocol: supabaseParsed.protocol,
+              hostname: supabaseParsed.hostname,
+              ...(supabaseParsed.port ? { port: supabaseParsed.port } : {}),
+              pathname: "/**",
+            },
+          ]
+        : []),
+      {
+        protocol: "https",
         hostname: "*.supabase.co",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.supabase.co",
+        pathname: "/**",
       },
       {
         protocol: "http",
@@ -46,13 +97,16 @@ const nextConfig: NextConfig = {
       "font-src 'self' https://fonts.gstatic.com data:",
 
       // Images: self + Unsplash + Cloudflare R2 + Supabase + data URIs + blob URIs
-      "img-src 'self' https://images.unsplash.com https://*.r2.cloudflarestorage.com https://images.methagukalanjiyam.in https://*.supabase.co data: blob:",
+      `img-src 'self' https://images.unsplash.com https://*.r2.cloudflarestorage.com https://images.methagukalanjiyam.in https://*.supabase.co${supabaseOrigin ? ` ${supabaseOrigin}` : ""} data: blob:`,
+
+      // Media: self + Supabase Storage (direct uploaded MP4/WebM) + Cloudflare R2 + blob URIs
+      `media-src 'self' https://*.supabase.co https://*.r2.cloudflarestorage.com${supabaseOrigin ? ` ${supabaseOrigin}` : ""} blob:`,
 
       // Connect: self + Supabase (HTTPS & Realtime WSS) + Razorpay API & analytics + Cloudflare Turnstile + dev websockets
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.razorpay.com https://lumberjack.razorpay.com https://challenges.cloudflare.com ws: wss:",
 
-      // Frames: Razorpay checkout modal + Cloudflare Turnstile challenge iframe + Video platforms (Odysee, YouTube)
-      "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://challenges.cloudflare.com https://odysee.com https://*.odysee.com https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com",
+      // Frames: Razorpay checkout modal + Cloudflare Turnstile challenge iframe + Video platforms (Odysee, YouTube, Vimeo)
+      "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com https://challenges.cloudflare.com https://odysee.com https://*.odysee.com https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://player.vimeo.com",
 
       // Frame ancestors: none (prevents clickjacking, equivalent to X-Frame-Options: DENY)
       "frame-ancestors 'none'",

@@ -28,7 +28,15 @@ import { RazorpayCheckout } from "@/components/checkout/RazorpayCheckout";
 import { useLanguage, type ShippingRegion, type UserDeliveryAddress } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
 import { formatINR, cn } from "@/lib/utils";
-import { allBooks } from "@/data/books";
+import { allBooks, type BookItem } from "@/data/books";
+import { resolveBookFrontCover } from "@/lib/book-images";
+import { resolveBilingualPair } from "@/lib/i18n";
+import {
+  computeShippingFee,
+  DEFAULT_SHIPPING_CONFIG,
+  type StoreShippingConfig,
+} from "@/lib/shipping-rules";
+import { WHATSAPP_NUMBER } from "@/lib/whatsapp";
 
 /* ============================================================
    PROGRESS STEPS (Zeigarnik Effect)
@@ -113,18 +121,107 @@ export default function CartPage() {
     user?: { id: string; email?: string; fullName?: string | null } | null;
   } | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = React.useState(true);
+  const [shippingConfig, setShippingConfig] = React.useState<StoreShippingConfig>(
+    DEFAULT_SHIPPING_CONFIG
+  );
+  const [whatsappNumber, setWhatsappNumber] = React.useState(WHATSAPP_NUMBER);
+  const [liveBooks, setLiveBooks] = React.useState<BookItem[]>(allBooks);
+  const [savedAddresses, setSavedAddresses] = React.useState<any[]>([]);
+  const [saveAddressToAccount, setSaveAddressToAccount] = React.useState(true);
 
   const isTa = locale === "ta";
 
-  // Check authenticated session for mandatory account ordering (No guest ordering)
+  // Check authenticated session, live shipping rules, catalog upsells, and saved addresses
   React.useEffect(() => {
     let isMounted = true;
+
+    async function loadStoreConfigAndBooks() {
+      try {
+        const [settingsRes, booksRes] = await Promise.all([
+          fetch("/api/settings/public"),
+          fetch("/api/books?limit=12"),
+        ]);
+        if (settingsRes.ok && isMounted) {
+          const sData = await settingsRes.json();
+          if (sData?.shipping) setShippingConfig(sData.shipping);
+          if (sData?.general?.whatsapp_number) setWhatsappNumber(sData.general.whatsapp_number);
+        }
+        if (booksRes.ok && isMounted) {
+          const bData = await booksRes.json();
+          if (Array.isArray(bData?.books) && bData.books.length > 0) {
+            const mapped: BookItem[] = bData.books.map((b: any) => {
+              const staticMatch = allBooks.find((sb) => sb.slug === b.slug);
+              const cover = resolveBookFrontCover(b, staticMatch?.image);
+              const titlePair = resolveBilingualPair({
+                en: b.title_en || b.titleEn || staticMatch?.titleEn,
+                ta: b.title_ta || b.titleTa,
+                legacy: b.title,
+              });
+              const authorPair = resolveBilingualPair({
+                en: b.author_en || b.authorEn || staticMatch?.authorEn,
+                ta: b.author_ta || b.authorTa,
+                legacy: b.author,
+              });
+              return {
+                ...(staticMatch || ({} as BookItem)),
+                id: String(b.id),
+                slug: b.slug,
+                title: titlePair.ta || b.title || staticMatch?.title || "",
+                titleEn: titlePair.en || staticMatch?.titleEn || b.title || "",
+                author: authorPair.ta || b.author || staticMatch?.author || "",
+                authorEn: authorPair.en || staticMatch?.authorEn || b.author || "",
+                price: Number(b.price),
+                discountPrice: b.discount_price ? Number(b.discount_price) : staticMatch?.discountPrice,
+                categoryTa: b.categories?.name_ta || staticMatch?.categoryTa || "வரலாறு",
+                categoryEn: b.categories?.name_en || staticMatch?.categoryEn || "History",
+                categorySlug: b.categories?.slug || staticMatch?.categorySlug || "history",
+                image: cover.url,
+                coverIsFront: cover.isFront,
+                stock: Number(b.stock ?? 10),
+                descriptionTa: b.description_ta || b.description || staticMatch?.descriptionTa || "",
+                descriptionEn: b.description_en || b.description || staticMatch?.descriptionEn || "",
+              };
+            });
+            setLiveBooks(mapped);
+          }
+        }
+      } catch {
+        // Fallback defaults already set
+      }
+    }
+    loadStoreConfigAndBooks();
+
     async function checkAuth() {
       try {
         const res = await fetch("/api/auth/session");
         if (res.ok) {
           const data = await res.json();
           if (isMounted) setUserSession(data);
+          if (data?.authenticated) {
+            try {
+              const addrRes = await fetch("/api/addresses");
+              if (addrRes.ok) {
+                const addrData = await addrRes.json();
+                const list = Array.isArray(addrData?.addresses) ? addrData.addresses : [];
+                if (isMounted) {
+                  setSavedAddresses(list);
+                  if (list.length > 0 && !deliveryAddress.fullName.trim()) {
+                    const def = list[0];
+                    const synced: UserDeliveryAddress = {
+                      fullName: def.full_name || "",
+                      phone: def.phone || "",
+                      doorStreet: [def.house_name, def.street].filter(Boolean).join(", "),
+                      cityArea: def.city || "",
+                      districtState: def.state || "",
+                      pincode: def.pincode || "",
+                    };
+                    setAddressForm(synced);
+                    setDeliveryAddress(synced);
+                  }
+                }
+              }
+            } catch {}
+          }
         } else {
           if (isMounted) setUserSession({ authenticated: false, user: null });
         }
@@ -139,6 +236,11 @@ export default function CartPage() {
       isMounted = false;
     };
   }, []);
+
+  // Invalidate pending Razorpay order if cart quantities/items or shipping region change
+  React.useEffect(() => {
+    setCreatedOrder(null);
+  }, [items, shippingRegion, addressForm.districtState]);
 
   // Sync address form when global context changes
   React.useEffect(() => {
@@ -161,6 +263,9 @@ export default function CartPage() {
         return null;
       case "cityArea":
         if (!value.trim()) return isTa ? "நகரம் / ஊர் பெயர் தேவை" : "City / town is required";
+        return null;
+      case "districtState":
+        if (!value.trim()) return isTa ? "மாநிலம் தேவை" : "State is required";
         return null;
       case "pincode":
         if (!value.trim()) return isTa ? "அஞ்சல் குறியீட்டு எண் தேவை" : "Pincode is required";
@@ -190,6 +295,18 @@ export default function CartPage() {
     const updated = { ...addressForm, [field]: value };
     setAddressForm(updated);
     setDeliveryAddress(updated);
+    if (field === "districtState" && shippingRegion !== "diaspora") {
+      const normalized = value.trim().toLowerCase();
+      if (normalized) {
+        const isTn =
+          normalized.includes("tamil") ||
+          normalized.includes("தமிழ்நாடு") ||
+          normalized === "tn" ||
+          normalized.includes("puducherry") ||
+          normalized.includes("pondicherry");
+        setShippingRegion(isTn ? "tamil-nadu" : "other-india");
+      }
+    }
     if (touched[field]) {
       const errorMsg = validateField(field, value);
       setErrors((prev) => {
@@ -219,11 +336,31 @@ export default function CartPage() {
   };
 
   const isDiaspora = shippingRegion === "diaspora";
-  const shippingFee =
-    shippingRegion === "other-india" ? 100 : isDiaspora ? 0 : 60;
-  const shipping = subtotal > 0 ? shippingFee : 0;
+  const effectiveStateOrRegion = isDiaspora
+    ? "diaspora"
+    : addressForm.districtState.trim() || shippingRegion;
+  const shipping = computeShippingFee(
+    subtotal,
+    effectiveStateOrRegion,
+    shippingConfig
+  );
+  const freeShippingThreshold = shippingConfig.free_shipping_threshold || 0;
+  const amountForFreeShipping =
+    !isDiaspora && freeShippingThreshold > 0
+      ? Math.max(0, freeShippingThreshold - subtotal)
+      : 0;
+  const isFreeShippingUnlocked =
+    !isDiaspora && freeShippingThreshold > 0 && subtotal >= freeShippingThreshold;
   const total = subtotal + shipping;
   const isEmpty = items.length === 0;
+
+  const upsellBooks = React.useMemo(() => {
+    const cartIds = new Set(items.map((i) => i.id));
+    const cartSlugs = new Set(items.map((i) => i.slug));
+    return liveBooks
+      .filter((b) => b.stock > 0 && !cartIds.has(b.id) && !cartSlugs.has(b.slug))
+      .slice(0, 2);
+  }, [liveBooks, items]);
 
   const getOverseasWhatsAppUrl = () => {
     const booksList = items
@@ -240,7 +377,7 @@ export default function CartPage() {
     const msg = encodeURIComponent(
       `வணக்கம் மேதகு களஞ்சியம்,\nநான் வெளிநாட்டிலிருந்து (Overseas / International Order) நூல்களை வாங்க விரும்புகிறேன்.\n\n📚 கூடையில் உள்ள நூல்கள்:\n${booksList}\n\nமொத்த நூல் மதிப்பு: ₹${subtotal}${addressStr}\n\nதயவுசெய்து சர்வதேச அஞ்சல் கட்டணம் (DHL / International Post) மற்றும் கட்டண விவரங்களைத் தெரிவிக்கவும்.`
     );
-    return `https://wa.me/916384654946?text=${msg}`;
+    return `https://wa.me/${whatsappNumber}?text=${msg}`;
   };
 
   // Validation
@@ -296,8 +433,10 @@ export default function CartPage() {
             phone: addressForm.phone,
             house_name: addressForm.doorStreet,
             street: addressForm.doorStreet,
-            city: addressForm.cityArea || "Tamil Nadu",
-            state: addressForm.districtState || "Tamil Nadu",
+            city: addressForm.cityArea || "Chennai",
+            state:
+              addressForm.districtState.trim() ||
+              (shippingRegion === "other-india" ? "Other Indian States" : "Tamil Nadu"),
             pincode: addressForm.pincode,
           },
           is_guest_checkout: false,
@@ -315,6 +454,25 @@ export default function CartPage() {
           );
         }
         throw new Error(data.error || "Order creation failed on server");
+      }
+
+      // Persist new address to user profile if opted in and not already saved
+      if (saveAddressToAccount && savedAddresses.length === 0) {
+        fetch("/api/addresses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            label: "Home",
+            full_name: addressForm.fullName,
+            phone: addressForm.phone,
+            house_name: addressForm.doorStreet,
+            street: addressForm.doorStreet,
+            city: addressForm.cityArea || "Tamil Nadu",
+            state: addressForm.districtState || "Tamil Nadu",
+            pincode: addressForm.pincode,
+            is_default: true,
+          }),
+        }).catch(() => {});
       }
 
       setCreatedOrder({
@@ -425,7 +583,7 @@ export default function CartPage() {
                 </Link>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-                {allBooks.slice(0, 4).map((book) => (
+                {liveBooks.slice(0, 4).map((book) => (
                   <BookCard
                     key={book.id}
                     book={book}
@@ -518,6 +676,68 @@ export default function CartPage() {
                 ))}
               </div>
 
+              {/* Smart Free-Shipping Upsell Strip */}
+              {!isDiaspora && amountForFreeShipping > 0 && upsellBooks.length > 0 && (
+                <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/35 border border-emerald-500/20 space-y-3">
+                  <div className="flex items-center justify-between gap-2 text-xs font-bold text-[#0A6847] dark:text-emerald-300 font-tamil">
+                    <span>
+                      {isTa
+                        ? `இன்னும் ${formatINR(amountForFreeShipping)} சேர்த்தால் இலவச அஞ்சல் சேவை!`
+                        : `Add ${formatINR(amountForFreeShipping)} more to unlock Free Shipping!`}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {upsellBooks.map((ub) => {
+                      const uPrice = ub.discountPrice ?? ub.price;
+                      return (
+                        <div
+                          key={ub.id}
+                          className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-black/8 dark:border-white/10"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <Image
+                              src={ub.image || "/images/books/book-placeholder.webp"}
+                              alt={isTa ? ub.title : ub.titleEn}
+                              width={36}
+                              height={48}
+                              className="w-9 h-12 object-cover rounded shrink-0"
+                            />
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-[#111111] dark:text-zinc-100 font-tamil line-clamp-1">
+                                {isTa ? ub.title : ub.titleEn}
+                              </p>
+                              <p className="text-xs font-mono font-bold text-[#0A6847] dark:text-emerald-400">
+                                {formatINR(uPrice)}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              addToCart({
+                                id: ub.id,
+                                title: ub.title,
+                                titleEn: ub.titleEn,
+                                author: ub.author,
+                                authorEn: ub.authorEn,
+                                price: uPrice,
+                                image: ub.image,
+                                slug: ub.slug,
+                                quantity: 1,
+                                maxStock: ub.stock || 10,
+                              })
+                            }
+                            className="px-3 py-1.5 rounded-lg bg-[#0A6847] hover:bg-[#085237] text-white text-xs font-bold font-tamil shrink-0 cursor-pointer min-h-[36px]"
+                          >
+                            {isTa ? "+ சேர்" : "+ Add"}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Mandatory Account Verification Notice (No Guest Ordering) */}
               {!isCheckingAuth && !userSession?.authenticated && (
                 <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-3">
@@ -596,6 +816,42 @@ export default function CartPage() {
                     </span>
                   )}
                 </div>
+
+                {savedAddresses.length > 0 && (
+                  <div className="space-y-2 pb-1">
+                    <p className="text-xs font-bold text-[#444444] dark:text-zinc-300 font-tamil">
+                      {isTa ? "சேமிக்கப்பட்ட முகவரிகள்:" : "Use a saved address:"}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {savedAddresses.slice(0, 3).map((addr) => (
+                        <button
+                          key={addr.id}
+                          type="button"
+                          onClick={() => {
+                            const next: UserDeliveryAddress = {
+                              fullName: addr.full_name || "",
+                              phone: addr.phone || "",
+                              doorStreet: [addr.house_name, addr.street].filter(Boolean).join(", "),
+                              cityArea: addr.city || "",
+                              districtState: addr.state || "",
+                              pincode: addr.pincode || "",
+                            };
+                            setAddressForm(next);
+                            setDeliveryAddress(next);
+                          }}
+                          className="px-3 py-2 rounded-xl border border-black/10 dark:border-white/15 bg-black/[0.02] dark:bg-white/[0.04] hover:border-[#0A6847] text-left text-xs transition-colors cursor-pointer"
+                        >
+                          <span className="font-bold text-[#111111] dark:text-zinc-100 block">
+                            {addr.full_name}
+                          </span>
+                          <span className="text-[11px] text-[#555555] dark:text-zinc-400">
+                            {addr.city}, {addr.pincode}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Full Name */}
@@ -720,6 +976,36 @@ export default function CartPage() {
                     )}
                   </div>
 
+                  {/* State / Region (synced with server shipping pricing) */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-[#222222] dark:text-zinc-200 font-tamil block">
+                      {isTa ? "மாநிலம் (State) *" : "State *"}
+                    </label>
+                    <input
+                      type="text"
+                      name="districtState"
+                      autoComplete="address-level1"
+                      required
+                      value={addressForm.districtState}
+                      onChange={(e) => handleAddressChange("districtState", e.target.value)}
+                      onBlur={() => handleBlur("districtState")}
+                      aria-invalid={Boolean(touched.districtState && errors.districtState)}
+                      placeholder={isTa ? "தமிழ்நாடு / Kerala / Karnataka" : "Tamil Nadu / Karnataka"}
+                      className={cn(
+                        "w-full px-3.5 py-2 rounded-xl border bg-white dark:bg-zinc-900 text-base sm:text-sm font-tamil text-[#111111] dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
+                        touched.districtState && errors.districtState
+                          ? "border-rose-400 focus:ring-rose-200 focus:border-rose-500"
+                          : "border-black/12 dark:border-white/15 focus:ring-[#0A6847]/30 focus:border-[#0A6847]"
+                      )}
+                    />
+                    {touched.districtState && errors.districtState && (
+                      <p className="text-xs text-rose-600 dark:text-rose-400 font-tamil flex items-center gap-1 mt-1">
+                        <AlertCircle className="h-3 w-3 shrink-0" />
+                        <span>{errors.districtState}</span>
+                      </p>
+                    )}
+                  </div>
+
                   {/* Pincode */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-[#222222] dark:text-zinc-200 font-tamil block">
@@ -751,6 +1037,21 @@ export default function CartPage() {
                       </p>
                     )}
                   </div>
+                  {userSession?.authenticated && savedAddresses.length === 0 && (
+                    <label className="sm:col-span-2 flex items-center gap-2 text-xs text-[#444444] dark:text-zinc-300 font-tamil pt-1 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={saveAddressToAccount}
+                        onChange={(e) => setSaveAddressToAccount(e.target.checked)}
+                        className="h-4 w-4 rounded border-black/20 text-[#0A6847] focus:ring-[#0A6847]"
+                      />
+                      <span>
+                        {isTa
+                          ? "அடுத்த முறை எளிதாக ஆர்டர் செய்ய இந்த முகவரியை என் கணக்கில் சேமி"
+                          : "Save this delivery address to my account for faster checkout"}
+                      </span>
+                    </label>
+                  )}
                 </div>
               </GlassPanel>
             </div>
@@ -774,14 +1075,18 @@ export default function CartPage() {
                           id: "tamil-nadu" as ShippingRegion,
                           titleTa: "தமிழ்நாடு (Tamil Nadu)",
                           titleEn: "Tamil Nadu",
-                          feeText: "₹60",
+                          feeText: isFreeShippingUnlocked
+                            ? isTa ? "இலவசம்" : "FREE"
+                            : `₹${shippingConfig.standard_shipping_fee}`,
                           courier: isTa ? "ST Courier / Speed Post (2-4 வேலை நாட்கள்)" : "ST Courier / Speed Post (2-4 Working Days)",
                         },
                         {
                           id: "other-india" as ShippingRegion,
                           titleTa: "பிற இந்திய மாநிலங்கள் (Other States)",
                           titleEn: "Other States",
-                          feeText: "₹100",
+                          feeText: isFreeShippingUnlocked
+                            ? isTa ? "இலவசம்" : "FREE"
+                            : `₹${shippingConfig.other_india_shipping_fee}`,
                           courier: isTa ? "Speed Post விரைவு அஞ்சல் (4-7 வேலை நாட்கள்)" : "Speed Post (4-7 Working Days)",
                         },
                         {
@@ -799,7 +1104,17 @@ export default function CartPage() {
                             type="button"
                             role="radio"
                             aria-checked={isSelected}
-                            onClick={() => setShippingRegion(reg.id)}
+                            onClick={() => {
+                              setShippingRegion(reg.id);
+                              if (reg.id === "tamil-nadu") {
+                                handleAddressChange("districtState", "Tamil Nadu");
+                              } else if (reg.id === "other-india") {
+                                const cur = addressForm.districtState.trim().toLowerCase();
+                                if (!cur || cur.includes("tamil") || cur === "tn") {
+                                  handleAddressChange("districtState", "Other Indian States");
+                                }
+                              }
+                            }}
                             className={cn(
                               "p-2.5 rounded-xl border text-left text-xs transition-all flex items-center justify-between cursor-pointer font-tamil min-h-[44px] touch-manipulation",
                               isSelected
@@ -821,6 +1136,34 @@ export default function CartPage() {
                       })}
                     </div>
                   </div>
+
+                  {/* Free Shipping Progress Indicator */}
+                  {!isDiaspora && freeShippingThreshold > 0 && (
+                    <div className="p-3 rounded-xl bg-[#0A6847]/6 dark:bg-emerald-950/40 border border-[#0A6847]/15 dark:border-emerald-800/50 space-y-2">
+                      <div className="flex items-center justify-between text-[11px] font-bold font-tamil text-[#0A6847] dark:text-emerald-300">
+                        <span>
+                          {isFreeShippingUnlocked
+                            ? isTa
+                              ? "இலவச அஞ்சல் சேவை பெறப்பட்டது!"
+                              : "Free Shipping Unlocked!"
+                            : isTa
+                              ? `இலவச அஞ்சலுக்கு மேலும் ${formatINR(amountForFreeShipping)}`
+                              : `Add ${formatINR(amountForFreeShipping)} for Free Shipping`}
+                        </span>
+                        <span className="font-mono">
+                          {Math.min(100, Math.round((subtotal / freeShippingThreshold) * 100))}%
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-[#0A6847] dark:bg-emerald-500 transition-all duration-300"
+                          style={{
+                            width: `${Math.min(100, Math.round((subtotal / freeShippingThreshold) * 100))}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   {/* Price Breakdown */}
                   <div className="space-y-3 text-sm pt-2 border-t border-black/8 dark:border-white/10">
@@ -1003,7 +1346,7 @@ export default function CartPage() {
                         {/* Secondary WhatsApp Help Link */}
                         <div className="pt-2.5 text-center border-t border-black/5 dark:border-white/10">
                           <a
-                            href="https://wa.me/916384654946?text=%E0%AE%B5%E0%AE%A3%E0%AE%95%E0%AF%8D%E0%AE%95%E0%AE%AE%E0%AF%8D%2C%20%E0%AE%AA%E0%AF%81%E0%AE%A4%E0%AF%8D%E0%AE%A4%E0%AE%95%E0%AE%99%E0%AF%8D%E0%AE%95%E0%AE%B3%E0%AF%8D%20%E0%AE%86%E0%AE%B0%E0%AF%8D%E0%AE%9F%E0%AE%B0%E0%AF%8D%20%E0%AE%9A%E0%AF%86%E0%AE%AF%E0%AF%8D%E0%AE%B5%E0%AE%A4%E0%AE%BF%E0%AE%B2%E0%AF%8D%20%E0%AE%89%E0%AE%A4%E0%AE%B5%E0%AE%BF%20%E0%AE%A4%E0%AF%87%E0%AE%B5%E0%AF%88%E0%AE%AA%E0%AF%8D%E0%AE%AA%E0%AE%9F%E0%AF%81%E0%AE%95%E0%AE%BF%E0%AE%B1%E0%AE%A4%E0%AF%81."
+                            href={`https://wa.me/${whatsappNumber}?text=%E0%AE%B5%E0%AE%A3%E0%AE%95%E0%AF%8D%E0%AE%95%E0%AE%AE%E0%AF%8D%2C%20%E0%AE%AA%E0%AF%81%E0%AE%A4%E0%AF%8D%E0%AE%A4%E0%AE%95%E0%AE%99%E0%AF%8D%E0%AE%95%E0%AE%B3%E0%AF%8D%20%E0%AE%86%E0%AE%B0%E0%AF%8D%E0%AE%9F%E0%AE%B0%E0%AF%8D%20%E0%AE%9A%E0%AF%86%E0%AE%AF%E0%AF%8D%E0%AE%B5%E0%AE%A4%E0%AE%BF%E0%AE%B2%E0%AF%8D%20%E0%AE%89%E0%AE%A4%E0%AE%B5%E0%AE%BF%20%E0%AE%A4%E0%AF%87%E0%AE%B5%E0%AF%88%E0%AE%AA%E0%AF%8D%E0%AE%AA%E0%AE%9F%E0%AF%81%E0%AE%95%E0%AE%BF%E0%AE%B1%E0%AE%A4%E0%AF%81.`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 text-xs text-emerald-800 dark:text-emerald-300 font-bold font-tamil hover:underline"

@@ -1,4 +1,5 @@
 "use client";
+import { getSupabaseStorageUrl } from "@/lib/book-images";
 
 import * as React from "react";
 import { Search, Bell, Newspaper } from "lucide-react";
@@ -18,7 +19,7 @@ const blogArticles: ArticleCardData[] = [
       "சேகரிப்பிள்ளை விநாயகமூர்த்தி என்ற இயற்பெயர் கொண்ட தளபதி விநாயகம், 1964 இல் பிறந்து, 2001 கட்டுநாயக்கா வான்படைத்தளத் தாக்குதலுக்கு வழிகாட்டி, வரலாறு படைத்த மாபெரும் வீரனின் வாழ்க்கை வரலாறு.",
     excerptEn:
       "The extraordinary biography of Commander Vinayagam (Vinayagamoorthy), the mastermind behind the 2001 Katunayake Air Base operation and steadfast guardian of Eelam history.",
-    coverImage: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/thalapathi-vinayagam-banner.webp",
+    coverImage: getSupabaseStorageUrl("blog", "thalapathi-vinayagam-banner.webp"),
     categoryTa: "வரலாற்று ஆவணம்",
     categoryEn: "Historical Record",
     publishedAt: "2026-08-06",
@@ -33,7 +34,7 @@ const blogArticles: ArticleCardData[] = [
       "1997 இல் ஆரம்பித்த தமிழ் வெப் ரேடியோ, வன்னியிலிருந்து அம்புறுஸ் அண்ணன் மற்றும் அருணன் உடனாகிய தொடர்புகள், மற்றும் புலனாய்வுத்துறைப் பொறுப்பாளர் பொட்டு அம்மானின் நேர்முக சந்திப்பு நினைவுகள்.",
     excerptEn:
       "A personal historical memoir by author Saanthi Nesakaram exploring early digital broadcasting with TamilWebRadio, correspondence from Vanni, and intimate meetings with Pottu Amman.",
-    coverImage: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/saanthi-nesakaram-banner-1.webp",
+    coverImage: getSupabaseStorageUrl("blog", "saanthi-nesakaram-banner-1.webp"),
     categoryTa: "நினைவுக் குறிப்பு",
     categoryEn: "Personal Memoir",
     publishedAt: "2026-08-08",
@@ -47,7 +48,7 @@ const blogArticles: ArticleCardData[] = [
       "\"தான் நேசித்த மக்களுக்காக, தான் நேசித்த மண்ணுக்காக ஒருவன் எத்தகைய உயர்ந்த, உன்னதமான தியாகத்தை செய்ய முடியுமோ, அந்த அற்புதமான அர்ப்பணிப்பைத்தான் திலீபன் செய்திருக்கிறான்...\" - தேசியத் தலைவர்.",
     excerptEn:
       "The historic non-violent hunger strike of Lt. Col. Thileepan in 1987 in Jaffna, an unmatched sacrifice in modern Tamil history for the fundamental rights of his people.",
-    coverImage: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/deelipan-book-cover.webp",
+    coverImage: getSupabaseStorageUrl("blog", "deelipan-book-cover.webp"),
     categoryTa: "தியாக வரலாறு",
     categoryEn: "Martyrdom History",
     publishedAt: "2026-08-05",
@@ -61,7 +62,7 @@ const blogArticles: ArticleCardData[] = [
       "“அப்பா! காந்தியடிகள் நல்லவர்; உயர்ந்தவர். ஆனால் இந்தியச் சூழ்நிலை வேறு; இலங்கைச் சூழ்நிலை வேறு என்பதை நாம் எண்ணிப் பார்க்க வேண்டும்...” இளமைக்கால வரலாற்று உரையாடல்.",
     excerptEn:
       "The early ideological dialogues between young Velupillai Prabhakaran and his father Thiruvenkadam, setting the philosophical foundation for the Eelam liberation movement.",
-    coverImage: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/prabakaran-dad-banner.webp",
+    coverImage: getSupabaseStorageUrl("blog", "prabakaran-dad-banner.webp"),
     categoryTa: "வாழ்க்கை வரலாறு",
     categoryEn: "Biography",
     publishedAt: "2026-08-01",
@@ -75,7 +76,7 @@ const blogArticles: ArticleCardData[] = [
       "பேராசிரியர் அறிவரசனிடம் தலைவர் பிரபாகரன் தனது பெயர் குறித்து நிகழ்த்திய சுவையான கலந்துரையாடல் மற்றும் தமிழ் மொழிப்பற்று குறித்த வரலாற்றுச் சுருக்கம்.",
     excerptEn:
       "An insightful literary interaction between Prof. Arivarasan and National Leader Prabhakaran regarding Tamil linguistics, naming traditions, and cultural heritage.",
-    coverImage: "https://yxghkhizyjsfrevtekbc.supabase.co/storage/v1/object/public/blog/kanden-kanden-banner.webp",
+    coverImage: getSupabaseStorageUrl("blog", "kanden-kanden-banner.webp"),
     categoryTa: "இலக்கிய உரையாடல்",
     categoryEn: "Literature & Language",
     publishedAt: "2026-07-28",

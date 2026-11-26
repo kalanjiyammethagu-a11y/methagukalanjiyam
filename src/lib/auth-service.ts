@@ -655,7 +655,7 @@ export async function validateAdminSession(signedSessionToken: string): Promise<
 
 export interface AdminAuthResult {
   authorized: boolean;
-  status: 401 | 403;
+  status: 200 | 401 | 403;
   error?: string;
   userId?: string;
   user?: { id: string; role: string; email?: string };
@@ -686,7 +686,7 @@ export async function requireAdmin(cookieOrReq: any): Promise<AdminAuthResult> {
   try {
     const adminSupabase = createAdminClient();
     const { data: profile, error } = await (adminSupabase.from("profiles") as any)
-      .select("id, role, email")
+      .select("id, role")
       .eq("id", userId)
       .maybeSingle();
 
@@ -700,9 +700,9 @@ export async function requireAdmin(cookieOrReq: any): Promise<AdminAuthResult> {
 
     return {
       authorized: true,
-      status: 401,
+      status: 200,
       userId: profile.id,
-      user: { id: profile.id, role: profile.role, email: profile.email },
+      user: { id: profile.id, role: profile.role },
     };
   } catch (err: any) {
     console.error("[requireAdmin] Verification error:", err?.message);
@@ -868,4 +868,59 @@ export async function verifyUserEmailToken(rawToken: string): Promise<{
   });
 
   return { success: true, userId: record.user_id, email: record.email };
+}
+
+export interface AuthUserLookupResult {
+  id: string;
+  email?: string;
+  email_confirmed_at?: string | null;
+  user_metadata?: Record<string, any>;
+}
+
+/**
+ * Finds an auth user by email without truncating at page 1 (1,000 users).
+ * Prefers SQL RPC `lookup_auth_user_by_email` and falls back to paginated `listUsers`.
+ */
+export async function findAuthUserByEmail(
+  adminSupabase: any,
+  email: string
+): Promise<AuthUserLookupResult | null> {
+  const normalized = email.toLowerCase().trim();
+  if (!normalized) return null;
+
+  try {
+    const { data: rpcRows, error: rpcErr } = await adminSupabase.rpc(
+      "lookup_auth_user_by_email",
+      { p_email: normalized }
+    );
+    if (!rpcErr && Array.isArray(rpcRows) && rpcRows.length > 0) {
+      const row = rpcRows[0];
+      return {
+        id: row.id,
+        email: row.email,
+        email_confirmed_at: row.email_confirmed_at,
+        user_metadata: row.raw_user_meta_data || {},
+      };
+    }
+  } catch {
+    // RPC may not exist on older schema or local mocks; fall back to paginated scan
+  }
+
+  const perPage = 1000;
+  for (let page = 1; page <= 50; page++) {
+    const { data: pageData, error: listErr } = await adminSupabase.auth.admin.listUsers({
+      page,
+      perPage,
+    });
+    if (listErr || !pageData?.users?.length) break;
+
+    const match = pageData.users.find(
+      (u: any) => u.email?.toLowerCase() === normalized
+    );
+    if (match) return match as AuthUserLookupResult;
+
+    if (pageData.users.length < perPage) break;
+  }
+
+  return null;
 }

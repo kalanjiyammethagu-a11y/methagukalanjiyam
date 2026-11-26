@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { addressSchema } from "@/lib/validators/order";
+import { z } from "zod";
 
 export const dynamic = "force-dynamic";
+
+const addressPostSchema = addressSchema.extend({
+  country: z.string().trim().max(80).default("India"),
+});
+
+const addressPatchSchema = addressPostSchema.partial().extend({
+  id: z.string().uuid("Invalid address ID"),
+});
 
 export async function GET(req: NextRequest) {
   try {
@@ -45,7 +55,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized. Please log in to add an address." }, { status: 401 });
     }
 
-    const body = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON request body" }, { status: 400 });
+    }
+
+    const parsed = addressPostSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid address data", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+
     const {
       label,
       full_name,
@@ -58,14 +82,7 @@ export async function POST(req: NextRequest) {
       pincode,
       country,
       is_default,
-    } = body;
-
-    if (!full_name || !phone || !house_name || !city || !state || !pincode) {
-      return NextResponse.json(
-        { error: "Full name, phone, house/building name, city, state, and pincode are required." },
-        { status: 400 }
-      );
-    }
+    } = parsed.data;
 
     // If new address is set as default, unset existing default addresses for this user
     if (is_default) {
@@ -78,14 +95,14 @@ export async function POST(req: NextRequest) {
       .insert({
         user_id: user.id,
         label: label || "Home",
-        full_name: full_name.trim(),
-        phone: phone.trim(),
-        house_name: house_name.trim(),
-        street: street ? street.trim() : null,
-        landmark: landmark ? landmark.trim() : null,
-        city: city.trim(),
-        state: state.trim(),
-        pincode: pincode.trim(),
+        full_name,
+        phone,
+        house_name,
+        street: street || null,
+        landmark: landmark || null,
+        city,
+        state,
+        pincode,
         country: country || "India",
         is_default: Boolean(is_default),
         created_at: new Date().toISOString(),
@@ -118,12 +135,22 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized. Please log in to update an address." }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { id, is_default, ...updates } = body;
-
-    if (!id) {
-      return NextResponse.json({ error: "Address ID is required" }, { status: 400 });
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON request body" }, { status: 400 });
     }
+
+    const parsed = addressPatchSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid address update payload", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const { id, is_default, ...updates } = parsed.data;
 
     if (is_default) {
       await (supabase.from("addresses") as any)
