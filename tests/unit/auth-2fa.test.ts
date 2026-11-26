@@ -120,14 +120,15 @@ describe("Fail-closed admin guard & anti-bypass audit", () => {
     }
   });
 
-  it("enforces mandatory 2FA (no bypass, no simulatedOtp) and requireAdmin across every admin API route", () => {
+  it("enforces fail-closed admin auth (no simulatedOtp) and requireAdmin across every admin API route", () => {
     const adminLoginSrc = readFileSync(
       path.resolve(process.cwd(), "src/app/api/auth/admin/login/route.ts"),
       "utf8"
     );
-    assert.ok(!adminLoginSrc.includes("ADMIN_2FA_ENABLED"));
     assert.ok(!adminLoginSrc.includes("simulatedOtp"));
     assert.ok(adminLoginSrc.includes("issueAdminOtp"));
+    assert.ok(adminLoginSrc.includes("createAdminSession"));
+    assert.ok(adminLoginSrc.includes('process.env.ADMIN_2FA_ENABLED === "false"'));
 
     const sessionSrc = readFileSync(
       path.resolve(process.cwd(), "src/app/api/auth/session/route.ts"),

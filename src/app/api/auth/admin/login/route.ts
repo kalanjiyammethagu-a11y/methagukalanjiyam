@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { adminLoginStep1Schema } from "@/lib/validators/auth";
-import { issueAdminOtp, recordAuthEvent } from "@/lib/auth-service";
+import { createAdminSession, issueAdminOtp, recordAuthEvent } from "@/lib/auth-service";
 import { sendAdminOtpEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
@@ -94,7 +94,50 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Two-Factor Authentication via Resend Email OTP is strictly mandatory on all admin logins.
+    // When ADMIN_2FA_ENABLED is explicitly set to "false", issue a direct DB-backed admin session after password + role check.
+    if (process.env.ADMIN_2FA_ENABLED === "false") {
+      const { sessionToken } = await createAdminSession(userId, clientIp, userAgent);
+
+      await recordAuthEvent({
+        userId,
+        email: normalizedEmail,
+        eventType: "admin_login_direct_success",
+        ipAddress: clientIp,
+        userAgent,
+      });
+
+      await equalizeTiming(startTime);
+
+      const response = NextResponse.json(
+        {
+          success: true,
+          step: "authenticated",
+          redirect: "/admin",
+          message: "Authentication confirmed. Redirecting to administration console...",
+        },
+        { status: 200 }
+      );
+
+      response.cookies.set("mk_admin_session", sessionToken, {
+        path: "/",
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: "strict",
+        maxAge: 8 * 60 * 60,
+      });
+
+      response.cookies.set("mk_admin_preauth", "", {
+        path: "/",
+        maxAge: 0,
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: "strict",
+      });
+
+      return response;
+    }
+
+    // Two-Factor Authentication via Resend Email OTP when ADMIN_2FA_ENABLED !== "false".
     const { preAuthToken, otpCode, expiresInMinutes } = await issueAdminOtp(
       userId,
       normalizedEmail

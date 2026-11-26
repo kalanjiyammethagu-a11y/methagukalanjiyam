@@ -60,6 +60,15 @@ export default function AdminLoginPage() {
         return;
       }
 
+      if (data.step === "authenticated" || data.redirect) {
+        setSuccessMessage(
+          data.message || "Authentication confirmed. Redirecting to administration console..."
+        );
+        router.push(data.redirect || "/admin");
+        router.refresh();
+        return;
+      }
+
       setStep("otp");
       setChallengeMode("otp");
       setBackupCode("");
@@ -236,7 +245,7 @@ export default function AdminLoginPage() {
 
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#0A6847]/10 border border-[#0A6847]/25 text-[#0A6847] text-[11px] font-mono font-bold">
             <ShieldCheck className="h-3.5 w-3.5" />
-            <span>2FA Gate</span>
+            <span>Admin Gate</span>
           </div>
         </div>
 
