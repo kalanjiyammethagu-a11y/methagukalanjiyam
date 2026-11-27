@@ -207,61 +207,61 @@ export default async function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6">
           {/* Bento Tile 1: Primary Spotlight Book (Span 7) */}
           {spotlightBook && (
-          <GlassPanel
-            interactive
-            className="md:col-span-7 p-6 sm:p-8 flex flex-col justify-between group rounded-3xl"
-          >
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold tracking-wider text-[#0A6847] dark:text-emerald-400 uppercase font-tamil">
-                  முதன்மை ஆவண நூல் (Primary Spotlight)
-                </span>
-                <span className="text-xs tabular-nums font-semibold text-[#666666] dark:text-zinc-400">
-                  {spotlightBook.year} PUBLICATION
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center pt-2">
-                <div className="sm:col-span-5 flex justify-center">
-                  <div className="relative aspect-[3/4] w-44 rounded-xl overflow-hidden bg-[#ECE8DF] dark:bg-zinc-800 border border-black/10 dark:border-white/10 shadow-xl group-hover:scale-103 transition-transform duration-300">
-                    <div className="absolute inset-y-0 left-0 w-3 bg-gradient-to-r from-black/25 via-black/5 to-transparent z-10 pointer-events-none" />
-                    <Image
-                      src={spotlightImage}
-                      alt={spotlightBook.title}
-                      fill
-                      sizes="180px"
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
+            <GlassPanel
+              interactive
+              className="md:col-span-7 p-6 sm:p-8 flex flex-col justify-between group rounded-3xl"
+            >
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold tracking-wider text-[#0A6847] dark:text-emerald-400 uppercase font-tamil">
+                    முதன்மை ஆவண நூல் (Primary Spotlight)
+                  </span>
+                  <span className="text-xs tabular-nums font-semibold text-[#666666] dark:text-zinc-400">
+                    {spotlightBook.year} PUBLICATION
+                  </span>
                 </div>
 
-                <div className="sm:col-span-7 space-y-2.5 font-tamil">
-                  <h3 className="text-xl sm:text-2xl font-bold text-[#111111] dark:text-zinc-100 leading-snug font-tamil-serif">
-                    {spotlightBook.title}
-                  </h3>
-                  <p className="text-xs font-bold text-[#0A6847] dark:text-emerald-400">
-                    ஆசிரியர்: {spotlightBook.author}
-                  </p>
-                  <p className="text-xs text-[#444444] dark:text-zinc-300 leading-relaxed font-medium line-clamp-3">
-                    {spotlightBook.descriptionTa ||
-                      "ஈழ விடுதலைப் போராட்ட வரலாற்றில் சாந்தி நேசக்கரம் ஆவணப்படுத்திய அரிய வரலாற்றுத் தடம். நீண்டகால உழைப்பில் உருவான நேரடி ஆவணம்."}
-                  </p>
-                  <div className="pt-2 flex items-center gap-3">
-                    <Button href={`/books/${spotlightBook.slug}`} size="sm" variant="primary">
-                      நூலை ஆர்டர் செய்க (Order Book - ₹{spotlightBook.price})
-                    </Button>
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center pt-2">
+                  <div className="sm:col-span-5 flex justify-center">
+                    <div className="relative aspect-[3/4] w-44 rounded-xl overflow-hidden bg-[#ECE8DF] dark:bg-zinc-800 border border-black/10 dark:border-white/10 shadow-xl group-hover:scale-103 transition-transform duration-300">
+                      <div className="absolute inset-y-0 left-0 w-3 bg-gradient-to-r from-black/25 via-black/5 to-transparent z-10 pointer-events-none" />
+                      <Image
+                        src={spotlightImage}
+                        alt={spotlightBook.title}
+                        fill
+                        sizes="180px"
+                        className="object-cover w-full h-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="sm:col-span-7 space-y-2.5 font-tamil">
+                    <h3 className="text-xl sm:text-2xl font-bold text-[#111111] dark:text-zinc-100 leading-snug font-tamil-serif">
+                      {spotlightBook.title}
+                    </h3>
+                    <p className="text-xs font-bold text-[#0A6847] dark:text-emerald-400">
+                      ஆசிரியர்: {spotlightBook.author}
+                    </p>
+                    <p className="text-xs text-[#444444] dark:text-zinc-300 leading-relaxed font-medium line-clamp-3">
+                      {spotlightBook.descriptionTa ||
+                        "ஈழ விடுதலைப் போராட்ட வரலாற்றில் சாந்தி நேசக்கரம் ஆவணப்படுத்திய அரிய வரலாற்றுத் தடம். நீண்டகால உழைப்பில் உருவான நேரடி ஆவணம்."}
+                    </p>
+                    <div className="pt-2 flex items-center gap-3">
+                      <Button href={`/books/${spotlightBook.slug}`} size="sm" variant="primary">
+                        நூலை ஆர்டர் செய்க (Order Book - ₹{spotlightBook.price})
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="pt-6 mt-6 border-t border-black/8 dark:border-white/10 flex items-center justify-between text-xs text-[#555555] dark:text-zinc-400 font-tamil">
-              <span>நேரடிப் பதிப்பக அச்சுப் பதிப்பு (Original Press Edition)</span>
-              <span className="font-bold text-[#0A6847] dark:text-emerald-400">
-                {spotlightBook.stock > 0 ? "கையிருப்பில் உள்ளது (In Stock)" : "முன்பதிவு (Out of Stock)"}
-              </span>
-            </div>
-          </GlassPanel>
+              <div className="pt-6 mt-6 border-t border-black/8 dark:border-white/10 flex items-center justify-between text-xs text-[#555555] dark:text-zinc-400 font-tamil">
+                <span>நேரடிப் பதிப்பக அச்சுப் பதிப்பு (Original Press Edition)</span>
+                <span className="font-bold text-[#0A6847] dark:text-emerald-400">
+                  {spotlightBook.stock > 0 ? "கையிருப்பில் உள்ளது (In Stock)" : "முன்பதிவு (Out of Stock)"}
+                </span>
+              </div>
+            </GlassPanel>
           )}
 
           {/* Bento Tile 2: Postal Tracking & Shipping Integrity (Span 5) */}
@@ -396,7 +396,10 @@ export default async function HomePage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div
+          className={`grid grid-cols-1 sm:grid-cols-2 ${displayCategories.length === 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"
+            } gap-4 sm:gap-6`}
+        >
           {displayCategories.map((cat) => {
             const count = categoryCounts[cat.slug] ?? 0;
             return (
@@ -407,7 +410,7 @@ export default async function HomePage() {
               >
                 <div className="flex items-start justify-between">
                   <span className="text-xs font-bold text-[#0A6847] dark:text-emerald-300 bg-[#0A6847]/10 dark:bg-emerald-950/80 px-2.5 py-1 rounded-full font-tamil">
-                    {count > 0 ? `${count} நூல்கள்` : cat.countTa}
+                    {count} நூல்கள்
                   </span>
                   <ChevronRight className="h-4 w-4 text-zinc-500 dark:text-zinc-400 group-hover:text-[#0A6847] dark:group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
                 </div>

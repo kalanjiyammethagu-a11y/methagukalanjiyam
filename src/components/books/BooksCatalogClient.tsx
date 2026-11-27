@@ -43,6 +43,7 @@ export function BooksCatalogClient({
   const [search, setSearch] = React.useState(urlQuery);
   const [selectedCategory, setSelectedCategory] = React.useState(urlCategory);
   const [sortBy, setSortBy] = React.useState<SortOption>(urlSort);
+  const [bestSellersOnly, setBestSellersOnly] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
   const [categoryOptions, setCategoryOptions] = React.useState<CategoryOption[]>(
@@ -67,14 +68,20 @@ export function BooksCatalogClient({
   );
 
   React.useEffect(() => {
+    const hasInitialBooks = Boolean(initialBooks && initialBooks.length > 0);
+    const hasInitialCategories = Boolean(initialCategories && initialCategories.length > 0);
+    if (hasInitialBooks && hasInitialCategories) {
+      return;
+    }
+
     let isMounted = true;
     async function loadDynamicCatalog() {
       try {
         const [res, catRes] = await Promise.all([
-          fetch("/api/books?limit=100"),
-          fetch("/api/categories"),
+          hasInitialBooks ? Promise.resolve(null) : fetch("/api/books?limit=100"),
+          hasInitialCategories ? Promise.resolve(null) : fetch("/api/categories"),
         ]);
-        if (catRes.ok) {
+        if (catRes && catRes.ok) {
           const catData = await catRes.json().catch(() => ({}));
           if (isMounted && Array.isArray(catData.categories) && catData.categories.length > 0) {
             setCategoryOptions(
@@ -86,7 +93,7 @@ export function BooksCatalogClient({
             );
           }
         }
-        if (res.ok) {
+        if (res && res.ok) {
           const data = await res.json();
           if (isMounted && data.books && Array.isArray(data.books) && data.books.length > 0) {
             const mapped: BookCardData[] = data.books.map((b: any) => {
@@ -170,6 +177,10 @@ export function BooksCatalogClient({
       });
     }
 
+    if (bestSellersOnly) {
+      books = books.filter((b) => Boolean(b.featured));
+    }
+
     // Sort
     switch (sortBy) {
       case "price-low":
@@ -189,12 +200,12 @@ export function BooksCatalogClient({
     }
 
     return books;
-  }, [liveBooks, search, selectedCategory, sortBy]);
+  }, [liveBooks, search, selectedCategory, bestSellersOnly, sortBy]);
 
   // Reset page when filter/search changes
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [search, selectedCategory, sortBy]);
+  }, [search, selectedCategory, bestSellersOnly, sortBy]);
 
   const totalPages = Math.ceil(processedBooks.length / BOOKS_PER_PAGE);
   const pagedBooks = processedBooks.slice(
@@ -212,15 +223,15 @@ export function BooksCatalogClient({
             { label: "நூல்கள்", labelEn: "Books", href: "/books" },
             ...(selectedCategory !== "all"
               ? [
-                  {
-                    label:
-                      categoryOptions.find((c) => c.slug === selectedCategory)?.labelTa ||
-                      selectedCategory,
-                    labelEn:
-                      categoryOptions.find((c) => c.slug === selectedCategory)?.labelEn ||
-                      selectedCategory,
-                  },
-                ]
+                {
+                  label:
+                    categoryOptions.find((c) => c.slug === selectedCategory)?.labelTa ||
+                    selectedCategory,
+                  labelEn:
+                    categoryOptions.find((c) => c.slug === selectedCategory)?.labelEn ||
+                    selectedCategory,
+                },
+              ]
               : []),
           ]}
         />
@@ -277,8 +288,22 @@ export function BooksCatalogClient({
               />
             </div>
 
-            {/* Sort Dropdown */}
-            <div className="flex items-center gap-2">
+            {/* Sort & Best Sellers Toggle */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                aria-pressed={bestSellersOnly}
+                onClick={() => setBestSellersOnly((prev) => !prev)}
+                className={cn(
+                  "px-3.5 py-2.5 rounded-xl border text-xs font-bold transition-all min-h-[44px] cursor-pointer flex items-center gap-1.5 font-tamil shrink-0",
+                  bestSellersOnly
+                    ? "bg-amber-50 dark:bg-amber-950/60 border-amber-400 text-amber-800 dark:text-amber-300 shadow-2xs"
+                    : "bg-white/80 dark:bg-zinc-900 border-black/12 dark:border-white/15 text-[#333333] dark:text-zinc-200 hover:border-amber-300"
+                )}
+              >
+                <span aria-hidden="true">★</span>
+                <span>{locale === "ta" ? "அதிகம் விற்பனை" : "Best Sellers"}</span>
+              </button>
               <div className="relative">
                 <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#555555] dark:text-zinc-400 pointer-events-none" />
                 <select
@@ -385,6 +410,7 @@ export function BooksCatalogClient({
             onAction={() => {
               setSearch("");
               setSelectedCategory("all");
+              setBestSellersOnly(false);
               setSortBy("relevance");
             }}
             locale={locale}

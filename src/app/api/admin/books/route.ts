@@ -176,6 +176,12 @@ export async function POST(req: NextRequest) {
           await deleteAdminAsset("books", galleryPath);
         }
       }
+      if (error.code === "23505") {
+        return NextResponse.json(
+          { error: `A book with slug "${generatedSlug}" already exists.` },
+          { status: 409 }
+        );
+      }
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 

@@ -23,9 +23,10 @@ import { localized } from "@/lib/i18n";
 
 interface ArticleDetailClientProps {
   article: ArticleDetailData;
+  relatedBooks?: BookItem[];
 }
 
-export function ArticleDetailClient({ article }: ArticleDetailClientProps) {
+export function ArticleDetailClient({ article, relatedBooks: propRelatedBooks }: ArticleDetailClientProps) {
   const { locale } = useLanguage();
   const isTa = locale === "ta";
 
@@ -194,7 +195,9 @@ export function ArticleDetailClient({ article }: ArticleDetailClientProps) {
           <div
             className="prose prose-neutral dark:prose-invert max-w-none font-tamil text-[#222222] dark:text-zinc-200 text-base sm:text-lg leading-[1.85] space-y-5
               [&>h2]:text-xl sm:[&>h2]:text-2xl [&>h2]:font-bold [&>h2]:font-tamil-serif [&>h2]:text-[#111111] dark:[&>h2]:text-zinc-100 [&>h2]:pt-6 [&>h2]:border-b [&>h2]:border-black/8 dark:[&>h2]:border-white/10 [&>h2]:pb-2.5 [&>h2]:text-balance
+              [&>h3]:text-lg sm:[&>h3]:text-xl [&>h3]:font-bold [&>h3]:text-[#0A6847] dark:[&>h3]:text-emerald-400 [&>h3]:pt-3
               [&>p]:leading-[1.85] [&>p]:text-[#2c2c2c] dark:[&>p]:text-zinc-200 [&>p]:text-pretty
+              [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:space-y-2 [&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:space-y-2
               [&>b]:text-[#111111] dark:[&>b]:text-white [&>strong]:text-[#111111] dark:[&>strong]:text-white [&>strong]:font-semibold
               [&_blockquote_p]:text-zinc-100 [&_blockquote_i]:text-amber-100 [&_blockquote_b]:text-white"
             dangerouslySetInnerHTML={{ __html: formatArticleBodyHtml(content) }}
@@ -219,13 +222,18 @@ export function ArticleDetailClient({ article }: ArticleDetailClientProps) {
             </div>
           </div>
 
-          {/* Grid of actual related book items */}
-          {article.relatedBookSlugs && article.relatedBookSlugs.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-              {article.relatedBookSlugs
-                .map((bookSlug) => getBookBySlug(bookSlug))
-                .filter((b): b is BookItem => Boolean(b))
-                .map((b) => (
+          {/* Grid of live related book items */}
+          {(() => {
+            const resolvedRelated =
+              propRelatedBooks && propRelatedBooks.length > 0
+                ? propRelatedBooks
+                : (article.relatedBookSlugs || [])
+                  .map((bookSlug) => getBookBySlug(bookSlug))
+                  .filter((b): b is BookItem => Boolean(b));
+            if (resolvedRelated.length === 0) return null;
+            return (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                {resolvedRelated.map((b) => (
                   <div
                     key={b.id}
                     className="p-4 rounded-2xl bg-white/95 dark:bg-zinc-900/95 border border-black/8 dark:border-white/10 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
@@ -270,8 +278,9 @@ export function ArticleDetailClient({ article }: ArticleDetailClientProps) {
                     </div>
                   </div>
                 ))}
-            </div>
-          )}
+              </div>
+            );
+          })()}
 
           <div className="pt-2 flex flex-wrap gap-3">
             <Link

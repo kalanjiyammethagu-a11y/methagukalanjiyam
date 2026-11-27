@@ -235,9 +235,9 @@ export async function PATCH(req: NextRequest) {
     const { id, ...updates } = parsed.data;
     const adminSupabase = createAdminClient();
 
-    // Check existing for storage cleanup
+    // Check existing for storage cleanup & published_at preservation
     const { data: existingPost } = await (adminSupabase.from("blog_posts") as any)
-      .select("cover_image_path, slug")
+      .select("cover_image_path, slug, published_at")
       .eq("id", id)
       .maybeSingle();
 
@@ -265,7 +265,7 @@ export async function PATCH(req: NextRequest) {
     if (updates.cover_image_path !== undefined) basePayload.cover_image_path = updates.cover_image_path;
     if (updates.status !== undefined) {
       basePayload.status = updates.status;
-      if (basePayload.status === "published" && !updates.published_at) {
+      if (basePayload.status === "published" && !updates.published_at && !existingPost?.published_at) {
         basePayload.published_at = new Date().toISOString();
       }
     }
@@ -379,7 +379,9 @@ export async function PATCH(req: NextRequest) {
       if (updates.cover_image_url !== undefined) legacyPayload.cover_image = updates.cover_image_url;
       if (updates.status !== undefined) {
         legacyPayload.is_published = updates.status === "published";
-        if (legacyPayload.is_published) legacyPayload.published_at = new Date().toISOString();
+        if (legacyPayload.is_published && !updates.published_at && !existingLegacy?.published_at) {
+          legacyPayload.published_at = new Date().toISOString();
+        }
       }
       if (updates.reading_time_mins !== undefined) legacyPayload.reading_time_mins = updates.reading_time_mins;
 

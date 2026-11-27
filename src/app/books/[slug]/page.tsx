@@ -18,7 +18,7 @@ import {
 import { mapDbBookToBookItem } from "@/lib/book-mappers";
 import { localized } from "@/lib/i18n";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 interface BookPageProps {
   params: Promise<{ slug: string }>;
@@ -41,12 +41,6 @@ async function resolveBook(slug: string): Promise<BookItem | undefined> {
     // Return static if DB is unreachable
   }
   return staticBook;
-}
-
-export function generateStaticParams() {
-  return allBooks.map((book) => ({
-    slug: book.slug,
-  }));
 }
 
 export async function generateMetadata({

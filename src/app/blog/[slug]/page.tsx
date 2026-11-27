@@ -2,10 +2,12 @@ import * as React from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArticleDetailClient } from "@/components/blog/ArticleDetailClient";
-import { getArticleBySlug, getAllArticleSlugs, type ArticleDetailData } from "@/data/articles";
+import { getArticleBySlug, type ArticleDetailData } from "@/data/articles";
+import { allBooks, getBookBySlug, type BookItem } from "@/data/books";
 import { safeJsonLdStringify } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/server";
 import { localized, resolveBilingualPair } from "@/lib/i18n";
+import { mapDbBookToBookItem } from "@/lib/book-mappers";
 import {
   normalizeLegacyBlogRow,
   resolveArticleCategoryPair,
@@ -93,12 +95,6 @@ async function resolveArticle(slug: string): Promise<ArticleDetailData | undefin
   return staticArticle;
 }
 
-export function generateStaticParams() {
-  return getAllArticleSlugs().map((slug) => ({
-    slug,
-  }));
-}
-
 export async function generateMetadata({
   params,
 }: ArticlePageProps): Promise<Metadata> {
@@ -160,6 +156,26 @@ export default async function ArticleDetailPage({ params }: ArticlePageProps) {
 
   if (!article) {
     notFound();
+  }
+
+  // Resolve live related books from Supabase (preserving static fallback)
+  let relatedBooks: BookItem[] = (article.relatedBookSlugs || [])
+    .map((bookSlug) => getBookBySlug(bookSlug))
+    .filter((b): b is BookItem => Boolean(b));
+  try {
+    const supabase = await createClient();
+    const { data: dbRelated } = await (supabase.from("books") as any)
+      .select("*, categories(name_ta, name_en, slug)")
+      .eq("status", "published")
+      .in("slug", article.relatedBookSlugs || ["dhisai-thavara-kanai", "katunayake-attack-victory"])
+      .limit(3);
+    if (Array.isArray(dbRelated) && dbRelated.length > 0) {
+      relatedBooks = dbRelated.map((row: any) =>
+        mapDbBookToBookItem(row, allBooks.find((sb) => sb.slug === row.slug))
+      );
+    }
+  } catch {
+    // Keep static related fallback
   }
 
   const articleSchema = {
@@ -229,7 +245,7 @@ export default async function ArticleDetailPage({ params }: ArticlePageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLdStringify(articleSchema) }}
       />
-      <ArticleDetailClient article={article} />
+      <ArticleDetailClient article={article} relatedBooks={relatedBooks} />
     </>
   );
 }

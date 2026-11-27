@@ -227,28 +227,40 @@ export function formatArticleBodyHtml(rawContent?: string | null): string {
   }
 
   const paragraphs = raw.split(/\r?\n\s*\r?\n+/).filter((block) => block.trim().length > 0);
+  const isHeadingCandidate = (line: string) =>
+    line.length <= 72 && !/[.!?。]$/.test(line);
+
   const htmlBlocks = paragraphs.map((block) => {
     const lines = block
       .split(/\r?\n/)
       .map((line) => line.trim())
       .filter((line) => line.length > 0);
 
+    const chunks: string[] = [];
+    let bodyStart = 0;
+
     if (lines.length === 1) {
       const single = lines[0]!;
-      // Treat standalone short line without sentence-ending punctuation as a subheading
-      if (single.length <= 72 && !/[.!?。]$/.test(single)) {
-        return `<h2>${escapeHtmlText(single)}</h2>`;
+      return isHeadingCandidate(single)
+        ? `<h2>${escapeHtmlText(single)}</h2>`
+        : `<p>${escapeHtmlText(single)}</p>`;
+    }
+
+    if (lines[0] && isHeadingCandidate(lines[0])) {
+      chunks.push(`<h2>${escapeHtmlText(lines[0])}</h2>`);
+      bodyStart = 1;
+      if (lines.length >= 3 && lines[1] && isHeadingCandidate(lines[1])) {
+        chunks.push(`<h3>${escapeHtmlText(lines[1])}</h3>`);
+        bodyStart = 2;
       }
-      return `<p>${escapeHtmlText(single)}</p>`;
     }
 
-    const first = lines[0]!;
-    if (first.length <= 72 && !/[.!?。]$/.test(first) && lines.length >= 2) {
-      const rest = lines.slice(1).map(escapeHtmlText).join("<br />");
-      return `<h2>${escapeHtmlText(first)}</h2><p>${rest}</p>`;
+    const bodyLines = lines.slice(bodyStart);
+    if (bodyLines.length > 0) {
+      chunks.push(`<p>${bodyLines.map(escapeHtmlText).join("<br />")}</p>`);
     }
 
-    return `<p>${lines.map(escapeHtmlText).join("<br />")}</p>`;
+    return chunks.join("");
   });
 
   return sanitizeHtml(htmlBlocks.join("\n"));

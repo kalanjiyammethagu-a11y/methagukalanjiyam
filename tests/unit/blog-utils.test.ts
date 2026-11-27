@@ -38,11 +38,13 @@ describe("Blog & Article Utilities", () => {
   });
 
   it("formats plain-text Tamil paragraphs into structured HTML while keeping existing rich HTML intact", () => {
-    const plain = "கொளத்தூர் மணி அறிமுகம்.\n\nவாழ்க்கைக் குறிப்பு\n1948-ஆம் ஆண்டு பிறந்தார்.";
+    const plain =
+      "கொளத்தூர் மணி அறிமுகம்.\n\nவாழ்க்கைக் குறிப்பு\n1948-ஆம் ஆண்டு பிறந்தார்.\n\nபொது வாழ்க்கை\nதிராவிடர் கழகம்\nபகுத்தறிவு சிந்தனை பெற்றார்.";
     const formatted = formatArticleBodyHtml(plain);
     assert.ok(formatted.includes("<p>கொளத்தூர் மணி அறிமுகம்.</p>"));
     assert.ok(formatted.includes("<h2>வாழ்க்கைக் குறிப்பு</h2>"));
     assert.ok(formatted.includes("<p>1948-ஆம் ஆண்டு பிறந்தார்.</p>"));
+    assert.ok(formatted.includes("<h2>பொது வாழ்க்கை</h2><h3>திராவிடர் கழகம்</h3><p>பகுத்தறிவு சிந்தனை பெற்றார்.</p>"));
 
     const richHtml = "<h2>Title</h2><p>Body <script>alert(1)</script>safe</p>";
     const cleanRich = formatArticleBodyHtml(richHtml);

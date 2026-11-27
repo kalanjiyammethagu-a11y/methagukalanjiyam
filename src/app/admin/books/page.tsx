@@ -261,7 +261,7 @@ export default function AdminBooksPage() {
           return;
         }
       }
-    } catch {}
+    } catch { }
     setBooks([]);
     setUsingFallback(true);
     setLoading(false);
@@ -606,11 +606,11 @@ export default function AdminBooksPage() {
         prev.map((b) =>
           b.id === book.id
             ? updated || {
-                ...b,
-                stock: nextStock,
-                status: (nextStock <= 0 ? "out_of_stock" : nextStock <= 5 ? "low_stock" : "in_stock") as BookStatus,
-                updatedAt: new Date().toISOString(),
-              }
+              ...b,
+              stock: nextStock,
+              status: (nextStock <= 0 ? "out_of_stock" : nextStock <= 5 ? "low_stock" : "in_stock") as BookStatus,
+              updatedAt: new Date().toISOString(),
+            }
             : b
         )
       );
@@ -692,10 +692,10 @@ export default function AdminBooksPage() {
       is_featured: Boolean(formData.isFeatured),
       ...(cleanCoverUrl && cleanCoverUrl !== BOOK_PLACEHOLDER_IMAGE
         ? {
-            cover_image_url: cleanCoverUrl,
-            cover_image_path: formData.cover_image_path || null,
-            cover_is_front: true,
-          }
+          cover_image_url: cleanCoverUrl,
+          cover_image_path: formData.cover_image_path || null,
+          cover_is_front: true,
+        }
         : {}),
       cover_alt_en: formData.coverAltEn.trim() || null,
       cover_alt_ta: formData.coverAltTa.trim() || null,
@@ -722,34 +722,34 @@ export default function AdminBooksPage() {
             prev.map((b) =>
               b.id === editingBook.id
                 ? savedBook || {
-                    ...b,
-                    slug: cleanSlug,
-                    title: requestPayload.title,
-                    titleEn: formData.titleEn.trim(),
-                    titleTa: formData.titleTa.trim(),
-                    author: requestPayload.author,
-                    authorEn: formData.authorEn.trim(),
-                    authorTa: formData.authorTa.trim(),
-                    price: Number(formData.price),
-                    stock: Number(formData.stock),
-                    image: cleanCoverUrl,
-                    coverImageUrl: cleanCoverUrl,
-                    coverImagePath: formData.cover_image_path || null,
-                    coverIsFront: true,
-                    coverAltEn: formData.coverAltEn.trim() || null,
-                    coverAltTa: formData.coverAltTa.trim() || null,
-                    galleryImages: formData.galleryImages,
-                    descriptionTa: formData.descriptionTa.trim(),
-                    descriptionEn: formData.descriptionEn.trim(),
-                    publisherTa: formData.publisherTa.trim(),
-                    publisherEn: formData.publisherEn.trim(),
-                    whatsappLink: formData.whatsapp_link,
-                    cmsStatus: formData.cmsStatus,
-                    status: (
-                      formData.stock <= 0 ? "out_of_stock" : formData.stock <= 5 ? "low_stock" : "in_stock"
-                    ) as BookStatus,
-                    updatedAt: new Date().toISOString(),
-                  }
+                  ...b,
+                  slug: cleanSlug,
+                  title: requestPayload.title,
+                  titleEn: formData.titleEn.trim(),
+                  titleTa: formData.titleTa.trim(),
+                  author: requestPayload.author,
+                  authorEn: formData.authorEn.trim(),
+                  authorTa: formData.authorTa.trim(),
+                  price: Number(formData.price),
+                  stock: Number(formData.stock),
+                  image: cleanCoverUrl,
+                  coverImageUrl: cleanCoverUrl,
+                  coverImagePath: formData.cover_image_path || null,
+                  coverIsFront: true,
+                  coverAltEn: formData.coverAltEn.trim() || null,
+                  coverAltTa: formData.coverAltTa.trim() || null,
+                  galleryImages: formData.galleryImages,
+                  descriptionTa: formData.descriptionTa.trim(),
+                  descriptionEn: formData.descriptionEn.trim(),
+                  publisherTa: formData.publisherTa.trim(),
+                  publisherEn: formData.publisherEn.trim(),
+                  whatsappLink: formData.whatsapp_link,
+                  cmsStatus: formData.cmsStatus,
+                  status: (
+                    formData.stock <= 0 ? "out_of_stock" : formData.stock <= 5 ? "low_stock" : "in_stock"
+                  ) as BookStatus,
+                  updatedAt: new Date().toISOString(),
+                }
                 : b
             )
           );
@@ -877,10 +877,24 @@ export default function AdminBooksPage() {
         return;
       }
       if (editingCat && data.category) {
+        const updatedCat = data.category;
         setCategoriesList((prev) =>
-          prev.map((c) => (c.id === editingCat.id ? { ...c, ...data.category } : c))
+          prev.map((c) => (c.id === editingCat.id ? { ...c, ...updatedCat } : c))
         );
-        showToast(`Updated category "${data.category.name_en}".`);
+        setBooks((prev) =>
+          prev.map((b) =>
+            b.categoryId === editingCat.id || b.categorySlug === editingCat.slug
+              ? {
+                ...b,
+                categoryId: updatedCat.id,
+                categorySlug: updatedCat.slug,
+                categoryEn: updatedCat.name_en,
+                categoryTa: updatedCat.name_ta,
+              }
+              : b
+          )
+        );
+        showToast(`Updated category "${updatedCat.name_en}".`);
       } else if (data.category) {
         setCategoriesList((prev) => [...prev, data.category]);
         showToast(`Created category "${data.category.name_en}".`);
@@ -1286,11 +1300,11 @@ export default function AdminBooksPage() {
                             {(book.coverIsFront === false ||
                               isFlaggedBookCoverSlug(book.slug) ||
                               book.image === BOOK_PLACEHOLDER_IMAGE) && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-bold">
-                                <AlertTriangle className="h-2.5 w-2.5" />
-                                Needs Front Cover
-                              </span>
-                            )}
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-bold">
+                                  <AlertTriangle className="h-2.5 w-2.5" />
+                                  Needs Front Cover
+                                </span>
+                              )}
                             {book.galleryImages && book.galleryImages.length > 0 && (
                               <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 text-[10px] font-semibold">
                                 +{book.galleryImages.length} gallery
@@ -1340,16 +1354,14 @@ export default function AdminBooksPage() {
                             ? "Click to remove Best Seller flag"
                             : "Click to flag as Best Seller"
                         }
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer disabled:opacity-50 ${
-                          book.isFeatured
-                            ? "bg-amber-50 text-amber-800 border-amber-300 shadow-2xs hover:bg-amber-100"
-                            : "bg-white text-gray-500 border-gray-200 hover:border-amber-300 hover:text-amber-700"
-                        }`}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer disabled:opacity-50 ${book.isFeatured
+                          ? "bg-amber-50 text-amber-800 border-amber-300 shadow-2xs hover:bg-amber-100"
+                          : "bg-white text-gray-500 border-gray-200 hover:border-amber-300 hover:text-amber-700"
+                          }`}
                       >
                         <Star
-                          className={`h-3 w-3 ${
-                            book.isFeatured ? "fill-amber-500 text-amber-500" : "text-gray-400"
-                          }`}
+                          className={`h-3 w-3 ${book.isFeatured ? "fill-amber-500 text-amber-500" : "text-gray-400"
+                            }`}
                         />
                         <span>{book.isFeatured ? "Best Seller" : "Flag"}</span>
                       </button>
@@ -1885,9 +1897,8 @@ export default function AdminBooksPage() {
                         className="h-4 w-4 accent-amber-500 rounded cursor-pointer"
                       />
                       <Star
-                        className={`h-4 w-4 shrink-0 ${
-                          formData.isFeatured ? "fill-amber-500 text-amber-500" : "text-gray-400"
-                        }`}
+                        className={`h-4 w-4 shrink-0 ${formData.isFeatured ? "fill-amber-500 text-amber-500" : "text-gray-400"
+                          }`}
                       />
                       <div className="min-w-0">
                         <span className="text-xs font-bold text-gray-900 block leading-tight">
@@ -2180,70 +2191,75 @@ export default function AdminBooksPage() {
                   Existing Categories ({categoriesList.length})
                 </div>
                 <div className="divide-y divide-gray-100 border border-gray-200 rounded-2xl overflow-hidden bg-white">
-                  {categoriesList.map((cat) => (
-                    <div
-                      key={cat.id}
-                      className="p-3.5 flex flex-wrap items-center justify-between gap-3 hover:bg-gray-50"
-                    >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs font-bold text-gray-900">{cat.name_en}</span>
-                          <span className="text-xs font-semibold text-[#0A6847] font-tamil">
-                            {cat.name_ta}
-                          </span>
-                          <span className="text-[10px] font-mono text-gray-400">/{cat.slug}</span>
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
-                            {cat.book_count ?? 0} books
-                          </span>
+                  {categoriesList.map((cat) => {
+                    const liveBookCount =
+                      books.filter(
+                        (b) => b.categoryId === cat.id || (!b.categoryId && b.categorySlug === cat.slug)
+                      ).length || cat.book_count || 0;
+                    return (
+                      <div
+                        key={cat.id}
+                        className="p-3.5 flex flex-wrap items-center justify-between gap-3 hover:bg-gray-50"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-bold text-gray-900">{cat.name_en}</span>
+                            <span className="text-xs font-semibold text-[#0A6847] font-tamil">
+                              {cat.name_ta}
+                            </span>
+                            <span className="text-[10px] font-mono text-gray-400">/{cat.slug}</span>
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                              {liveBookCount} books
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleCategoryActive(cat)}
-                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold border cursor-pointer ${
-                            cat.is_active
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleCategoryActive(cat)}
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold border cursor-pointer ${cat.is_active
                               ? "bg-emerald-50 text-emerald-800 border-emerald-200"
                               : "bg-gray-100 text-gray-500 border-gray-200"
-                          }`}
-                        >
-                          {cat.is_active ? "Active" : "Hidden"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingCat(cat);
-                            setCatError(null);
-                            setCatForm({
-                              name_en: cat.name_en,
-                              name_ta: cat.name_ta,
-                              slug: cat.slug,
-                              description_en: cat.description_en || "",
-                              description_ta: cat.description_ta || "",
-                              sort_order: cat.sort_order ?? 0,
-                            });
-                          }}
-                          className="h-8 w-8 rounded-lg bg-gray-100 hover:bg-[#0A6847] hover:text-white text-gray-600 flex items-center justify-center cursor-pointer"
-                          title="Edit category"
-                        >
-                          <Edit className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          disabled={(cat.book_count ?? 0) > 0}
-                          onClick={() => handleDeleteCategory(cat)}
-                          className="h-8 w-8 rounded-lg bg-gray-100 hover:bg-rose-600 hover:text-white disabled:opacity-35 disabled:hover:bg-gray-100 disabled:hover:text-gray-600 text-gray-600 flex items-center justify-center cursor-pointer"
-                          title={
-                            (cat.book_count ?? 0) > 0
-                              ? "Reassign books before deleting category"
-                              : "Delete category"
-                          }
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                              }`}
+                          >
+                            {cat.is_active ? "Active" : "Hidden"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingCat(cat);
+                              setCatError(null);
+                              setCatForm({
+                                name_en: cat.name_en,
+                                name_ta: cat.name_ta,
+                                slug: cat.slug,
+                                description_en: cat.description_en || "",
+                                description_ta: cat.description_ta || "",
+                                sort_order: cat.sort_order ?? 0,
+                              });
+                            }}
+                            className="h-8 w-8 rounded-lg bg-gray-100 hover:bg-[#0A6847] hover:text-white text-gray-600 flex items-center justify-center cursor-pointer"
+                            title="Edit category"
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            disabled={liveBookCount > 0}
+                            onClick={() => handleDeleteCategory(cat)}
+                            className="h-8 w-8 rounded-lg bg-gray-100 hover:bg-rose-600 hover:text-white disabled:opacity-35 disabled:hover:bg-gray-100 disabled:hover:text-gray-600 text-gray-600 flex items-center justify-center cursor-pointer"
+                            title={
+                              liveBookCount > 0
+                                ? "Reassign books before deleting category"
+                                : "Delete category"
+                            }
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>

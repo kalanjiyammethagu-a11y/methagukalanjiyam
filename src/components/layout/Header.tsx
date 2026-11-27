@@ -175,7 +175,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
                 type="button"
                 onClick={handleOpenSearch}
                 aria-label={isTa ? "நூல்களைத் தேடுக — Ctrl+K" : "Search archives — Ctrl+K"}
-                className="min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] border border-black/[0.08] dark:border-white/[0.1] hover:border-black/[0.16] text-[var(--color-ink-secondary)] hover:text-[var(--color-ink-primary)] flex items-center justify-center transition-all active:scale-95 motion-reduce:active:scale-100 cursor-pointer shadow-2xs shrink-0"
+                className="min-h-[44px] min-w-[38px] sm:min-w-[44px] h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] border border-black/[0.08] dark:border-white/[0.1] hover:border-black/[0.16] text-[var(--color-ink-secondary)] hover:text-[var(--color-ink-primary)] flex items-center justify-center transition-all active:scale-95 motion-reduce:active:scale-100 cursor-pointer shadow-2xs shrink-0"
                 title={isTa ? "தேடல் (Ctrl+K)" : "Search (Ctrl+K)"}
               >
                 <Search className="h-4 w-4 text-[var(--color-accent)] shrink-0" />
@@ -219,10 +219,10 @@ export function Header({ onOpenSearch }: HeaderProps) {
                 type="button"
                 onClick={() => setLocale(isTa ? "en" : "ta")}
                 aria-label={isTa ? "Switch language to English" : "தமிழுக்கு மாற்றுக"}
-                className="md:hidden min-h-[44px] min-w-[44px] h-10 px-2 sm:px-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.08] dark:border-white/[0.1] text-xs font-bold text-[var(--color-ink-primary)] flex items-center justify-center gap-1 active:scale-95 transition-all shadow-2xs font-tamil cursor-pointer shrink-0"
+                className="md:hidden min-h-[44px] min-w-[38px] sm:min-w-[44px] h-9 sm:h-10 px-2 sm:px-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.08] dark:border-white/[0.1] text-xs font-bold text-[var(--color-ink-primary)] flex items-center justify-center gap-1 active:scale-95 transition-all shadow-2xs font-tamil cursor-pointer shrink-0"
               >
                 <span className="text-[var(--color-accent)] font-extrabold">{isTa ? "EN" : "அ"}</span>
-                <span className="hidden min-[380px]:inline text-[11px] font-semibold">{isTa ? "English" : "தமிழ்"}</span>
+                <span className="hidden min-[430px]:inline text-[11px] font-semibold">{isTa ? "English" : "தமிழ்"}</span>
               </button>
 
               {/* 3. Ghost Settings Icon Button (Available in Mobile Drawer on mobile viewports) */}
@@ -238,7 +238,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
 
               {/* 4. Ghost Reader Library / Wishlist Heart Icon Button */}
               <Link
-                href="/account"
+                href="/account?tab=wishlist"
                 aria-label={
                   isTa
                     ? `விருப்பப்பட்டியல் (${wishlistCount} நூல்கள்)`
@@ -270,7 +270,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
                     : undefined
                 }
                 className={cn(
-                  "min-h-[44px] min-w-[40px] sm:min-w-[44px] h-10 px-2 sm:px-3 rounded-xl border flex items-center justify-center gap-1.5 text-xs font-bold transition-all active:scale-95 shrink-0 shadow-2xs",
+                  "min-h-[44px] min-w-[38px] sm:min-w-[44px] h-9 sm:h-10 px-2 sm:px-3 rounded-xl border flex items-center justify-center gap-1.5 text-xs font-bold transition-all active:scale-95 shrink-0 shadow-2xs",
                   pathname?.startsWith("/account") || pathname === "/login" || pathname === "/signup"
                     ? "bg-[var(--color-accent-light)] border-[var(--color-accent)]/40 text-[var(--color-accent)]"
                     : "bg-black/[0.03] dark:bg-white/[0.04] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] border-black/[0.08] dark:border-white/[0.1] text-[var(--color-ink-primary)]"
