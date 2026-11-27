@@ -18,8 +18,10 @@ import {
   Upload,
   ImageIcon,
   Loader2,
+  Bell,
 } from "lucide-react";
 import type { AdminArticle, ArticleStatus } from "@/types/admin";
+import { AnnouncementsManager } from "@/components/admin/AnnouncementsManager";
 import {
   buildBilingualSearchText,
   generateAsciiSlug,
@@ -163,6 +165,7 @@ export default function AdminArticlesPage() {
   const [selectedStatus, setSelectedStatus] = React.useState<string>("all");
   const [selectedCategory, setSelectedCategory] = React.useState<string>("all");
   const [selectedLangFilter, setSelectedLangFilter] = React.useState<"all" | "missing_tamil">("all");
+  const [activeSection, setActiveSection] = React.useState<"articles" | "announcements">("articles");
   const [toastMessage, setToastMessage] = React.useState<string | null>(null);
 
   // Modal State
@@ -687,23 +690,57 @@ export default function AdminArticlesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">
-            Articles & Editorial Management
+            Articles &amp; Announcements Management
           </h2>
           <p className="text-xs text-gray-500 mt-1">
-            Create, edit, upload cover images, and publish historical features to the archive
+            Publish historical features and manage Recent Announcements displayed on the `/blog` page
           </p>
         </div>
 
+        {activeSection === "articles" && (
+          <button
+            type="button"
+            onClick={handleOpenAddModal}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white text-xs font-bold shadow-sm transition-all active:scale-95 cursor-pointer min-h-[42px]"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Write New Article</span>
+          </button>
+        )}
+      </div>
+
+      {/* Section Switcher: Articles vs Recent Announcements */}
+      <div className="inline-flex p-1 rounded-2xl bg-gray-100 border border-gray-200 gap-1">
         <button
           type="button"
-          onClick={handleOpenAddModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white text-xs font-bold shadow-sm transition-all active:scale-95 cursor-pointer min-h-[42px]"
+          onClick={() => setActiveSection("articles")}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[38px] ${
+            activeSection === "articles"
+              ? "bg-white text-[#0A6847] shadow-2xs"
+              : "text-gray-600 hover:text-gray-900"
+          }`}
         >
-          <Plus className="h-4 w-4" />
-          <span>Write New Article</span>
+          <FileText className="h-3.5 w-3.5" />
+          <span>Articles &amp; Features ({articles.length})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveSection("announcements")}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[38px] ${
+            activeSection === "announcements"
+              ? "bg-white text-[#0A6847] shadow-2xs"
+              : "text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          <Bell className="h-3.5 w-3.5" />
+          <span>Recent Announcements</span>
         </button>
       </div>
 
+      {activeSection === "announcements" ? (
+        <AnnouncementsManager onToast={showToast} />
+      ) : (
+        <>
       {/* 4 Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
@@ -940,6 +977,8 @@ export default function AdminArticlesPage() {
           </table>
         </div>
       </div>
+        </>
+      )}
 
       {/* Delete Confirmation Dialog */}
       {deleteTarget && (

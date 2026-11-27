@@ -2,6 +2,7 @@
 import { getSupabaseStorageUrl } from "@/lib/book-images";
 
 import * as React from "react";
+import Link from "next/link";
 import { Search, Bell, Newspaper } from "lucide-react";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { CategoryPills, type CategoryOption } from "@/components/ui/CategoryPills";
@@ -9,6 +10,8 @@ import { ArticleCard, type ArticleCardData } from "@/components/blog/ArticleCard
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useLanguage } from "@/context/LanguageContext";
 import { ARTICLE_CATEGORY_OPTIONS, matchesArticleCategory } from "@/lib/blog-utils";
+import { DEFAULT_ANNOUNCEMENTS, type AnnouncementItem } from "@/lib/announcements";
+export type { AnnouncementItem };
 
 /* Authentic articles extracted from feeds.html & feed-item.html */
 const blogArticles: ArticleCardData[] = [
@@ -91,34 +94,12 @@ const categoryOptions: CategoryOption[] = ARTICLE_CATEGORY_OPTIONS.map((opt) => 
   labelEn: opt.labelEn,
 }));
 
-const announcements = [
-  {
-    date: "07 ஆகஸ்ட் 2026",
-    titleTa: "புதிய நூல் வெளியீடு: கட்டுநாயக்கா தாக்குதல் வெற்றி",
-    titleEn: "New Book Release: Katunayake Attack Victory",
-    descTa: "ஜூலை 24, 2001 அன்று நடந்த வான்படைத்தளத் தாக்குதல் பற்றிய ஆவண நூல் தற்போது கையிருப்பில் உள்ளது.",
-    descEn: "Special archival monograph detailing the landmark 2001 Katunayake military airbase operation is now available.",
-  },
-  {
-    date: "05 ஆகஸ்ட் 2026",
-    titleTa: "தியாக தீபம் திலீபன் நூல்கள் மறுபதிப்பு",
-    titleEn: "Reprint: Lt. Col. Thileepan Commemorative Volumes",
-    descTa: "நல்லூர் வீதியில் நிகழ்ந்த வரலாற்று உன்னத தியாகத்தின் அரிய புகைப்படங்கள் அடங்கிய தொகுப்பு.",
-    descEn: "Rare photographic and documentary archival volumes on the historic fast-unto-death in Jaffna.",
-  },
-  {
-    date: "28 ஜூலை 2026",
-    titleTa: "அஞ்சல் வழியே அரிய ஆவணங்கள் பெறலாம்",
-    titleEn: "Worldwide Courier Dispatch Active",
-    descTa: "இந்தியா மற்றும் வெளிநாடுகளுக்கு விரைவு அஞ்சல் மூலம் நூல்கள் அனுப்பி வைக்கப்படுகின்றன.",
-    descEn: "Speed Post dispatch available to all 19,100+ PIN codes across India and worldwide destinations.",
-  },
-];
-
 export function BlogCatalogClient({
   initialArticles,
+  initialAnnouncements,
 }: {
   initialArticles?: ArticleCardData[];
+  initialAnnouncements?: AnnouncementItem[];
 } = {}) {
   const { locale } = useLanguage();
   const isTa = locale === "ta";
@@ -126,6 +107,9 @@ export function BlogCatalogClient({
   const [articlesList, setArticlesList] = React.useState<ArticleCardData[]>(
     initialArticles && initialArticles.length > 0 ? initialArticles : blogArticles
   );
+
+  const announcementsList =
+    initialAnnouncements !== undefined ? initialAnnouncements : DEFAULT_ANNOUNCEMENTS;
 
   const [search, setSearch] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState("all");
@@ -181,6 +165,7 @@ export function BlogCatalogClient({
         </div>
 
         {/* Live Announcements Ticker / Feed Banner */}
+        {announcementsList.length > 0 && (
         <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-black/10 dark:border-white/10 bg-gradient-to-br from-[#0A6847]/8 via-[#0A6847]/4 to-transparent dark:from-emerald-950/60 dark:via-emerald-950/30 dark:to-transparent shadow-xs">
           <div className="flex items-center gap-2.5 mb-4 text-[#0A6847] dark:text-emerald-400">
             <Bell className="h-5 w-5 animate-pulse" />
@@ -190,24 +175,56 @@ export function BlogCatalogClient({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {announcements.map((item, idx) => (
-              <div
-                key={idx}
-                className="p-4 rounded-2xl bg-white/85 dark:bg-zinc-900/90 border border-black/8 dark:border-white/10 shadow-2xs space-y-1.5"
-              >
-                <span className="text-[11px] font-bold text-[#0A6847] dark:text-emerald-400 font-tamil block">
-                  {item.date}
-                </span>
-                <h3 className="text-xs sm:text-sm font-bold text-[#111111] dark:text-zinc-100 font-tamil leading-snug">
-                  {isTa ? item.titleTa : item.titleEn}
-                </h3>
-                <p className="text-xs text-[#555555] dark:text-zinc-300 font-tamil line-clamp-2 leading-relaxed">
-                  {isTa ? item.descTa : item.descEn}
-                </p>
-              </div>
-            ))}
+            {announcementsList.map((item, idx) => {
+              const cardContent = (
+                <>
+                  <span className="text-[11px] font-bold text-[#0A6847] dark:text-emerald-400 font-tamil block">
+                    {isTa ? item.dateLabelTa : item.dateLabelEn}
+                  </span>
+                  <h3 className="text-xs sm:text-sm font-bold text-[#111111] dark:text-zinc-100 font-tamil leading-snug">
+                    {isTa ? item.titleTa : item.titleEn}
+                  </h3>
+                  <p className="text-xs text-[#555555] dark:text-zinc-300 font-tamil line-clamp-2 leading-relaxed">
+                    {isTa ? item.descTa : item.descEn}
+                  </p>
+                </>
+              );
+
+              if (item.linkUrl) {
+                const isExternal = item.linkUrl.startsWith("http");
+                return isExternal ? (
+                  <a
+                    key={item.id || idx}
+                    href={item.linkUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-4 rounded-2xl bg-white/85 dark:bg-zinc-900/90 border border-black/8 dark:border-white/10 hover:border-[#0A6847]/40 shadow-2xs space-y-1.5 transition-all block"
+                  >
+                    {cardContent}
+                  </a>
+                ) : (
+                  <Link
+                    key={item.id || idx}
+                    href={item.linkUrl}
+                    className="p-4 rounded-2xl bg-white/85 dark:bg-zinc-900/90 border border-black/8 dark:border-white/10 hover:border-[#0A6847]/40 shadow-2xs space-y-1.5 transition-all block"
+                  >
+                    {cardContent}
+                  </Link>
+                );
+              }
+
+              return (
+                <div
+                  key={item.id || idx}
+                  className="p-4 rounded-2xl bg-white/85 dark:bg-zinc-900/90 border border-black/8 dark:border-white/10 shadow-2xs space-y-1.5"
+                >
+                  {cardContent}
+                </div>
+              );
+            })}
           </div>
         </div>
+        )}
 
         {/* Search & Category Filter Toolbar */}
         <div className="space-y-4">

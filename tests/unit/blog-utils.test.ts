@@ -8,6 +8,11 @@ import {
   resolveArticleCategoryPair,
   resolveBlogCoverUrl,
 } from "../../src/lib/blog-utils.ts";
+import {
+  adminAnnouncementCreateSchema,
+  adminAnnouncementReorderSchema,
+  adminAnnouncementUpdateSchema,
+} from "../../src/lib/validators/admin.ts";
 
 describe("Blog & Article Utilities", () => {
   it("extracts body text from legacy blogs rows storing content.body or content.html", () => {
@@ -113,5 +118,41 @@ describe("Blog & Article Utilities", () => {
       matchesArticleCategory({ categoryEn: "Historical Record", categoryTa: "வரலாற்று ஆவணம்" }, "memoir"),
       false
     );
+  });
+
+  it("validates bilingual announcement create, update, and reorder schemas", () => {
+    const valid = adminAnnouncementCreateSchema.safeParse({
+      date_label_en: "07 August 2026",
+      date_label_ta: "07 ஆகஸ்ட் 2026",
+      title_en: "New Book Release",
+      desc_en: "Special archival monograph is now available.",
+      link_url: "/books/katunayake-attack-victory",
+    });
+    assert.equal(valid.success, true);
+
+    const missingDesc = adminAnnouncementCreateSchema.safeParse({
+      date_label_en: "07 August 2026",
+      title_en: "Only Title",
+    });
+    assert.equal(missingDesc.success, false);
+
+    const badLink = adminAnnouncementCreateSchema.safeParse({
+      date_label_en: "07 August 2026",
+      title_en: "Title",
+      desc_en: "Desc",
+      link_url: "javascript:alert(1)",
+    });
+    assert.equal(badLink.success, false);
+
+    const upd = adminAnnouncementUpdateSchema.safeParse({
+      id: "c0000000-0000-0000-0000-000000000001",
+      is_active: false,
+    });
+    assert.equal(upd.success, true);
+
+    const reorder = adminAnnouncementReorderSchema.safeParse({
+      orderedIds: ["id-2", "id-1", "id-3"],
+    });
+    assert.equal(reorder.success, true);
   });
 });

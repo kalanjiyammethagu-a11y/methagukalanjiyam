@@ -427,3 +427,67 @@ export const adminOrderTrackingUpdateSchema = z
       }
     }
   });
+
+// ============================================================================
+// RECENT ANNOUNCEMENTS VALIDATOR
+// ============================================================================
+export const adminAnnouncementBaseSchema = z.object({
+  date_label: z.string().trim().max(80).optional(),
+  date_label_en: z.string().trim().max(80).optional().nullable(),
+  date_label_ta: z.string().trim().max(80).optional().nullable(),
+  title_en: z.string().trim().max(200).optional().nullable(),
+  title_ta: z.string().trim().max(200).optional().nullable(),
+  desc_en: z.string().trim().max(500).optional().nullable(),
+  desc_ta: z.string().trim().max(500).optional().nullable(),
+  link_url: z
+    .string()
+    .trim()
+    .max(300)
+    .refine(
+      (v) => !v || v.startsWith("/") || v.startsWith("https://") || v.startsWith("http://"),
+      "Link URL must start with /, https://, or http://"
+    )
+    .optional()
+    .nullable(),
+  sort_order: z.coerce.number().int().min(0).default(0).optional(),
+  is_active: z.boolean().default(true).optional(),
+});
+
+export const adminAnnouncementCreateSchema = adminAnnouncementBaseSchema.superRefine((data, ctx) => {
+  const hasTitle = Boolean((data.title_en || "").trim() || (data.title_ta || "").trim());
+  const hasDesc = Boolean((data.desc_en || "").trim() || (data.desc_ta || "").trim());
+  const hasDate = Boolean(
+    (data.date_label || "").trim() ||
+      (data.date_label_en || "").trim() ||
+      (data.date_label_ta || "").trim()
+  );
+  if (!hasDate) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["date_label_en"],
+      message: "Announcement date label is required",
+    });
+  }
+  if (!hasTitle) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["title_en"],
+      message: "At least one title (English or Tamil) is required",
+    });
+  }
+  if (!hasDesc) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["desc_en"],
+      message: "At least one description (English or Tamil) is required",
+    });
+  }
+});
+
+export const adminAnnouncementUpdateSchema = adminAnnouncementBaseSchema.partial().extend({
+  id: z.string().min(1, "Announcement ID is required"),
+});
+
+export const adminAnnouncementReorderSchema = z.object({
+  orderedIds: z.array(z.string().min(1)).min(1, "At least one announcement ID is required"),
+});

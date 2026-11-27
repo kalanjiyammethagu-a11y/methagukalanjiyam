@@ -1,6 +1,7 @@
 import * as React from "react";
 import type { Metadata } from "next";
 import { BlogCatalogClient } from "@/components/blog/BlogCatalogClient";
+import { mapAnnouncementRecordToItem, type AnnouncementItem } from "@/lib/announcements";
 import { safeJsonLdStringify } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/server";
 import type { ArticleCardData } from "@/components/blog/ArticleCard";
@@ -47,21 +48,43 @@ export const metadata: Metadata = {
 
 export default async function BlogPage() {
   let initialArticles: ArticleCardData[] | undefined;
+  let initialAnnouncements: AnnouncementItem[] | undefined;
 
   try {
     const supabase = await createClient();
-    const [{ data: dbPosts }, { data: legacyBlogs }] = await Promise.all([
-      (supabase.from("blog_posts") as any)
-        .select("*")
-        .eq("status", "published")
-        .order("created_at", { ascending: false })
-        .order("published_at", { ascending: false, nullsFirst: false }),
-      (supabase.from("blogs") as any)
-        .select("*")
-        .eq("is_published", true)
-        .order("created_at", { ascending: false })
-        .order("published_at", { ascending: false, nullsFirst: false }),
-    ]);
+    const [{ data: dbPosts }, { data: legacyBlogs }, { data: dbAnnouncements, error: annErr }] =
+      await Promise.all([
+        (supabase.from("blog_posts") as any)
+          .select("*")
+          .eq("status", "published")
+          .order("created_at", { ascending: false })
+          .order("published_at", { ascending: false, nullsFirst: false }),
+        (supabase.from("blogs") as any)
+          .select("*")
+          .eq("is_published", true)
+          .order("created_at", { ascending: false })
+          .order("published_at", { ascending: false, nullsFirst: false }),
+        (supabase.from("announcements") as any)
+          .select("*")
+          .eq("is_active", true)
+          .order("sort_order", { ascending: true })
+          .order("created_at", { ascending: false }),
+      ]);
+
+    if (!annErr && Array.isArray(dbAnnouncements)) {
+      initialAnnouncements = dbAnnouncements.map(mapAnnouncementRecordToItem);
+    } else if (annErr) {
+      const { data: settingsRow } = await (supabase.from("site_settings") as any)
+        .select("value")
+        .eq("key", "recent_announcements")
+        .maybeSingle();
+      if (Array.isArray(settingsRow?.value)) {
+        initialAnnouncements = settingsRow.value
+          .filter((item: any) => item?.is_active !== false)
+          .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+          .map(mapAnnouncementRecordToItem);
+      }
+    }
 
     const combinedPosts = mergeBlogPostsAndLegacyBlogs(dbPosts || [], legacyBlogs || []);
 
@@ -141,7 +164,10 @@ export default async function BlogPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLdStringify(jsonLd) }}
       />
-      <BlogCatalogClient initialArticles={initialArticles} />
+      <BlogCatalogClient
+        initialArticles={initialArticles}
+        initialAnnouncements={initialAnnouncements}
+      />
     </>
   );
 }
