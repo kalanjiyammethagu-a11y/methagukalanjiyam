@@ -103,7 +103,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
         <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
           <div
             suppressHydrationWarning
-            className={`rounded-2xl px-2.5 sm:px-5 lg:px-6 flex items-center justify-between gap-1.5 sm:gap-4 lg:gap-6 border transition-all duration-300 ${isScrolled
+            className={`rounded-2xl px-2.5 sm:px-4 lg:px-5 flex items-center justify-between gap-1.5 sm:gap-3 xl:gap-4 border transition-all duration-300 ${isScrolled
               ? "py-2 bg-[var(--color-surface-card)]/98 backdrop-blur-2xl border-[var(--color-border-subtle)] shadow-md shadow-black/5"
               : "py-2.5 bg-[var(--color-surface-card)]/92 backdrop-blur-xl border-[var(--color-border-subtle)]/80 shadow-xs"
               }`}
@@ -111,7 +111,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
             {/* Left: Brand Logo & Editorial Wordmark */}
             <Link
               href="/"
-              className="flex items-center gap-2 sm:gap-3 group transition-transform active:scale-98 motion-reduce:active:scale-100 min-h-[44px] min-w-0 shrink"
+              className="flex items-center gap-2 sm:gap-3 group transition-transform active:scale-98 motion-reduce:active:scale-100 min-h-[44px] min-w-0 shrink sm:shrink-0"
               aria-label={isTa ? "மேதகு களஞ்சியம் — முகப்பு" : "Methagu Kalanjiyam — Home"}
             >
               <div className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full overflow-hidden border border-[var(--color-border-strong)] ring-2 ring-[var(--color-accent)]/15 shadow-2xs bg-white shrink-0 group-hover:scale-105 motion-reduce:group-hover:scale-100 transition-transform">
@@ -126,13 +126,13 @@ export function Header({ onOpenSearch }: HeaderProps) {
               </div>
               <div className="flex flex-col text-left min-w-0">
                 <span
-                  className={`font-bold text-xs xs:text-sm sm:text-base lg:text-lg tracking-tight text-[var(--color-ink-primary)] leading-snug transition-colors group-hover:text-[var(--color-accent)] truncate sm:whitespace-nowrap ${isTa ? "font-tamil font-bold" : "font-sans font-extrabold"
+                  className={`font-bold text-xs xs:text-sm sm:text-base xl:text-[17px] tracking-tight text-[var(--color-ink-primary)] leading-snug transition-colors group-hover:text-[var(--color-accent)] truncate sm:whitespace-nowrap ${isTa ? "font-tamil font-bold" : "font-sans font-extrabold"
                     }`}
                 >
                   {isTa ? "மேதகு களஞ்சியம்" : "Methagu Kalanjiyam"}
                 </span>
                 <span
-                  className={`hidden 2xl:block text-[9px] sm:text-[10px] tracking-wider uppercase text-[var(--color-accent)] font-semibold leading-none mt-0.5 whitespace-nowrap ${isTa ? "font-tamil" : "font-sans"
+                  className={`hidden 2xl:block text-[10px] tracking-wide text-[var(--color-accent)] font-semibold leading-none mt-0.5 truncate max-w-[220px] ${isTa ? "font-tamil" : "font-sans"
                     }`}
                 >
                   {isTa ? "அரிய தமிழ் ஆவணக் காப்பகம்" : "Rare Tamil Literature & Archives"}
@@ -142,7 +142,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
 
             {/* Center: Editorial Navigation Links */}
             <nav
-              className="hidden xl:flex items-center gap-0.5 2xl:gap-1.5 shrink-0"
+              className="hidden xl:flex items-center gap-1 2xl:gap-1.5 shrink-0"
               aria-label={isTa ? "முதன்மை வழிசெலுத்தல்" : "Main Navigation"}
             >
               {navLinks.map((link) => {
@@ -155,7 +155,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
                     key={link.href}
                     href={link.href}
                     aria-current={isActive ? "page" : undefined}
-                    className={`px-2 2xl:px-3 py-1.5 rounded-lg text-xs 2xl:text-sm font-medium transition-all min-h-[38px] flex items-center whitespace-nowrap ${isTa ? "font-tamil" : "font-sans"
+                    className={`px-2.5 2xl:px-3 py-1.5 rounded-lg text-[13px] 2xl:text-sm font-medium transition-all min-h-[38px] flex items-center whitespace-nowrap shrink-0 ${isTa ? "font-tamil" : "font-sans"
                       } ${isActive
                         ? "bg-[var(--color-accent-light)] text-[var(--color-accent)] font-bold shadow-2xs"
                         : "text-[var(--color-ink-secondary)] hover:text-[var(--color-ink-primary)] hover:bg-black/[0.04] dark:hover:bg-white/[0.05]"
@@ -168,22 +168,16 @@ export function Header({ onOpenSearch }: HeaderProps) {
             </nav>
 
             {/* Right: Streamlined Action Toolbar (Apple / Stripe Design Hierarchy) */}
-            <div className="flex items-center gap-1 sm:gap-1.5 2xl:gap-2 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
               {/* 1. Sleek Search Command Trigger */}
               <button
                 type="button"
                 onClick={handleOpenSearch}
-                aria-label={isTa ? "நூல்களைத் தேடுக — ⌘K" : "Search archives — ⌘K"}
-                className="min-h-[44px] min-w-[44px] h-10 px-2.5 2xl:px-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] border border-black/[0.08] dark:border-white/[0.1] hover:border-black/[0.16] text-[var(--color-ink-secondary)] hover:text-[var(--color-ink-primary)] flex items-center justify-center gap-2 text-xs font-medium transition-all active:scale-95 motion-reduce:active:scale-100 cursor-pointer shadow-2xs"
-                title={isTa ? "தேடல் (⌘K)" : "Search (⌘K)"}
+                aria-label={isTa ? "நூல்களைத் தேடுக — Ctrl+K" : "Search archives — Ctrl+K"}
+                className="min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] border border-black/[0.08] dark:border-white/[0.1] hover:border-black/[0.16] text-[var(--color-ink-secondary)] hover:text-[var(--color-ink-primary)] flex items-center justify-center transition-all active:scale-95 motion-reduce:active:scale-100 cursor-pointer shadow-2xs shrink-0"
+                title={isTa ? "தேடல் (Ctrl+K)" : "Search (Ctrl+K)"}
               >
                 <Search className="h-4 w-4 text-[var(--color-accent)] shrink-0" />
-                <span className={`hidden 2xl:inline-block ${isTa ? "font-tamil" : "font-sans"}`}>
-                  {isTa ? "தேடுக..." : "Search..."}
-                </span>
-                <kbd className="hidden 2xl:inline-flex items-center text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 text-[var(--color-ink-muted)] border border-black/5">
-                  ⌘K
-                </kbd>
               </button>
 
               {/* 2. Micro-Segmented Language Switcher (Tablet >= md / Desktop) */}
