@@ -18,6 +18,10 @@ import {
   AlertTriangle,
   UserCheck,
   UserX,
+  GripVertical,
+  ArrowUp,
+  ArrowDown,
+  Loader2,
 } from "lucide-react";
 import type { AdminSupporter } from "@/types/admin";
 import {
@@ -49,6 +53,7 @@ interface MemberFormData {
   instagramUrl: string;
   whatsappUrl: string;
   isActive: boolean;
+  sort_order: number;
 }
 
 const initialFormData: MemberFormData = {
@@ -69,6 +74,7 @@ const initialFormData: MemberFormData = {
   instagramUrl: "",
   whatsappUrl: "",
   isActive: true,
+  sort_order: 0,
 };
 
 export default function AdminSupportersPage() {
@@ -88,12 +94,75 @@ export default function AdminSupportersPage() {
   });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [uploadProgress, setUploadProgress] = React.useState(false);
+  const [isReordering, setIsReordering] = React.useState(false);
+  const [draggedId, setDraggedId] = React.useState<string | null>(null);
+  const [dragOverId, setDragOverId] = React.useState<string | null>(null);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const persistRosterOrder = React.useCallback(async (nextList: AdminSupporter[]) => {
+    const previousList = supporters;
+    const normalized = nextList.map((member, index) => ({
+      ...member,
+      sort_order: index,
+    }));
+    setSupporters(normalized);
+    setIsReordering(true);
+
+    try {
+      const res = await fetch("/api/admin/supporters", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderedIds: normalized.map((m) => m.id) }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.supporters)) {
+          setSupporters(data.supporters);
+        }
+        showToast("Member display order saved.");
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setSupporters(previousList);
+        showToast(err.error || "Failed to save member order.");
+      }
+    } catch {
+      setSupporters(previousList);
+      showToast("Network error saving member order.");
+    } finally {
+      setIsReordering(false);
+    }
+  }, [supporters]);
+
+  const handleMoveMember = (memberId: string, targetIndex: number) => {
+    if (isReordering) return;
+    const currentIndex = supporters.findIndex((m) => m.id === memberId);
+    if (currentIndex === -1) return;
+    const clampedIndex = Math.max(0, Math.min(supporters.length - 1, targetIndex));
+    if (currentIndex === clampedIndex) return;
+
+    const reordered = [...supporters];
+    const [moved] = reordered.splice(currentIndex, 1);
+    if (!moved) return;
+    reordered.splice(clampedIndex, 0, moved);
+    void persistRosterOrder(reordered);
+  };
+
+  const handleCardDrop = (targetId: string) => {
+    const sourceId = draggedId;
+    setDraggedId(null);
+    setDragOverId(null);
+    if (!sourceId || sourceId === targetId) return;
+    const targetIndex = supporters.findIndex((m) => m.id === targetId);
+    if (targetIndex !== -1) {
+      handleMoveMember(sourceId, targetIndex);
+    }
   };
 
   // Fetch supporters on mount
@@ -206,8 +275,9 @@ export default function AdminSupportersPage() {
 
   // Open Add Modal
   const handleOpenAdd = () => {
-    setFormData(initialFormData);
-    setSnapshotFromForm(initialFormData);
+    const nextDefault = { ...initialFormData, sort_order: supporters.length };
+    setFormData(nextDefault);
+    setSnapshotFromForm(nextDefault);
     setActiveLangTab("en");
     setModalMode("add");
   };
@@ -233,6 +303,7 @@ export default function AdminSupportersPage() {
       instagramUrl: supporter.instagramUrl || "",
       whatsappUrl: supporter.whatsappUrl || "",
       isActive: supporter.isActive,
+      sort_order: supporter.sort_order ?? 0,
     };
     setFormData(populated);
     setSnapshotFromForm(populated);
@@ -310,7 +381,11 @@ export default function AdminSupportersPage() {
 
         if (res.ok) {
           const result = await res.json();
-          setSupporters((prev) => prev.map((s) => (s.id === formData.id ? result.supporter : s)));
+          setSupporters((prev) =>
+            prev
+              .map((s) => (s.id === formData.id ? result.supporter : s))
+              .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+          );
           setModalMode(null);
           showToast("Member updated successfully!");
         } else {
@@ -326,7 +401,11 @@ export default function AdminSupportersPage() {
 
         if (res.ok) {
           const result = await res.json();
-          setSupporters((prev) => [result.supporter, ...prev]);
+          setSupporters((prev) =>
+            [result.supporter, ...prev].sort(
+              (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+            )
+          );
           setModalMode(null);
           setFormData(initialFormData);
           showToast("New member added to roster successfully!");
@@ -486,6 +565,26 @@ export default function AdminSupportersPage() {
         </div>
       </div>
 
+      {/* Reorder Status / Hint Bar */}
+      {supporters.length > 1 && (
+        <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs text-gray-500">
+          <div className="flex items-center gap-2">
+            <GripVertical className="h-3.5 w-3.5 text-gray-400" />
+            <span>
+              {searchQuery.trim() || statusFilter !== "all"
+                ? "Clear search and status filters to reorder the full member roster."
+                : "Drag cards, use ↑ / ↓ arrows, or pick a # position to reorder the public /supporters grid."}
+            </span>
+          </div>
+          {isReordering && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#0A6847] font-semibold">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              <span>Saving order...</span>
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Members Grid */}
       {filteredSupporters.length === 0 ? (
         <div className="bg-white rounded-2xl p-10 border border-gray-200 text-center space-y-3">
@@ -504,12 +603,101 @@ export default function AdminSupportersPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredSupporters.map((s) => (
-            <div
-              key={s.id}
-              className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-200 shadow-2xs flex flex-col justify-between gap-4 hover:shadow-md transition-shadow group relative"
-            >
-              <div className="flex items-start gap-3.5">
+          {filteredSupporters.map((s, idx) => {
+            const canReorder = !searchQuery.trim() && statusFilter === "all" && supporters.length > 1;
+            const isDragging = draggedId === s.id;
+            const isDropTarget = dragOverId === s.id && draggedId !== s.id;
+
+            return (
+              <div
+                key={s.id}
+                draggable={canReorder && !isReordering}
+                onDragStart={(e) => {
+                  if (!canReorder || isReordering) return;
+                  setDraggedId(s.id);
+                  e.dataTransfer.effectAllowed = "move";
+                  e.dataTransfer.setData("text/plain", s.id);
+                }}
+                onDragOver={(e) => {
+                  if (!canReorder || !draggedId || draggedId === s.id) return;
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                  if (dragOverId !== s.id) setDragOverId(s.id);
+                }}
+                onDragLeave={() => {
+                  if (dragOverId === s.id) setDragOverId(null);
+                }}
+                onDrop={(e) => {
+                  if (!canReorder) return;
+                  e.preventDefault();
+                  handleCardDrop(s.id);
+                }}
+                onDragEnd={() => {
+                  setDraggedId(null);
+                  setDragOverId(null);
+                }}
+                className={`bg-white rounded-2xl p-4 sm:p-5 border shadow-2xs flex flex-col justify-between gap-3.5 transition-all group relative ${
+                  isDropTarget
+                    ? "border-[#0A6847] ring-2 ring-[#0A6847]/30 bg-emerald-50/30"
+                    : "border-gray-200 hover:shadow-md"
+                } ${isDragging ? "opacity-50 scale-[0.98]" : ""}`}
+              >
+                {/* Roster Order Strip */}
+                <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-gray-100">
+                  <div className="flex items-center gap-1.5">
+                    {canReorder && (
+                      <span
+                        className="p-1 -ml-1 rounded-md text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing"
+                        title="Drag to reorder"
+                      >
+                        <GripVertical className="h-4 w-4" />
+                      </span>
+                    )}
+                    <label className="inline-flex items-center gap-1 text-[11px] font-bold text-gray-600">
+                      <span>Order</span>
+                      <select
+                        aria-label={`Display order for ${s.nameEn || s.nameTa}`}
+                        disabled={!canReorder || isReordering}
+                        value={idx}
+                        onChange={(e) => handleMoveMember(s.id, Number(e.target.value))}
+                        className="h-7 px-1.5 rounded-lg border border-gray-200 bg-gray-50 text-[11px] font-mono font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 disabled:opacity-60 cursor-pointer"
+                      >
+                        {supporters.map((_, posIdx) => (
+                          <option key={posIdx} value={posIdx}>
+                            #{posIdx + 1}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+
+                  {canReorder && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        disabled={idx === 0 || isReordering}
+                        onClick={() => handleMoveMember(s.id, idx - 1)}
+                        aria-label={`Move ${s.nameEn || s.nameTa} earlier`}
+                        title="Move earlier"
+                        className="h-7 w-7 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 disabled:opacity-35 text-gray-700 flex items-center justify-center transition-colors cursor-pointer disabled:cursor-not-allowed"
+                      >
+                        <ArrowUp className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={idx === supporters.length - 1 || isReordering}
+                        onClick={() => handleMoveMember(s.id, idx + 1)}
+                        aria-label={`Move ${s.nameEn || s.nameTa} later`}
+                        title="Move later"
+                        className="h-7 w-7 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 disabled:opacity-35 text-gray-700 flex items-center justify-center transition-colors cursor-pointer disabled:cursor-not-allowed"
+                      >
+                        <ArrowDown className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-start gap-3.5">
                 {/* Avatar with fallback */}
                 <div className="relative h-14 w-14 rounded-2xl overflow-hidden border border-gray-200 bg-gray-100 shrink-0 shadow-2xs">
                   <Image
@@ -627,8 +815,9 @@ export default function AdminSupportersPage() {
                   </button>
                 </div>
               </div>
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -806,6 +995,25 @@ export default function AdminSupportersPage() {
                       />
                     </div>
                   </div>
+                </div>
+
+                {/* Display Order */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Display Order (0 = First)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={formData.sort_order}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        sort_order: Math.max(0, Number(e.target.value) || 0),
+                      })
+                    }
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
+                  />
                 </div>
 
                 {/* Active Toggle */}

@@ -101,6 +101,7 @@ export default async function HomePage() {
       (supabase.from("books") as any)
         .select("*, categories(name_ta, name_en, slug)")
         .eq("status", "published")
+        .order("created_at", { ascending: false })
         .order("sort_order", { ascending: true }),
       (supabase.from("blog_posts") as any)
         .select("slug, cover_image_url, cover_image")

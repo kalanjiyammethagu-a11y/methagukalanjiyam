@@ -49,7 +49,8 @@ export default async function BooksPage() {
     const { data: dbBooks } = await (supabase.from("books") as any)
       .select("*, categories(name_ta, name_en, slug)")
       .eq("status", "published")
-      .order("sort_order", { ascending: true });
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
 
     if (dbBooks && dbBooks.length > 0) {
       initialBooks = dbBooks.map((b: any) =>

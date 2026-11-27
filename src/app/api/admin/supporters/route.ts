@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth-service";
-import { adminSupporterCreateSchema, adminSupporterUpdateSchema } from "@/lib/validators/admin";
+import {
+  adminSupporterCreateSchema,
+  adminSupporterReorderSchema,
+  adminSupporterUpdateSchema,
+} from "@/lib/validators/admin";
 import { deleteAdminAsset } from "@/lib/storage";
 import type { AdminSupporter } from "@/types/admin";
 import { resolveBilingualPair } from "@/lib/i18n";
@@ -374,6 +378,93 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: true, message: "Member deleted successfully" });
   } catch (err: any) {
     console.error("DELETE /api/admin/supporters error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const auth = await requireAdmin(req);
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
+    }
+
+    const body = await req.json();
+    const parseResult = adminSupporterReorderSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: "Invalid member order payload", details: parseResult.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const adminSupabase = createAdminClient();
+    const { data: existingRows, error: fetchErr } = await (adminSupabase.from("supporters") as any)
+      .select("id")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
+
+    if (fetchErr) {
+      return NextResponse.json({ error: fetchErr.message || "Failed to load members" }, { status: 500 });
+    }
+
+    const existingIds: string[] = (existingRows || []).map((r: any) => String(r.id));
+    const existingSet = new Set(existingIds);
+    const seen = new Set<string>();
+    const finalOrder: string[] = [];
+
+    for (const id of parseResult.data.orderedIds) {
+      if (existingSet.has(id) && !seen.has(id)) {
+        seen.add(id);
+        finalOrder.push(id);
+      }
+    }
+    for (const id of existingIds) {
+      if (!seen.has(id)) {
+        seen.add(id);
+        finalOrder.push(id);
+      }
+    }
+
+    const nowIso = new Date().toISOString();
+    const updateResults = await Promise.all(
+      finalOrder.map((id, idx) =>
+        (adminSupabase.from("supporters") as any)
+          .update({ sort_order: idx, updated_at: nowIso })
+          .eq("id", id)
+      )
+    );
+
+    const failedUpdate = updateResults.find((r) => r?.error);
+    if (failedUpdate?.error) {
+      return NextResponse.json(
+        { error: failedUpdate.error.message || "Failed to persist member order" },
+        { status: 500 }
+      );
+    }
+
+    const { data: refreshedRows, error: refreshErr } = await (adminSupabase.from("supporters") as any)
+      .select("*")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
+
+    if (refreshErr) {
+      return NextResponse.json({ error: refreshErr.message }, { status: 500 });
+    }
+
+    try {
+      revalidatePath("/supporters");
+      revalidatePath("/");
+    } catch {
+      // Ignore cache revalidation errors
+    }
+
+    return NextResponse.json({
+      supporters: (refreshedRows || []).map(mapSupabaseSupporterRow),
+      message: "Member roster order updated successfully",
+    });
+  } catch (err: any) {
+    console.error("PUT /api/admin/supporters error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

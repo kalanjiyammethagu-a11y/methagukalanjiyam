@@ -37,8 +37,8 @@ export async function GET(req: NextRequest) {
     // Try modern blog_posts table first
     const { data: blogPosts, error } = await (adminSupabase.from("blog_posts") as any)
       .select("*")
-      .order("published_at", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .order("published_at", { ascending: false, nullsFirst: false });
 
     if (!error && blogPosts) {
       return NextResponse.json({ articles: blogPosts });

@@ -7,7 +7,7 @@ import type { ArticleCardData } from "@/components/blog/ArticleCard";
 import { resolveBilingualPair } from "@/lib/i18n";
 import { getSupabaseStorageUrl } from "@/lib/book-images";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "செய்திகள் & ஆவணப் பதிவுகள் — Articles, News & Archival Records | மேதகு களஞ்சியம்",
@@ -49,6 +49,7 @@ export default async function BlogPage() {
     const { data: dbPosts, error: blogPostsErr } = await (supabase.from("blog_posts") as any)
       .select("*")
       .eq("status", "published")
+      .order("created_at", { ascending: false })
       .order("published_at", { ascending: false, nullsFirst: false });
 
     if (!blogPostsErr && dbPosts && dbPosts.length > 0) {
@@ -77,6 +78,7 @@ export default async function BlogPage() {
       const { data: legacyBlogs } = await (supabase.from("blogs") as any)
         .select("*")
         .eq("is_published", true)
+        .order("created_at", { ascending: false })
         .order("published_at", { ascending: false, nullsFirst: false });
 
       if (legacyBlogs && legacyBlogs.length > 0) {

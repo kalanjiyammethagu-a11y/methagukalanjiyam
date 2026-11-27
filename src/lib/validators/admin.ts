@@ -302,6 +302,10 @@ export const adminSupporterUpdateSchema = adminSupporterSchema
     validateBilingualSupporterFields(data, ctx, false);
   });
 
+export const adminSupporterReorderSchema = z.object({
+  orderedIds: z.array(z.string().min(1, "Supporter ID is required")).min(1, "At least one supporter ID is required"),
+});
+
 // ============================================================================
 // VIDEOS VALIDATOR
 // ============================================================================

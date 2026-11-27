@@ -46,7 +46,9 @@ export async function GET(req: NextRequest) {
         } else if (sort === "newest") {
           qBuilder = qBuilder.order("created_at", { ascending: false });
         } else {
-          qBuilder = qBuilder.order("sort_order", { ascending: true });
+          qBuilder = qBuilder
+            .order("sort_order", { ascending: true })
+            .order("created_at", { ascending: false });
         }
 
         return qBuilder.range(offset, offset + limit - 1);
