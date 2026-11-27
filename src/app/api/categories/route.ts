@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     try {
       const supabase = await createClient();
       const { data: categories, error } = await (supabase.from("categories") as any)
-        .select("id, name_ta, name_en, slug, sort_order")
+        .select("id, name_ta, name_en, description_ta, description_en, slug, sort_order")
         .eq("is_active", true)
         .order("sort_order", { ascending: true });
 

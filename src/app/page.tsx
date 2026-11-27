@@ -50,7 +50,7 @@ export const metadata: Metadata = {
   },
 };
 
-const categories = [
+const defaultHomeCategories = [
   {
     nameTa: "வரலாறு & ஆவணங்கள்",
     nameEn: "Historical Records & Treatises",
@@ -94,10 +94,11 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   let books: BookItem[] = allBooks;
   let blogPosts: BlogPostSlideSource[] = [];
+  let displayCategories = defaultHomeCategories;
 
   try {
     const supabase = await createClient();
-    const [{ data: dbBooks }, { data: dbPosts }] = await Promise.all([
+    const [{ data: dbBooks }, { data: dbPosts }, { data: dbCategories }] = await Promise.all([
       (supabase.from("books") as any)
         .select("*, categories(name_ta, name_en, slug)")
         .eq("status", "published")
@@ -106,6 +107,10 @@ export default async function HomePage() {
       (supabase.from("blog_posts") as any)
         .select("slug, cover_image_url, cover_image")
         .eq("status", "published"),
+      (supabase.from("categories") as any)
+        .select("id, slug, name_ta, name_en, description_ta, description_en, sort_order")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true }),
     ]);
 
     if (dbBooks && dbBooks.length > 0) {
@@ -115,6 +120,27 @@ export default async function HomePage() {
     }
     if (Array.isArray(dbPosts)) {
       blogPosts = dbPosts;
+    }
+    if (Array.isArray(dbCategories) && dbCategories.length > 0) {
+      const defaultsBySlug = new Map(defaultHomeCategories.map((c) => [c.slug, c]));
+      displayCategories = dbCategories.map((cat: any) => {
+        const fallback = defaultsBySlug.get(cat.slug);
+        return {
+          nameTa: cat.name_ta || cat.name_en,
+          nameEn: cat.name_en || cat.name_ta,
+          slug: cat.slug,
+          countTa: fallback?.countTa || "நூல்கள்",
+          countEn: fallback?.countEn || "Publications",
+          descTa:
+            cat.description_ta ||
+            fallback?.descTa ||
+            `${cat.name_ta || cat.name_en} பிரிவின் கீழ் தொகுக்கப்பட்ட அரிய நூல்கள் மற்றும் ஆவணங்கள்.`,
+          descEn:
+            cat.description_en ||
+            fallback?.descEn ||
+            `Curated publications and archival volumes filed under ${cat.name_en || cat.name_ta}.`,
+        };
+      });
     }
   } catch (err) {
     console.error("Failed to fetch books on HomePage:", err);
@@ -126,9 +152,15 @@ export default async function HomePage() {
       : defaultHeroSlides;
 
   const spotlightBook =
-    books.find((b) => b.slug === "katunayake-attack-victory") ||
     books.find((b) => b.featured) ||
+    books.find((b) => b.slug === "katunayake-attack-victory") ||
     books[0];
+
+  const homeCategoryTabs = displayCategories.map((cat) => ({
+    id: cat.slug,
+    labelTa: cat.nameTa,
+    labelEn: cat.nameEn,
+  }));
 
   const categoryCounts = books.reduce<Record<string, number>>((acc, item) => {
     const slug = item.categorySlug || "history";
@@ -348,7 +380,7 @@ export default async function HomePage() {
           4. INTERACTIVE FILTERABLE BOOK CATALOG (Tactile Physical Books)
           ============================================================ */}
       <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <CategoryFilterTabs books={books} />
+        <CategoryFilterTabs books={books} categories={homeCategoryTabs} />
       </section>
 
       {/* ============================================================
@@ -365,7 +397,7 @@ export default async function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          {categories.map((cat) => {
+          {displayCategories.map((cat) => {
             const count = categoryCounts[cat.slug] ?? 0;
             return (
               <Link

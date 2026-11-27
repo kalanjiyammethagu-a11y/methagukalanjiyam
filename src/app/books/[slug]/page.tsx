@@ -215,6 +215,11 @@ export default async function BookDetailPage({ params }: BookPageProps) {
                 <Badge variant="category" className="text-xs">
                   {book.categoryTa}
                 </Badge>
+                {book.featured && (
+                  <Badge variant="gold" className="text-xs font-bold">
+                    ★ அதிகம் விற்பனையான நூல் | Best Seller
+                  </Badge>
+                )}
                 <span className="text-xs text-[#665F57] dark:text-zinc-400" aria-hidden="true">
                   •
                 </span>

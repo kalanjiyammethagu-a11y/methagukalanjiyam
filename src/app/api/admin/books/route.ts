@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
     const adminSupabase = createAdminClient();
     const { data: books, error } = await (adminSupabase.from("books") as any)
-      .select("*, categories (name_ta, name_en, slug)")
+      .select("*, categories (id, name_ta, name_en, slug)")
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false });
 
@@ -153,13 +153,13 @@ export async function POST(req: NextRequest) {
 
     let { data: newBook, error } = await (adminSupabase.from("books") as any)
       .insert(fullPayload)
-      .select()
+      .select("*, categories (id, name_ta, name_en, slug)")
       .single();
 
     if (error && isMissingBookColumnError(error)) {
       const retry = await (adminSupabase.from("books") as any)
         .insert(basePayload)
-        .select()
+        .select("*, categories (id, name_ta, name_en, slug)")
         .single();
       newBook = retry.data;
       error = retry.error;
@@ -301,14 +301,14 @@ export async function PATCH(req: NextRequest) {
     let { data: updatedBook, error } = await (adminSupabase.from("books") as any)
       .update(fullPayload)
       .eq("id", id)
-      .select()
+      .select("*, categories (id, name_ta, name_en, slug)")
       .single();
 
     if (error && isMissingBookColumnError(error)) {
       const retry = await (adminSupabase.from("books") as any)
         .update(basePayload)
         .eq("id", id)
-        .select()
+        .select("*, categories (id, name_ta, name_en, slug)")
         .single();
       updatedBook = retry.data;
       error = retry.error;

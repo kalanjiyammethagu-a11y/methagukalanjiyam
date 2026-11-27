@@ -7,6 +7,7 @@ import { ArrowRight, Calendar, Clock, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { localized } from "@/lib/i18n";
+import { resolveBlogCoverUrl } from "@/lib/blog-utils";
 
 export interface ArticleCardData {
   slug: string;
@@ -42,10 +43,7 @@ export function ArticleCard({
   const excerpt = localized(article, "excerpt", locale);
   const category = localized(article, "category", locale);
   const coverAlt = localized(article, "coverAlt", locale, title);
-  const normalizedCoverSrc =
-    article.coverImage.startsWith("http") || article.coverImage.startsWith("/")
-      ? article.coverImage
-      : `/${article.coverImage}`;
+  const normalizedCoverSrc = resolveBlogCoverUrl(article.coverImage);
 
   // Format date nicely
   const formattedDate = React.useMemo(() => {

@@ -93,13 +93,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     if (!isPlaceholderDb) {
       const supabase = await createClient();
-      const [{ data: dbBooks }, { data: dbPosts }] = await Promise.all([
+      const [{ data: dbBooks }, { data: dbPosts }, { data: legacyBlogs }] = await Promise.all([
         (supabase.from("books") as any)
           .select("slug, updated_at, cover_front, cover_image_url")
           .eq("status", "published"),
         (supabase.from("blog_posts") as any)
           .select("slug, published_at, updated_at")
           .eq("status", "published"),
+        (supabase.from("blogs") as any)
+          .select("slug, published_at, updated_at")
+          .eq("is_published", true),
       ]);
 
       if (Array.isArray(dbBooks)) {
@@ -113,6 +116,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             changeFrequency: "weekly",
             priority: 0.85,
             images: img ? [toAbsoluteSiteImageUrl(img, baseUrl)] : existing?.images,
+          });
+        }
+      }
+
+      if (Array.isArray(legacyBlogs)) {
+        for (const p of legacyBlogs) {
+          if (!p?.slug || blogMap.has(p.slug)) continue;
+          blogMap.set(p.slug, {
+            url: `${baseUrl}/blog/${p.slug}`,
+            lastModified: p.updated_at
+              ? new Date(p.updated_at)
+              : p.published_at
+              ? new Date(p.published_at)
+              : now,
+            changeFrequency: "monthly",
+            priority: 0.75,
           });
         }
       }

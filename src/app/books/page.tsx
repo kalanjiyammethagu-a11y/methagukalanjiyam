@@ -5,9 +5,10 @@ import { safeJsonLdStringify } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/server";
 import { allBooks } from "@/data/books";
 import type { BookCardData } from "@/components/books/BookCard";
+import type { CategoryOption } from "@/components/ui/CategoryPills";
 import { mapDbBookToBookItem } from "@/lib/book-mappers";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "நூல்கள் களஞ்சியம் — Rare Tamil Literature & Historical Catalog | மேதகு களஞ்சியம்",
@@ -43,19 +44,33 @@ export const metadata: Metadata = {
 
 export default async function BooksPage() {
   let initialBooks: BookCardData[] = allBooks;
+  let initialCategories: CategoryOption[] = [];
 
   try {
     const supabase = await createClient();
-    const { data: dbBooks } = await (supabase.from("books") as any)
-      .select("*, categories(name_ta, name_en, slug)")
-      .eq("status", "published")
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: false });
+    const [{ data: dbBooks }, { data: dbCategories }] = await Promise.all([
+      (supabase.from("books") as any)
+        .select("*, categories(name_ta, name_en, slug)")
+        .eq("status", "published")
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: false }),
+      (supabase.from("categories") as any)
+        .select("slug, name_ta, name_en, sort_order")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true }),
+    ]);
 
     if (dbBooks && dbBooks.length > 0) {
       initialBooks = dbBooks.map((b: any) =>
         mapDbBookToBookItem(b, allBooks.find((sb) => sb.slug === b.slug))
       );
+    }
+    if (Array.isArray(dbCategories) && dbCategories.length > 0) {
+      initialCategories = dbCategories.map((c: any) => ({
+        slug: c.slug,
+        labelTa: c.name_ta || c.name_en,
+        labelEn: c.name_en || c.name_ta,
+      }));
     }
   } catch {
     // Keep fallback static catalog
@@ -118,7 +133,7 @@ export default async function BooksPage() {
           </div>
         }
       >
-        <BooksCatalogClient initialBooks={initialBooks} />
+        <BooksCatalogClient initialBooks={initialBooks} initialCategories={initialCategories} />
       </React.Suspense>
     </>
   );

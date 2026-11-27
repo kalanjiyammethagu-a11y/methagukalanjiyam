@@ -5,7 +5,11 @@ import { safeJsonLdStringify } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/server";
 import type { ArticleCardData } from "@/components/blog/ArticleCard";
 import { resolveBilingualPair } from "@/lib/i18n";
-import { getSupabaseStorageUrl } from "@/lib/book-images";
+import {
+  mergeBlogPostsAndLegacyBlogs,
+  resolveArticleCategoryPair,
+  resolveBlogCoverUrl,
+} from "@/lib/blog-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -46,60 +50,50 @@ export default async function BlogPage() {
 
   try {
     const supabase = await createClient();
-    const { data: dbPosts, error: blogPostsErr } = await (supabase.from("blog_posts") as any)
-      .select("*")
-      .eq("status", "published")
-      .order("created_at", { ascending: false })
-      .order("published_at", { ascending: false, nullsFirst: false });
+    const [{ data: dbPosts }, { data: legacyBlogs }] = await Promise.all([
+      (supabase.from("blog_posts") as any)
+        .select("*")
+        .eq("status", "published")
+        .order("created_at", { ascending: false })
+        .order("published_at", { ascending: false, nullsFirst: false }),
+      (supabase.from("blogs") as any)
+        .select("*")
+        .eq("is_published", true)
+        .order("created_at", { ascending: false })
+        .order("published_at", { ascending: false, nullsFirst: false }),
+    ]);
 
-    if (!blogPostsErr && dbPosts && dbPosts.length > 0) {
-      initialArticles = dbPosts.map((p: any) => {
-        const titlePair = resolveBilingualPair({ en: p.title_en ?? p.seo_title, ta: p.title_ta, legacy: p.title });
-        const excerptPair = resolveBilingualPair({ en: p.excerpt_en ?? p.seo_description, ta: p.excerpt_ta, legacy: p.excerpt });
-        const catPair = resolveBilingualPair({ en: p.category_en, ta: p.category_ta, legacy: "Historical Record" });
+    const combinedPosts = mergeBlogPostsAndLegacyBlogs(dbPosts || [], legacyBlogs || []);
+
+    if (combinedPosts.length > 0) {
+      initialArticles = combinedPosts.map((p: any) => {
+        const titlePair = resolveBilingualPair({
+          en: p.title_en ?? p.seo_title,
+          ta: p.title_ta,
+          legacy: p.title,
+        });
+        const excerptPair = resolveBilingualPair({
+          en: p.excerpt_en ?? p.seo_description,
+          ta: p.excerpt_ta,
+          legacy: p.excerpt,
+        });
+        const catPair = resolveArticleCategoryPair(p.category_en, p.category_ta);
         return {
           slug: p.slug,
           titleTa: titlePair.ta || titlePair.en || p.title,
           titleEn: titlePair.en || titlePair.ta || p.title,
           excerptTa: excerptPair.ta || excerptPair.en || "",
           excerptEn: excerptPair.en || excerptPair.ta || "",
-          coverImage: p.cover_image_url || p.cover_image || getSupabaseStorageUrl("blog", "thalapathi-vinayagam-banner.webp"),
+          coverImage: resolveBlogCoverUrl(p.cover_image_url || p.cover_image),
           coverAltTa: p.cover_alt_ta || undefined,
           coverAltEn: p.cover_alt_en || undefined,
-          categoryTa: catPair.ta || "வரலாற்று ஆவணம்",
-          categoryEn: catPair.en || "Historical Record",
+          categoryTa: catPair.ta,
+          categoryEn: catPair.en,
           publishedAt: p.published_at ? p.published_at.split("T")[0] : "2026-08-01",
           readingTimeMinutes: p.reading_time_mins || 5,
-          featured: p.sort_order <= 1,
+          featured: (p.sort_order ?? 99) <= 1,
         };
       });
-    } else {
-      // Query blogs table
-      const { data: legacyBlogs } = await (supabase.from("blogs") as any)
-        .select("*")
-        .eq("is_published", true)
-        .order("created_at", { ascending: false })
-        .order("published_at", { ascending: false, nullsFirst: false });
-
-      if (legacyBlogs && legacyBlogs.length > 0) {
-        initialArticles = legacyBlogs.map((b: any) => {
-          const titlePair = resolveBilingualPair({ en: b.title_en ?? b.meta_title, ta: b.title_ta, legacy: b.title });
-          const excerptPair = resolveBilingualPair({ en: b.excerpt_en ?? b.meta_description, ta: b.excerpt_ta, legacy: b.excerpt });
-          return {
-            slug: b.slug,
-            titleTa: titlePair.ta || titlePair.en || b.title,
-            titleEn: titlePair.en || titlePair.ta || b.title,
-            excerptTa: excerptPair.ta || excerptPair.en || "",
-            excerptEn: excerptPair.en || excerptPair.ta || "",
-            coverImage: b.cover_image || getSupabaseStorageUrl("blog", "thalapathi-vinayagam-banner.webp"),
-            categoryTa: "வரலாற்று ஆவணம்",
-            categoryEn: "Historical Record",
-            publishedAt: b.published_at ? b.published_at.split("T")[0] : "2026-08-01",
-            readingTimeMinutes: b.reading_time_mins || 5,
-            featured: true,
-          };
-        });
-      }
     }
   } catch {
     // Keep fallback static articles

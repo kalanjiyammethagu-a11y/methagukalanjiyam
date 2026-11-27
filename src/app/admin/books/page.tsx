@@ -19,8 +19,22 @@ import {
   AlertTriangle,
   ArrowUp,
   ArrowDown,
+  Star,
+  Tag,
 } from "lucide-react";
 import type { AdminBook, BookStatus } from "@/types/admin";
+
+interface AdminCategoryItem {
+  id: string;
+  name_ta: string;
+  name_en: string;
+  description_ta?: string | null;
+  description_en?: string | null;
+  slug: string;
+  sort_order: number;
+  is_active: boolean;
+  book_count?: number;
+}
 import { formatINR } from "@/lib/utils";
 import {
   BOOK_PLACEHOLDER_IMAGE,
@@ -65,6 +79,8 @@ function mapSupabaseBook(b: any): AdminBook {
     categoryTa: cat.name_ta || cat.name_en || "History",
     categoryEn: cat.name_en || "History",
     categorySlug: cat.slug || "history",
+    categoryId: b.category_id || cat.id || null,
+    isFeatured: Boolean(b.is_featured),
     image: cover.url,
     coverImagePath: cover.path,
     coverImageUrl: cover.url,
@@ -146,8 +162,31 @@ export default function AdminBooksPage() {
   const [selectedCategory, setSelectedCategory] = React.useState("all");
   const [selectedStatus, setSelectedStatus] = React.useState("all");
   const [selectedCmsStatus, setSelectedCmsStatus] = React.useState("all");
-  const [selectedCoverFilter, setSelectedCoverFilter] = React.useState<"all" | "needs_cover" | "missing_tamil">("all");
+  const [selectedCoverFilter, setSelectedCoverFilter] = React.useState<"all" | "best_sellers" | "needs_cover" | "missing_tamil">("all");
   const [toastMessage, setToastMessage] = React.useState<string | null>(null);
+  const [categoriesList, setCategoriesList] = React.useState<AdminCategoryItem[]>([]);
+  const [togglingFeaturedId, setTogglingFeaturedId] = React.useState<string | null>(null);
+
+  // Category Management Modal State
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = React.useState(false);
+  const [editingCat, setEditingCat] = React.useState<AdminCategoryItem | null>(null);
+  const [catSaving, setCatSaving] = React.useState(false);
+  const [catError, setCatError] = React.useState<string | null>(null);
+  const [catForm, setCatForm] = React.useState({
+    name_en: "",
+    name_ta: "",
+    slug: "",
+    description_en: "",
+    description_ta: "",
+    sort_order: 10,
+  });
+
+  // Inline Quick-Category Creator inside Book Modal
+  const [showQuickCat, setShowQuickCat] = React.useState(false);
+  const [quickCatEn, setQuickCatEn] = React.useState("");
+  const [quickCatTa, setQuickCatTa] = React.useState("");
+  const [quickCatSlug, setQuickCatSlug] = React.useState("");
+  const [creatingQuickCat, setCreatingQuickCat] = React.useState(false);
 
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [editingBook, setEditingBook] = React.useState<AdminBook | null>(null);
@@ -183,6 +222,8 @@ export default function AdminBooksPage() {
     categorySlug: "history",
     categoryTa: "History & Archives",
     categoryEn: "History & Archives",
+    categoryId: "",
+    isFeatured: false,
     image: "",
     cover_image_path: "",
     coverAltEn: "",
@@ -201,7 +242,16 @@ export default function AdminBooksPage() {
   const fetchBooks = React.useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/books");
+      const [res, catRes] = await Promise.all([
+        fetch("/api/admin/books"),
+        fetch("/api/admin/categories"),
+      ]);
+      if (catRes.ok) {
+        const catData = await catRes.json().catch(() => ({}));
+        if (Array.isArray(catData.categories)) {
+          setCategoriesList(catData.categories);
+        }
+      }
       if (res.ok) {
         const data = await res.json();
         if (data.books && Array.isArray(data.books)) {
@@ -223,13 +273,14 @@ export default function AdminBooksPage() {
 
   // Lock scroll when modal is open
   React.useEffect(() => {
-    if (!isModalOpen && !deleteTarget) return;
+    if (!isModalOpen && !deleteTarget && !isCategoryModalOpen) return;
     const orig = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setIsModalOpen(false);
         setDeleteTarget(null);
+        setIsCategoryModalOpen(false);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -237,7 +288,7 @@ export default function AdminBooksPage() {
       document.body.style.overflow = orig;
       window.removeEventListener("keydown", onKey);
     };
-  }, [isModalOpen, deleteTarget]);
+  }, [isModalOpen, deleteTarget, isCategoryModalOpen]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -245,6 +296,7 @@ export default function AdminBooksPage() {
   };
 
   const resetForm = () => {
+    const firstActiveCat = categoriesList.find((c) => c.is_active) || categoriesList[0];
     const empty = {
       slug: "",
       titleEn: "",
@@ -253,9 +305,11 @@ export default function AdminBooksPage() {
       authorTa: "",
       price: 150,
       stock: 20,
-      categorySlug: "history",
-      categoryTa: "History & Archives",
-      categoryEn: "History & Archives",
+      categorySlug: firstActiveCat?.slug || "history",
+      categoryTa: firstActiveCat?.name_ta || "History & Archives",
+      categoryEn: firstActiveCat?.name_en || "History & Archives",
+      categoryId: firstActiveCat?.id || "",
+      isFeatured: false,
       image: "",
       cover_image_path: "",
       coverAltEn: "",
@@ -271,6 +325,10 @@ export default function AdminBooksPage() {
       cmsStatus: "published" as "published" | "draft",
     };
     setFormData(empty);
+    setShowQuickCat(false);
+    setQuickCatEn("");
+    setQuickCatTa("");
+    setQuickCatSlug("");
     initialLangSnapshotRef.current = {
       en: {
         titleEn: empty.titleEn,
@@ -310,6 +368,10 @@ export default function AdminBooksPage() {
     const authorEnVal = book.authorEn || "";
     const authorTaVal = book.authorTa || (book.author !== book.authorEn ? book.author : "");
 
+    const matchedCat =
+      categoriesList.find((c) => c.id === book.categoryId) ||
+      categoriesList.find((c) => c.slug === book.categorySlug);
+
     const populated = {
       slug: book.slug || "",
       titleEn: titleEnVal,
@@ -318,9 +380,11 @@ export default function AdminBooksPage() {
       authorTa: authorTaVal,
       price: book.price,
       stock: book.stock,
-      categorySlug: book.categorySlug || "history",
-      categoryTa: book.categoryTa || "History & Archives",
-      categoryEn: book.categoryEn || "History & Archives",
+      categorySlug: matchedCat?.slug || book.categorySlug || "history",
+      categoryTa: matchedCat?.name_ta || book.categoryTa || "History & Archives",
+      categoryEn: matchedCat?.name_en || book.categoryEn || "History & Archives",
+      categoryId: matchedCat?.id || book.categoryId || "",
+      isFeatured: Boolean(book.isFeatured),
       image: hasRealCover ? book.image : "",
       cover_image_path: book.coverImagePath || "",
       coverAltEn: book.coverAltEn || "",
@@ -355,6 +419,10 @@ export default function AdminBooksPage() {
       },
     };
     setActiveLangTab("en");
+    setShowQuickCat(false);
+    setQuickCatEn("");
+    setQuickCatTa("");
+    setQuickCatSlug("");
     setGalleryUrlInput("");
     setImagePreview(book.image || BOOK_PLACEHOLDER_IMAGE);
     setIsModalOpen(true);
@@ -620,6 +688,8 @@ export default function AdminBooksPage() {
       quote_ta: formData.quoteTa.trim() || null,
       price: Number(formData.price),
       stock: Number(formData.stock),
+      category_id: formData.categoryId || null,
+      is_featured: Boolean(formData.isFeatured),
       ...(cleanCoverUrl && cleanCoverUrl !== BOOK_PLACEHOLDER_IMAGE
         ? {
             cover_image_url: cleanCoverUrl,
@@ -718,6 +788,208 @@ export default function AdminBooksPage() {
     }
   };
 
+  const handleToggleFeatured = async (book: AdminBook) => {
+    const nextFeatured = !book.isFeatured;
+    setTogglingFeaturedId(book.id);
+    setBooks((prev) =>
+      prev.map((b) => (b.id === book.id ? { ...b, isFeatured: nextFeatured } : b))
+    );
+    try {
+      const res = await fetch("/api/admin/books", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: book.id,
+          is_featured: nextFeatured,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        if (data.book) {
+          const saved = mapSupabaseBook(data.book);
+          setBooks((prev) => prev.map((b) => (b.id === book.id ? saved : b)));
+        }
+        showToast(nextFeatured ? "Flagged as Best Seller." : "Best Seller flag removed.");
+      } else {
+        setBooks((prev) =>
+          prev.map((b) => (b.id === book.id ? { ...b, isFeatured: book.isFeatured } : b))
+        );
+        showToast(data.error || "Failed to update Best Seller flag.");
+      }
+    } catch {
+      setBooks((prev) =>
+        prev.map((b) => (b.id === book.id ? { ...b, isFeatured: book.isFeatured } : b))
+      );
+      showToast("Network error updating Best Seller flag.");
+    } finally {
+      setTogglingFeaturedId(null);
+    }
+  };
+
+  const openManageCategoriesModal = () => {
+    setEditingCat(null);
+    setCatError(null);
+    setCatForm({
+      name_en: "",
+      name_ta: "",
+      slug: "",
+      description_en: "",
+      description_ta: "",
+      sort_order: categoriesList.length + 1,
+    });
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleSaveCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCatError(null);
+    const cleanEn = catForm.name_en.trim();
+    const cleanTa = catForm.name_ta.trim();
+    if (!cleanEn || !cleanTa) {
+      setCatError("Both English and Tamil category names are required.");
+      return;
+    }
+    const cleanSlug = (catForm.slug.trim() || generateAsciiSlug(cleanEn, "cat")).toLowerCase();
+    if (!isAsciiSlug(cleanSlug)) {
+      setCatError("Slug must use lowercase ASCII letters, numbers, and hyphens only.");
+      return;
+    }
+
+    setCatSaving(true);
+    try {
+      const payload = {
+        ...(editingCat ? { id: editingCat.id } : {}),
+        name_en: cleanEn,
+        name_ta: cleanTa,
+        slug: cleanSlug,
+        description_en: catForm.description_en.trim() || null,
+        description_ta: catForm.description_ta.trim() || null,
+        sort_order: Number(catForm.sort_order) || 0,
+      };
+      const res = await fetch("/api/admin/categories", {
+        method: editingCat ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setCatError(data.error || "Failed to save category.");
+        return;
+      }
+      if (editingCat && data.category) {
+        setCategoriesList((prev) =>
+          prev.map((c) => (c.id === editingCat.id ? { ...c, ...data.category } : c))
+        );
+        showToast(`Updated category "${data.category.name_en}".`);
+      } else if (data.category) {
+        setCategoriesList((prev) => [...prev, data.category]);
+        showToast(`Created category "${data.category.name_en}".`);
+      }
+      setEditingCat(null);
+      setCatForm({
+        name_en: "",
+        name_ta: "",
+        slug: "",
+        description_en: "",
+        description_ta: "",
+        sort_order: categoriesList.length + 2,
+      });
+    } catch {
+      setCatError("Network error saving category.");
+    } finally {
+      setCatSaving(false);
+    }
+  };
+
+  const handleToggleCategoryActive = async (cat: AdminCategoryItem) => {
+    try {
+      const res = await fetch("/api/admin/categories", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: cat.id, is_active: !cat.is_active }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.category) {
+        setCategoriesList((prev) =>
+          prev.map((c) => (c.id === cat.id ? { ...c, is_active: data.category.is_active } : c))
+        );
+        showToast(data.category.is_active ? `Activated "${cat.name_en}".` : `Deactivated "${cat.name_en}".`);
+      } else {
+        showToast(data.error || "Failed to update category.");
+      }
+    } catch {
+      showToast("Network error updating category.");
+    }
+  };
+
+  const handleDeleteCategory = async (cat: AdminCategoryItem) => {
+    try {
+      const res = await fetch(`/api/admin/categories?id=${cat.id}&permanent=true`, {
+        method: "DELETE",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setCategoriesList((prev) => prev.filter((c) => c.id !== cat.id));
+        showToast(`Deleted category "${cat.name_en}".`);
+      } else {
+        showToast(data.error || "Could not delete category.");
+      }
+    } catch {
+      showToast("Network error deleting category.");
+    }
+  };
+
+  const handleQuickCreateCategory = async () => {
+    const cleanEn = quickCatEn.trim();
+    const cleanTa = quickCatTa.trim();
+    if (!cleanEn || !cleanTa) {
+      showToast("Enter both English and Tamil category names.");
+      return;
+    }
+    const cleanSlug = (quickCatSlug.trim() || generateAsciiSlug(cleanEn, "cat")).toLowerCase();
+    if (!isAsciiSlug(cleanSlug)) {
+      showToast("Category slug must be ASCII lowercase letters, numbers, and hyphens.");
+      return;
+    }
+    setCreatingQuickCat(true);
+    try {
+      const res = await fetch("/api/admin/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name_en: cleanEn,
+          name_ta: cleanTa,
+          slug: cleanSlug,
+          sort_order: categoriesList.length + 1,
+          is_active: true,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.category) {
+        showToast(data.error || "Failed to create category.");
+        return;
+      }
+      const created: AdminCategoryItem = data.category;
+      setCategoriesList((prev) => [...prev, created]);
+      setFormData((prev) => ({
+        ...prev,
+        categoryId: created.id,
+        categorySlug: created.slug,
+        categoryEn: created.name_en,
+        categoryTa: created.name_ta,
+      }));
+      setQuickCatEn("");
+      setQuickCatTa("");
+      setQuickCatSlug("");
+      setShowQuickCat(false);
+      showToast(`Category "${created.name_en}" created & selected.`);
+    } catch {
+      showToast("Network error creating category.");
+    } finally {
+      setCreatingQuickCat(false);
+    }
+  };
+
   const handleToggleStatus = async (book: AdminBook) => {
     const nextStatus = book.cmsStatus === "published" ? "draft" : "published";
     try {
@@ -770,6 +1042,25 @@ export default function AdminBooksPage() {
     [books]
   );
 
+  const bestSellerCount = React.useMemo(
+    () => books.filter((b) => Boolean(b.isFeatured)).length,
+    [books]
+  );
+
+  const activeCategories = React.useMemo(() => {
+    if (categoriesList.length > 0) {
+      return categoriesList.filter((c) => c.is_active);
+    }
+    return CATEGORY_OPTIONS.map((c) => ({
+      id: "",
+      slug: c.slug,
+      name_en: c.label,
+      name_ta: c.label,
+      sort_order: 0,
+      is_active: true,
+    }));
+  }, [categoriesList]);
+
   const filteredBooks = React.useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
     return books.filter((b) => {
@@ -790,6 +1081,7 @@ export default function AdminBooksPage() {
       const langState = getLanguageCompleteness(b, BOOK_REQUIRED_BILINGUAL_FIELDS);
       const matchesCoverFilter =
         selectedCoverFilter === "all" ||
+        (selectedCoverFilter === "best_sellers" && Boolean(b.isFeatured)) ||
         (selectedCoverFilter === "needs_cover" && needsFrontCover) ||
         (selectedCoverFilter === "missing_tamil" && langState.missingTamil);
 
@@ -827,14 +1119,24 @@ export default function AdminBooksPage() {
             Dynamic CRUD management for publications, prices, stock, cover images, and public visibility.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleOpenAddModal}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white text-xs font-bold transition-all shadow-sm hover:shadow min-h-[44px] cursor-pointer"
-        >
-          <Plus className="h-4 w-4" />
-          Add Publication
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={openManageCategoriesModal}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 text-xs font-bold transition-all shadow-2xs min-h-[44px] cursor-pointer"
+          >
+            <Tag className="h-4 w-4 text-[#0A6847]" />
+            <span>Manage Categories ({categoriesList.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleOpenAddModal}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white text-xs font-bold transition-all shadow-sm hover:shadow min-h-[44px] cursor-pointer"
+          >
+            <Plus className="h-4 w-4" />
+            Add Publication
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
@@ -856,9 +1158,9 @@ export default function AdminBooksPage() {
             className="px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px] cursor-pointer"
           >
             <option value="all">All Categories</option>
-            {CATEGORY_OPTIONS.map((c) => (
+            {activeCategories.map((c) => (
               <option key={c.slug} value={c.slug}>
-                {c.label}
+                {c.name_en} ({c.name_ta})
               </option>
             ))}
           </select>
@@ -886,10 +1188,17 @@ export default function AdminBooksPage() {
 
           <select
             value={selectedCoverFilter}
-            onChange={(e) => setSelectedCoverFilter(e.target.value as "all" | "needs_cover" | "missing_tamil")}
+            onChange={(e) =>
+              setSelectedCoverFilter(
+                e.target.value as "all" | "best_sellers" | "needs_cover" | "missing_tamil"
+              )
+            }
             className="px-3 py-2.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px] cursor-pointer"
           >
-            <option value="all">All Covers & Languages</option>
+            <option value="all">All Collections & Flags</option>
+            <option value="best_sellers">
+              Best Sellers Only{bestSellerCount > 0 ? ` (${bestSellerCount})` : ""}
+            </option>
             <option value="needs_cover">
               Needs Front Cover{flaggedCoverCount > 0 ? ` (${flaggedCoverCount})` : ""}
             </option>
@@ -926,6 +1235,7 @@ export default function AdminBooksPage() {
                 <th className="py-3.5 px-4">Category</th>
                 <th className="py-3.5 px-4">Price</th>
                 <th className="py-3.5 px-4 text-center">Stock</th>
+                <th className="py-3.5 px-4 text-center">Best Seller</th>
                 <th className="py-3.5 px-4">Visibility</th>
                 <th className="py-3.5 px-4">Inventory</th>
                 <th className="py-3.5 px-4 text-right">Actions</th>
@@ -934,14 +1244,14 @@ export default function AdminBooksPage() {
             <tbody className="divide-y divide-gray-100 text-xs text-gray-800">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-16 text-center text-gray-400">
+                  <td colSpan={8} className="py-16 text-center text-gray-400">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-[#0A6847]" />
                     Loading database catalog...
                   </td>
                 </tr>
               ) : filteredBooks.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-16 text-center text-gray-400">
+                  <td colSpan={8} className="py-16 text-center text-gray-400">
                     <BookOpen className="h-10 w-10 text-gray-300 mx-auto mb-2" />
                     <p className="text-sm font-semibold">No books match your criteria</p>
                   </td>
@@ -1018,6 +1328,31 @@ export default function AdminBooksPage() {
                           +
                         </button>
                       </div>
+                    </td>
+                    <td className="py-3.5 px-4 text-center">
+                      <button
+                        type="button"
+                        disabled={togglingFeaturedId === book.id}
+                        onClick={() => handleToggleFeatured(book)}
+                        aria-pressed={Boolean(book.isFeatured)}
+                        title={
+                          book.isFeatured
+                            ? "Click to remove Best Seller flag"
+                            : "Click to flag as Best Seller"
+                        }
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer disabled:opacity-50 ${
+                          book.isFeatured
+                            ? "bg-amber-50 text-amber-800 border-amber-300 shadow-2xs hover:bg-amber-100"
+                            : "bg-white text-gray-500 border-gray-200 hover:border-amber-300 hover:text-amber-700"
+                        }`}
+                      >
+                        <Star
+                          className={`h-3 w-3 ${
+                            book.isFeatured ? "fill-amber-500 text-amber-500" : "text-gray-400"
+                          }`}
+                        />
+                        <span>{book.isFeatured ? "Best Seller" : "Flag"}</span>
+                      </button>
                     </td>
                     <td className="py-3.5 px-4">
                       <button
@@ -1497,6 +1832,131 @@ export default function AdminBooksPage() {
                 />
               </div>
 
+              {/* Category Selection (+ Inline New Category) & Best Seller Flag */}
+              <div className="rounded-2xl border border-gray-200 bg-gray-50/60 p-4 space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <label className="text-xs font-bold text-gray-700">Book Category</label>
+                      <button
+                        type="button"
+                        onClick={() => setShowQuickCat((prev) => !prev)}
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-[#0A6847] hover:underline cursor-pointer"
+                      >
+                        <Plus className="h-3 w-3" />
+                        {showQuickCat ? "Close New Category" : "Create New Category"}
+                      </button>
+                    </div>
+                    <select
+                      value={formData.categoryId}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        const found = categoriesList.find((c) => c.id === selectedId);
+                        setFormData((prev) => ({
+                          ...prev,
+                          categoryId: selectedId,
+                          categorySlug: found?.slug || prev.categorySlug,
+                          categoryEn: found?.name_en || prev.categoryEn,
+                          categoryTa: found?.name_ta || prev.categoryTa,
+                        }));
+                      }}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-base sm:text-xs font-semibold text-gray-800 focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[44px] cursor-pointer"
+                    >
+                      <option value="">Uncategorized</option>
+                      {categoriesList.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name_en} — {cat.name_ta}{!cat.is_active ? " (Inactive)" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-700 block">
+                      Best Seller Highlight
+                    </label>
+                    <label className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white cursor-pointer hover:border-amber-300 transition-colors min-h-[44px]">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(formData.isFeatured)}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, isFeatured: e.target.checked }))
+                        }
+                        className="h-4 w-4 accent-amber-500 rounded cursor-pointer"
+                      />
+                      <Star
+                        className={`h-4 w-4 shrink-0 ${
+                          formData.isFeatured ? "fill-amber-500 text-amber-500" : "text-gray-400"
+                        }`}
+                      />
+                      <div className="min-w-0">
+                        <span className="text-xs font-bold text-gray-900 block leading-tight">
+                          Flag as Best Seller
+                        </span>
+                        <span className="text-[10px] text-gray-500 block leading-tight">
+                          Shows Best Seller badge & spotlight priority
+                        </span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                {showQuickCat && (
+                  <div className="p-3.5 rounded-xl bg-white border border-emerald-200 space-y-3">
+                    <div className="text-[11px] font-bold text-[#0A6847] uppercase tracking-wider">
+                      Quick Create & Assign Category
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      <input
+                        type="text"
+                        value={quickCatEn}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setQuickCatEn(val);
+                          setQuickCatSlug((prevSlug) =>
+                            prevSlug ? prevSlug : generateAsciiSlug(val, "cat")
+                          );
+                        }}
+                        placeholder="Category Name (English) *"
+                        className="px-3 py-2 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[40px]"
+                      />
+                      <input
+                        type="text"
+                        value={quickCatTa}
+                        onChange={(e) => setQuickCatTa(e.target.value)}
+                        placeholder="வகைப் பெயர் (Tamil) *"
+                        className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-tamil focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[40px]"
+                      />
+                      <input
+                        type="text"
+                        value={quickCatSlug}
+                        onChange={(e) => setQuickCatSlug(e.target.value.toLowerCase())}
+                        placeholder="ascii-slug"
+                        className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-mono focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[40px]"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowQuickCat(false)}
+                        className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        disabled={creatingQuickCat}
+                        onClick={handleQuickCreateCategory}
+                        className="px-3.5 py-1.5 rounded-lg bg-[#0A6847] hover:bg-[#085036] disabled:opacity-60 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                      >
+                        {creatingQuickCat && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                        <span>Create & Select</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Price, Stock, Visibility */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1">
@@ -1573,6 +2033,220 @@ export default function AdminBooksPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Manage Categories Modal */}
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <Tag className="h-5 w-5 text-[#0A6847]" />
+                  Book Categories Management
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Create bilingual book categories, edit names/descriptions, and sync immediately to the storefront.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCategoryModalOpen(false)}
+                className="h-10 w-10 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <form onSubmit={handleSaveCategory} className="p-4 rounded-2xl border border-gray-200 bg-gray-50/70 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-gray-800 uppercase tracking-wider">
+                    {editingCat ? `Editing: ${editingCat.name_en}` : "Create New Category"}
+                  </span>
+                  {editingCat && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingCat(null);
+                        setCatForm({
+                          name_en: "",
+                          name_ta: "",
+                          slug: "",
+                          description_en: "",
+                          description_ta: "",
+                          sort_order: categoriesList.length + 1,
+                        });
+                      }}
+                      className="text-xs font-semibold text-gray-500 hover:text-gray-800 underline cursor-pointer"
+                    >
+                      Switch to New Category
+                    </button>
+                  )}
+                </div>
+
+                {catError && (
+                  <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">
+                    {catError}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <input
+                    type="text"
+                    required
+                    value={catForm.name_en}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCatForm((prev) => ({
+                        ...prev,
+                        name_en: val,
+                        slug: editingCat
+                          ? prev.slug
+                          : prev.slug || generateAsciiSlug(val, "cat"),
+                      }));
+                    }}
+                    placeholder="English Name *"
+                    className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs min-h-[42px] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
+                  />
+                  <input
+                    type="text"
+                    required
+                    value={catForm.name_ta}
+                    onChange={(e) => setCatForm((prev) => ({ ...prev, name_ta: e.target.value }))}
+                    placeholder="தமிழ் பெயர் *"
+                    className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-tamil min-h-[42px] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
+                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={catForm.slug}
+                      onChange={(e) =>
+                        setCatForm((prev) => ({ ...prev, slug: e.target.value.toLowerCase() }))
+                      }
+                      placeholder="url-slug"
+                      className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-mono min-h-[42px] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
+                    />
+                    <input
+                      type="number"
+                      min={0}
+                      value={catForm.sort_order}
+                      onChange={(e) =>
+                        setCatForm((prev) => ({ ...prev, sort_order: Number(e.target.value) }))
+                      }
+                      title="Sort order"
+                      className="w-16 px-2.5 py-2 rounded-xl border border-gray-200 bg-white text-xs font-mono min-h-[42px] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    value={catForm.description_en}
+                    onChange={(e) =>
+                      setCatForm((prev) => ({ ...prev, description_en: e.target.value }))
+                    }
+                    placeholder="Short description (English, optional)"
+                    className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs min-h-[40px] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
+                  />
+                  <input
+                    type="text"
+                    value={catForm.description_ta}
+                    onChange={(e) =>
+                      setCatForm((prev) => ({ ...prev, description_ta: e.target.value }))
+                    }
+                    placeholder="சிறு விளக்கம் (தமிழ், விருப்பத்தேர்வு)"
+                    className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-tamil min-h-[40px] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30"
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={catSaving}
+                    className="px-5 py-2 rounded-xl bg-[#0A6847] hover:bg-[#085036] disabled:opacity-60 text-white text-xs font-bold min-h-[40px] flex items-center gap-2 cursor-pointer"
+                  >
+                    {catSaving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    <span>{editingCat ? "Update Category" : "Create Category"}</span>
+                  </button>
+                </div>
+              </form>
+
+              <div className="space-y-2">
+                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  Existing Categories ({categoriesList.length})
+                </div>
+                <div className="divide-y divide-gray-100 border border-gray-200 rounded-2xl overflow-hidden bg-white">
+                  {categoriesList.map((cat) => (
+                    <div
+                      key={cat.id}
+                      className="p-3.5 flex flex-wrap items-center justify-between gap-3 hover:bg-gray-50"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-bold text-gray-900">{cat.name_en}</span>
+                          <span className="text-xs font-semibold text-[#0A6847] font-tamil">
+                            {cat.name_ta}
+                          </span>
+                          <span className="text-[10px] font-mono text-gray-400">/{cat.slug}</span>
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                            {cat.book_count ?? 0} books
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleCategoryActive(cat)}
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold border cursor-pointer ${
+                            cat.is_active
+                              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                              : "bg-gray-100 text-gray-500 border-gray-200"
+                          }`}
+                        >
+                          {cat.is_active ? "Active" : "Hidden"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingCat(cat);
+                            setCatError(null);
+                            setCatForm({
+                              name_en: cat.name_en,
+                              name_ta: cat.name_ta,
+                              slug: cat.slug,
+                              description_en: cat.description_en || "",
+                              description_ta: cat.description_ta || "",
+                              sort_order: cat.sort_order ?? 0,
+                            });
+                          }}
+                          className="h-8 w-8 rounded-lg bg-gray-100 hover:bg-[#0A6847] hover:text-white text-gray-600 flex items-center justify-center cursor-pointer"
+                          title="Edit category"
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={(cat.book_count ?? 0) > 0}
+                          onClick={() => handleDeleteCategory(cat)}
+                          className="h-8 w-8 rounded-lg bg-gray-100 hover:bg-rose-600 hover:text-white disabled:opacity-35 disabled:hover:bg-gray-100 disabled:hover:text-gray-600 text-gray-600 flex items-center justify-center cursor-pointer"
+                          title={
+                            (cat.book_count ?? 0) > 0
+                              ? "Reassign books before deleting category"
+                              : "Delete category"
+                          }
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

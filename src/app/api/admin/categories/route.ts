@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth-service";
 import { adminCategorySchema, adminCategoryUpdateSchema } from "@/lib/validators/admin";
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    const { name_ta, name_en, slug, sort_order, is_active } = parseResult.data;
+    const { name_ta, name_en, description_en, description_ta, slug, sort_order, is_active } = parseResult.data;
 
     const generatedSlug =
       slug ||
@@ -75,6 +76,8 @@ export async function POST(req: NextRequest) {
       .insert({
         name_ta,
         name_en,
+        description_en: description_en || null,
+        description_ta: description_ta || null,
         slug: generatedSlug,
         sort_order: sort_order !== undefined ? Number(sort_order) : 99,
         is_active: is_active !== undefined ? Boolean(is_active) : true,
@@ -85,11 +88,21 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
+      if (error.code === "23505") {
+        return NextResponse.json(
+          { error: `A category with slug "${generatedSlug}" already exists.` },
+          { status: 409 }
+        );
+      }
       console.error("Failed to insert category:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ category: newCat, message: "Category created successfully" }, { status: 201 });
+    revalidatePath("/");
+    revalidatePath("/books");
+    revalidatePath("/admin/books");
+
+    return NextResponse.json({ category: { ...newCat, book_count: 0 }, message: "Category created successfully" }, { status: 201 });
   } catch (err: any) {
     console.error("POST /api/admin/categories error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -124,6 +137,8 @@ export async function PATCH(req: NextRequest) {
 
     if (updates.name_ta !== undefined) payload.name_ta = updates.name_ta;
     if (updates.name_en !== undefined) payload.name_en = updates.name_en;
+    if (updates.description_en !== undefined) payload.description_en = updates.description_en;
+    if (updates.description_ta !== undefined) payload.description_ta = updates.description_ta;
     if (updates.slug !== undefined) payload.slug = updates.slug;
     if (updates.sort_order !== undefined) payload.sort_order = Number(updates.sort_order);
     if (updates.is_active !== undefined) payload.is_active = Boolean(updates.is_active);
@@ -136,9 +151,19 @@ export async function PATCH(req: NextRequest) {
       .single();
 
     if (error) {
+      if (error.code === "23505") {
+        return NextResponse.json(
+          { error: `A category with slug "${updates.slug}" already exists.` },
+          { status: 409 }
+        );
+      }
       console.error("Failed to update category:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    revalidatePath("/");
+    revalidatePath("/books");
+    revalidatePath("/admin/books");
 
     return NextResponse.json({ category: updatedCat, message: "Category updated successfully" });
   } catch (err: any) {
@@ -176,6 +201,10 @@ export async function DELETE(req: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
+      revalidatePath("/");
+      revalidatePath("/books");
+      revalidatePath("/admin/books");
+
       return NextResponse.json({ message: "Category deactivated successfully", category: data });
     }
 
@@ -202,6 +231,10 @@ export async function DELETE(req: NextRequest) {
     if (delError) {
       return NextResponse.json({ error: delError.message }, { status: 500 });
     }
+
+    revalidatePath("/");
+    revalidatePath("/books");
+    revalidatePath("/admin/books");
 
     return NextResponse.json({ message: "Category permanently deleted" });
   } catch (err: any) {

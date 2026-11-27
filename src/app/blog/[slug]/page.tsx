@@ -6,9 +6,13 @@ import { getArticleBySlug, getAllArticleSlugs, type ArticleDetailData } from "@/
 import { safeJsonLdStringify } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/server";
 import { localized, resolveBilingualPair } from "@/lib/i18n";
-import { getSupabaseStorageUrl } from "@/lib/book-images";
+import {
+  normalizeLegacyBlogRow,
+  resolveArticleCategoryPair,
+  resolveBlogCoverUrl,
+} from "@/lib/blog-utils";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 interface ArticlePageProps {
   params: Promise<{ slug: string }>;
@@ -33,24 +37,7 @@ async function resolveArticle(slug: string): Promise<ArticleDetailData | undefin
         .maybeSingle();
 
       if (legacyPost) {
-        post = {
-          slug: legacyPost.slug,
-          title: legacyPost.title,
-          title_en: legacyPost.title_en ?? legacyPost.meta_title,
-          title_ta: legacyPost.title_ta,
-          excerpt: legacyPost.excerpt,
-          excerpt_en: legacyPost.excerpt_en ?? legacyPost.meta_description,
-          excerpt_ta: legacyPost.excerpt_ta,
-          seo_title: legacyPost.meta_title || legacyPost.title,
-          seo_description: legacyPost.meta_description || legacyPost.excerpt,
-          cover_image_url: legacyPost.cover_image,
-          published_at: legacyPost.published_at,
-          reading_time_mins: legacyPost.reading_time_mins,
-          author: "சாந்தி நேசக்கரம்",
-          body: typeof legacyPost.content === "string" ? legacyPost.content : legacyPost.content?.html || "",
-          body_en: legacyPost.body_en,
-          body_ta: legacyPost.body_ta,
-        };
+        post = normalizeLegacyBlogRow(legacyPost);
       }
     }
 
@@ -75,30 +62,29 @@ async function resolveArticle(slug: string): Promise<ArticleDetailData | undefin
         ta: post.author_ta ?? staticArticle?.authorTa,
         legacy: post.author || "சாந்தி நேசக்கரம்",
       });
-      const catPair = resolveBilingualPair({
-        en: post.category_en ?? staticArticle?.categoryEn,
-        ta: post.category_ta ?? staticArticle?.categoryTa,
-        legacy: "Historical Record",
-      });
+      const catPair = resolveArticleCategoryPair(
+        post.category_en ?? staticArticle?.categoryEn,
+        post.category_ta ?? staticArticle?.categoryTa
+      );
 
       return {
         slug: post.slug,
-        titleTa: titlePair.ta || staticArticle?.titleTa || post.title,
-        titleEn: titlePair.en || staticArticle?.titleEn || post.title,
-        subtitleTa: subtitlePair.ta || staticArticle?.subtitleTa || "",
-        subtitleEn: subtitlePair.en || staticArticle?.subtitleEn || "",
-        coverImage: post.cover_image_url || staticArticle?.coverImage || getSupabaseStorageUrl("blog", "thalapathi-vinayagam-banner.webp"),
+        titleTa: titlePair.ta || titlePair.en || staticArticle?.titleTa || post.title,
+        titleEn: titlePair.en || titlePair.ta || staticArticle?.titleEn || post.title,
+        subtitleTa: subtitlePair.ta || subtitlePair.en || staticArticle?.subtitleTa || "",
+        subtitleEn: subtitlePair.en || subtitlePair.ta || staticArticle?.subtitleEn || "",
+        coverImage: resolveBlogCoverUrl(post.cover_image_url || post.cover_image || staticArticle?.coverImage),
         coverAltTa: post.cover_alt_ta || undefined,
         coverAltEn: post.cover_alt_en || undefined,
-        categoryTa: catPair.ta || "வரலாற்று ஆவணம்",
-        categoryEn: catPair.en || "Historical Record",
+        categoryTa: catPair.ta,
+        categoryEn: catPair.en,
         publishedAt: post.published_at ? post.published_at.split("T")[0] : "2026-08-01",
         readingTimeMinutes: post.reading_time_mins || 5,
-        authorTa: authorPair.ta || "சாந்தி நேசக்கரம்",
-        authorEn: authorPair.en || "Saanthi Nesakaram",
+        authorTa: authorPair.ta || authorPair.en || "சாந்தி நேசக்கரம்",
+        authorEn: authorPair.en || authorPair.ta || "Saanthi Nesakaram",
         relatedBookSlugs: staticArticle?.relatedBookSlugs || ["dhisai-thavara-kanai", "katunayake-attack-victory"],
-        htmlContentTa: bodyPair.ta || staticArticle?.htmlContentTa || "",
-        htmlContentEn: bodyPair.en || staticArticle?.htmlContentEn || "",
+        htmlContentTa: bodyPair.ta || bodyPair.en || staticArticle?.htmlContentTa || "",
+        htmlContentEn: bodyPair.en || bodyPair.ta || staticArticle?.htmlContentEn || "",
       };
     }
   } catch {

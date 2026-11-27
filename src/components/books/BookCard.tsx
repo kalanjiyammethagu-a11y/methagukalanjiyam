@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ShoppingBag, Heart, Check } from "lucide-react";
+import { ShoppingBag, Heart, Check, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatINR } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
@@ -131,12 +131,20 @@ export function BookCard({
         className
       )}
     >
-      {/* Sold-out indicator banner (if out of stock) */}
-      {isSoldOut && (
-        <div className="absolute top-2 left-2 z-20">
-          <Badge variant="sold_out" className="text-xs px-2.5 py-1">
-            {locale === "ta" ? "விற்றுத் தீர்ந்தது" : "Sold Out"}
-          </Badge>
+      {/* Top-left Status Badges (Best Seller & Sold-out) */}
+      {(book.featured || isSoldOut) && (
+        <div className="absolute top-2 left-2 z-20 flex flex-col items-start gap-1">
+          {book.featured && (
+            <Badge variant="gold" className="text-[11px] px-2.5 py-0.5 shadow-xs font-bold">
+              <Star className="h-3 w-3 fill-amber-500 text-amber-500 shrink-0" />
+              <span>{locale === "ta" ? "அதிகம் விற்பனை" : "Best Seller"}</span>
+            </Badge>
+          )}
+          {isSoldOut && (
+            <Badge variant="sold_out" className="text-xs px-2.5 py-1">
+              {locale === "ta" ? "விற்றுத் தீர்ந்தது" : "Sold Out"}
+            </Badge>
+          )}
         </div>
       )}
 

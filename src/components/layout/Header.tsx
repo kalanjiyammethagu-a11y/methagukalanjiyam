@@ -10,6 +10,7 @@ import {
   Sliders,
   ShoppingBag,
   Heart,
+  User,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { MobileNav } from "./MobileNav";
@@ -244,7 +245,7 @@ export function Header({ onOpenSearch }: HeaderProps) {
                     : `Wishlist (${wishlistCount} items)`
                 }
                 className={cn(
-                  "relative hidden md:flex min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl items-center justify-center transition-colors cursor-pointer shrink-0",
+                  "relative hidden lg:flex min-h-[44px] min-w-[44px] h-10 w-10 rounded-xl items-center justify-center transition-colors cursor-pointer shrink-0",
                   wishlistCount > 0
                     ? "text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
                     : "text-[var(--color-ink-secondary)] hover:text-[var(--color-accent)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
@@ -257,6 +258,29 @@ export function Header({ onOpenSearch }: HeaderProps) {
                     {wishlistCount}
                   </span>
                 )}
+              </Link>
+
+              {/* 4b. Dedicated Account Button (Desktop pill + Mobile icon) */}
+              <Link
+                href="/account"
+                aria-label={isTa ? "என் கணக்கு" : "My Account"}
+                aria-current={
+                  pathname?.startsWith("/account") || pathname === "/login" || pathname === "/signup"
+                    ? "page"
+                    : undefined
+                }
+                className={cn(
+                  "min-h-[44px] min-w-[40px] sm:min-w-[44px] h-10 px-2 sm:px-3 rounded-xl border flex items-center justify-center gap-1.5 text-xs font-bold transition-all active:scale-95 shrink-0 shadow-2xs",
+                  pathname?.startsWith("/account") || pathname === "/login" || pathname === "/signup"
+                    ? "bg-[var(--color-accent-light)] border-[var(--color-accent)]/40 text-[var(--color-accent)]"
+                    : "bg-black/[0.03] dark:bg-white/[0.04] hover:bg-black/[0.06] dark:hover:bg-white/[0.08] border-black/[0.08] dark:border-white/[0.1] text-[var(--color-ink-primary)]"
+                )}
+                title={isTa ? "கணக்கு & ஆர்டர்கள்" : "Account & Orders"}
+              >
+                <User className="h-4 w-4 text-[var(--color-accent)] shrink-0" />
+                <span className={`hidden sm:inline ${isTa ? "font-tamil" : "font-sans"}`}>
+                  {isTa ? "கணக்கு" : "Account"}
+                </span>
               </Link>
 
               {/* 5. Hero Shopping Cart Button (Single Filled Accent CTA - desktop/tablet, bottom bar on mobile) */}

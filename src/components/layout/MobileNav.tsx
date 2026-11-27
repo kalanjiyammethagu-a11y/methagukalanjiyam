@@ -14,11 +14,11 @@ import {
   MessageCircle,
   ChevronRight,
   ShoppingBag,
+  User,
 } from "lucide-react";
 import {
   ArchivalFilmFrameIcon,
   ArchivalWaxSealIcon,
-  BookmarkRibbonIcon,
 } from "@/components/ui/Icons";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
@@ -149,11 +149,11 @@ export function MobileNav({
     },
     {
       href: "/account",
-      labelTa: "வாசகர் கணக்கு & நூலகம்",
-      labelEn: "My Library & Account",
-      subTa: "விருப்பப் பட்டியல் & முகவரி",
-      subEn: "Bookmarks & Preferences",
-      icon: BookmarkRibbonIcon,
+      labelTa: "என் கணக்கு",
+      labelEn: "Account",
+      subTa: "ஆர்டர்கள், சுயவிவரம் & விருப்பப்பட்டியல்",
+      subEn: "Orders, Profile & Wishlist",
+      icon: User,
       badge: wishlist.length > 0 ? wishlist.length.toString() : null,
     },
   ];

@@ -54,6 +54,8 @@ export interface AdminBook {
   categoryTa: string;
   categoryEn: string;
   categorySlug: string;
+  categoryId?: string | null;
+  isFeatured?: boolean;
   image: string;
   stock: number;
   slug: string;

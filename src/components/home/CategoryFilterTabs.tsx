@@ -5,21 +5,33 @@ import { BookCard } from "@/components/books/BookCard";
 import { useLanguage } from "@/context/LanguageContext";
 import type { BookItem } from "@/data/books";
 
-export interface CategoryFilterTabsProps {
-  books: BookItem[];
+export interface HomeCategoryTab {
+  id: string;
+  labelTa: string;
+  labelEn: string;
 }
 
-const categories = [
-  { id: "all", labelTa: "அனைத்தும்", labelEn: "All Books" },
+export interface CategoryFilterTabsProps {
+  books: BookItem[];
+  categories?: HomeCategoryTab[];
+}
+
+const defaultCategories: HomeCategoryTab[] = [
   { id: "history", labelTa: "வரலாறு", labelEn: "History" },
   { id: "memoirs", labelTa: "நினைவுகள்", labelEn: "Memoirs" },
   { id: "archives", labelTa: "ஆவணங்கள்", labelEn: "Archives" },
   { id: "biographies", labelTa: "தலைவர்கள்", labelEn: "Leadership" },
 ];
 
-export function CategoryFilterTabs({ books }: CategoryFilterTabsProps) {
+export function CategoryFilterTabs({ books, categories: propCategories }: CategoryFilterTabsProps) {
   const { locale } = useLanguage();
   const [selectedCategory, setSelectedCategory] = React.useState<string>("all");
+
+  const categories = React.useMemo<HomeCategoryTab[]>(() => {
+    const base = propCategories && propCategories.length > 0 ? propCategories : defaultCategories;
+    const withoutAll = base.filter((c) => c.id !== "all");
+    return [{ id: "all", labelTa: "அனைத்தும்", labelEn: "All Books" }, ...withoutAll];
+  }, [propCategories]);
 
   const filteredBooks = React.useMemo(() => {
     if (selectedCategory === "all") return books;

@@ -8,6 +8,7 @@ import { CategoryPills, type CategoryOption } from "@/components/ui/CategoryPill
 import { ArticleCard, type ArticleCardData } from "@/components/blog/ArticleCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useLanguage } from "@/context/LanguageContext";
+import { ARTICLE_CATEGORY_OPTIONS, matchesArticleCategory } from "@/lib/blog-utils";
 
 /* Authentic articles extracted from feeds.html & feed-item.html */
 const blogArticles: ArticleCardData[] = [
@@ -84,13 +85,11 @@ const blogArticles: ArticleCardData[] = [
   },
 ];
 
-const categoryOptions: CategoryOption[] = [
-  { slug: "history", labelTa: "வரலாற்று ஆவணம்", labelEn: "History" },
-  { slug: "memoir", labelTa: "நினைவுக் குறிப்பு", labelEn: "Memoirs" },
-  { slug: "martyrdom", labelTa: "தியாக வரலாறு", labelEn: "Martyrdom" },
-  { slug: "biography", labelTa: "வாழ்க்கை வரலாறு", labelEn: "Biography" },
-  { slug: "literature", labelTa: "இலக்கிய உரையாடல்", labelEn: "Literature" },
-];
+const categoryOptions: CategoryOption[] = ARTICLE_CATEGORY_OPTIONS.map((opt) => ({
+  slug: opt.slug,
+  labelTa: opt.labelTa,
+  labelEn: opt.labelEn,
+}));
 
 const announcements = [
   {
@@ -140,10 +139,7 @@ export function BlogCatalogClient({
         article.excerptTa.toLowerCase().includes(search.toLowerCase()) ||
         article.excerptEn.toLowerCase().includes(search.toLowerCase());
 
-      const matchesCategory =
-        selectedCategory === "all" ||
-        article.categoryTa.toLowerCase().includes(selectedCategory) ||
-        article.categoryEn.toLowerCase().includes(selectedCategory);
+      const matchesCategory = matchesArticleCategory(article, selectedCategory);
 
       return matchesSearch && matchesCategory;
     });

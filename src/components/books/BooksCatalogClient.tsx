@@ -15,7 +15,7 @@ import { matchesSearchQuery } from "@/lib/search";
 import { resolveBookFrontCover } from "@/lib/book-images";
 import { resolveBilingualPair } from "@/lib/i18n";
 
-const categoryOptions: CategoryOption[] = [
+const defaultCategoryOptions: CategoryOption[] = [
   { slug: "history", labelTa: "வரலாறு", labelEn: "History" },
   { slug: "archives", labelTa: "ஆவணத் தொகுப்பு", labelEn: "Archives" },
   { slug: "memoirs", labelTa: "நினைவுக் குறிப்பு", labelEn: "Memoirs" },
@@ -29,8 +29,10 @@ const BOOKS_PER_PAGE = 9;
 
 export function BooksCatalogClient({
   initialBooks,
+  initialCategories,
 }: {
   initialBooks?: BookCardData[];
+  initialCategories?: CategoryOption[];
 } = {}) {
   const { locale } = useLanguage();
   const searchParams = useSearchParams();
@@ -43,6 +45,9 @@ export function BooksCatalogClient({
   const [sortBy, setSortBy] = React.useState<SortOption>(urlSort);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid");
+  const [categoryOptions, setCategoryOptions] = React.useState<CategoryOption[]>(
+    initialCategories && initialCategories.length > 0 ? initialCategories : defaultCategoryOptions
+  );
 
   // Sync state if user navigates via search modal or browser back/forward
   React.useEffect(() => {
@@ -65,7 +70,22 @@ export function BooksCatalogClient({
     let isMounted = true;
     async function loadDynamicCatalog() {
       try {
-        const res = await fetch("/api/books?limit=100");
+        const [res, catRes] = await Promise.all([
+          fetch("/api/books?limit=100"),
+          fetch("/api/categories"),
+        ]);
+        if (catRes.ok) {
+          const catData = await catRes.json().catch(() => ({}));
+          if (isMounted && Array.isArray(catData.categories) && catData.categories.length > 0) {
+            setCategoryOptions(
+              catData.categories.map((c: any) => ({
+                slug: c.slug,
+                labelTa: c.name_ta || c.name_en,
+                labelEn: c.name_en || c.name_ta,
+              }))
+            );
+          }
+        }
         if (res.ok) {
           const data = await res.json();
           if (isMounted && data.books && Array.isArray(data.books) && data.books.length > 0) {

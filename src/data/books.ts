@@ -11,7 +11,7 @@ export interface BookItem {
   discountPrice?: number | null;
   categoryTa: string;
   categoryEn: string;
-  categorySlug: "history" | "memoirs" | "archives" | "biographies" | "political";
+  categorySlug: string;
   image: string;
   coverIsFront?: boolean;
   coverAltEn?: string;

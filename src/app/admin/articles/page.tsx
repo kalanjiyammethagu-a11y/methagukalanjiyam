@@ -30,6 +30,12 @@ import {
   type AppLocale,
 } from "@/lib/i18n";
 import { BilingualListBadge, BilingualTabs } from "@/components/admin/BilingualTabs";
+import {
+  ARTICLE_CATEGORY_OPTIONS,
+  matchesArticleCategory,
+  resolveArticleCategoryPair,
+  resolveBlogCoverUrl,
+} from "@/lib/blog-utils";
 
 const ARTICLE_REQUIRED_BILINGUAL_FIELDS = ["title", "body"];
 
@@ -67,13 +73,7 @@ interface ArticleItem {
   updatedAt: string;
 }
 
-const CATEGORY_OPTIONS = [
-  "Historical Record",
-  "Personal Memoir",
-  "Martyrdom History",
-  "Analysis & Essay",
-  "Announcements & News",
-];
+const CATEGORY_OPTIONS = ARTICLE_CATEGORY_OPTIONS.map((c) => c.labelEn);
 
 const DEFAULT_COVER = getSupabaseStorageUrl("blog", "thalapathi-vinayagam-banner.webp");
 
@@ -124,11 +124,20 @@ function mapSupabaseBlog(b: any): ArticleItem {
     content: bodyPair.ta || bodyPair.en || "",
     bodyEn: bodyPair.en || "",
     bodyTa: bodyPair.ta || "",
-    category: b.category_en || b.category_ta || (Array.isArray(b.keywords) && b.keywords[0]) || "Historical Record",
-    categoryEn: b.category_en || (Array.isArray(b.keywords) && b.keywords[0]) || "Historical Record",
-    categoryTa: b.category_ta || "வரலாற்று ஆவணம்",
+    category: resolveArticleCategoryPair(
+      b.category_en || (Array.isArray(b.keywords) && b.keywords[0]),
+      b.category_ta
+    ).en,
+    categoryEn: resolveArticleCategoryPair(
+      b.category_en || (Array.isArray(b.keywords) && b.keywords[0]),
+      b.category_ta
+    ).en,
+    categoryTa: resolveArticleCategoryPair(
+      b.category_en || (Array.isArray(b.keywords) && b.keywords[0]),
+      b.category_ta
+    ).ta,
     author: authorPair.ta || authorPair.en || "Methagu Kalanjiyam",
-    authorEn: authorPair.en || "Methagu Kalanjiyam",
+    authorEn: authorPair.en || (authorPair.ta ? "" : "Methagu Kalanjiyam"),
     authorTa: authorPair.ta || "மேதகு களஞ்சியம்",
     seoTitleEn: b.seo_title_en || b.seo_title || b.meta_title || "",
     seoTitleTa: b.seo_title_ta || "",
@@ -140,7 +149,7 @@ function mapSupabaseBlog(b: any): ArticleItem {
     readingTimeMinutes: b.reading_time_mins || 5,
     publishedAt: b.published_at ? b.published_at.split("T")[0] : "",
     viewCount: b.view_count || 0,
-    coverImage: b.cover_image_url || b.cover_image || DEFAULT_COVER,
+    coverImage: resolveBlogCoverUrl(b.cover_image_url || b.cover_image || DEFAULT_COVER),
     coverImagePath: b.cover_image_path || "",
     createdAt: b.created_at || new Date().toISOString(),
     updatedAt: b.updated_at || new Date().toISOString(),
@@ -160,6 +169,7 @@ export default function AdminArticlesPage() {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [editingArticle, setEditingArticle] = React.useState<ArticleItem | null>(null);
   const [saving, setSaving] = React.useState(false);
+  const [formError, setFormError] = React.useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = React.useState(false);
   const [deleteTarget, setDeleteTarget] = React.useState<ArticleItem | null>(null);
   const [deleting, setDeleting] = React.useState(false);
@@ -241,6 +251,7 @@ export default function AdminArticlesPage() {
 
   const handleOpenAddModal = () => {
     setEditingArticle(null);
+    setFormError(null);
     const empty = {
       slug: "",
       titleEn: "",
@@ -271,6 +282,8 @@ export default function AdminArticlesPage() {
 
   const handleOpenEditModal = (article: ArticleItem) => {
     setEditingArticle(article);
+    setFormError(null);
+    const catPair = resolveArticleCategoryPair(article.categoryEn || article.category, article.categoryTa);
     const populated = {
       slug: article.slug,
       titleEn: article.titleEn || "",
@@ -279,8 +292,8 @@ export default function AdminArticlesPage() {
       excerptTa: article.excerptTa || (article.excerpt !== article.excerptEn ? article.excerpt : ""),
       bodyEn: article.bodyEn || "",
       bodyTa: article.bodyTa || (article.content !== article.bodyEn ? article.content : ""),
-      categoryEn: article.categoryEn || article.category || "Historical Record",
-      categoryTa: article.categoryTa || "வரலாற்று ஆவணம்",
+      categoryEn: catPair.en,
+      categoryTa: catPair.ta,
       authorEn: article.authorEn || "Deepak Harvin",
       authorTa: article.authorTa || "தீபக் ஹார்வின்",
       coverAltEn: article.coverAltEn || "",
@@ -307,7 +320,10 @@ export default function AdminArticlesPage() {
         coverAltTa: populated.coverAltTa,
       },
     };
-    setActiveLangTab("en");
+    const preferTamil =
+      (!populated.titleEn.trim() || !populated.bodyEn.trim()) &&
+      Boolean(populated.titleTa.trim() || populated.bodyTa.trim());
+    setActiveLangTab(preferTamil ? "ta" : "en");
     setIsModalOpen(true);
   };
 
@@ -424,9 +440,15 @@ export default function AdminArticlesPage() {
 
   const handleSaveArticle = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.titleEn.trim() || !formData.bodyEn.trim()) {
-      setActiveLangTab("en");
-      showToast("English title and English article body are required.");
+    setFormError(null);
+
+    const hasEnComplete = Boolean(formData.titleEn.trim() && formData.bodyEn.trim());
+    const hasTaComplete = Boolean(formData.titleTa.trim() && formData.bodyTa.trim());
+
+    if (!hasEnComplete && !hasTaComplete) {
+      const msg = "Please enter both title and body in at least one language (English or Tamil).";
+      setFormError(msg);
+      showToast(msg);
       return;
     }
     if (
@@ -435,37 +457,45 @@ export default function AdminArticlesPage() {
       (!formData.titleTa.trim() || !formData.bodyTa.trim())
     ) {
       setActiveLangTab("ta");
-      showToast("Tamil title and Tamil body are required to publish.");
+      const msg = "Tamil title and Tamil body are required to publish.";
+      setFormError(msg);
+      showToast(msg);
       return;
     }
 
     const generatedSlug = (formData.slug.trim() || generateAsciiSlug(formData.titleEn, "article")).toLowerCase();
     if (!isAsciiSlug(generatedSlug)) {
-      showToast("Slug must contain only ASCII lowercase letters, numbers, and hyphens.");
+      const msg = "Slug must contain only ASCII lowercase letters, numbers, and hyphens.";
+      setFormError(msg);
+      showToast(msg);
       return;
     }
     setSaving(true);
 
+    const catPair = resolveArticleCategoryPair(formData.categoryEn, formData.categoryTa);
+    const resolvedTitleEn = formData.titleEn.trim() || null;
+    const resolvedBodyEn = formData.bodyEn.trim() || null;
+
     const apiPayload = {
       title: formData.titleTa.trim() || formData.titleEn.trim(),
-      title_en: formData.titleEn.trim(),
+      title_en: resolvedTitleEn,
       title_ta: formData.titleTa.trim() || null,
       slug: generatedSlug,
       excerpt: formData.excerptTa.trim() || formData.excerptEn.trim() || null,
       excerpt_en: formData.excerptEn.trim() || null,
       excerpt_ta: formData.excerptTa.trim() || null,
       body: formData.bodyTa.trim() || formData.bodyEn.trim(),
-      body_en: formData.bodyEn.trim(),
+      body_en: resolvedBodyEn,
       body_ta: formData.bodyTa.trim() || null,
-      category_en: formData.categoryEn,
-      category_ta: formData.categoryTa || "வரலாற்று ஆவணம்",
+      category_en: catPair.en,
+      category_ta: catPair.ta,
       author: formData.authorTa.trim() || formData.authorEn.trim() || "மேதகு களஞ்சியம்",
-      author_en: formData.authorEn.trim() || "Methagu Kalanjiyam",
+      author_en: formData.authorEn.trim() || null,
       author_ta: formData.authorTa.trim() || null,
       cover_alt_en: formData.coverAltEn.trim() || null,
       cover_alt_ta: formData.coverAltTa.trim() || null,
-      seo_title: formData.titleEn.trim(),
-      seo_description: formData.excerptEn.trim() || null,
+      seo_title: resolvedTitleEn || formData.titleTa.trim(),
+      seo_description: formData.excerptEn.trim() || formData.excerptTa.trim() || null,
       reading_time_mins: Number(formData.readingTimeMinutes),
       status: formData.status === "archived" ? "draft" : formData.status,
       cover_image_url: formData.coverImage,
@@ -518,7 +548,9 @@ export default function AdminArticlesPage() {
           setIsModalOpen(false);
         } else {
           const err = await res.json().catch(() => ({}));
-          showToast(err.error || "Failed to update article in database.");
+          const msg = err.error || "Failed to update article in database.";
+          setFormError(msg);
+          showToast(msg);
         }
       } else {
         const res = await fetch("/api/admin/articles", {
@@ -570,7 +602,9 @@ export default function AdminArticlesPage() {
           setIsModalOpen(false);
         } else {
           const err = await res.json().catch(() => ({}));
-          showToast(err.error || "Failed to create article in database.");
+          const msg = err.error || "Failed to create article in database.";
+          setFormError(msg);
+          showToast(msg);
         }
       }
     } catch {
@@ -620,7 +654,11 @@ export default function AdminArticlesPage() {
     );
     const matchesSearch = !q || corpus.includes(q);
     const matchesStatus = selectedStatus === "all" || a.status === selectedStatus;
-    const matchesCategory = selectedCategory === "all" || a.category === selectedCategory;
+    const matchesCategory =
+      selectedCategory === "all" ||
+      a.category === selectedCategory ||
+      a.categoryEn === selectedCategory ||
+      matchesArticleCategory(a, selectedCategory);
     const langComp = getLanguageCompleteness(
       { titleEn: a.titleEn, titleTa: a.titleTa, bodyEn: a.bodyEn, bodyTa: a.bodyTa },
       ARTICLE_REQUIRED_BILINGUAL_FIELDS
@@ -971,6 +1009,14 @@ export default function AdminArticlesPage() {
             </div>
 
             <form onSubmit={handleSaveArticle} className="space-y-4">
+              {formError && (
+                <div
+                  role="alert"
+                  className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold"
+                >
+                  {formError}
+                </div>
+              )}
               {/* Cover Image Upload */}
               <div>
                 <label className="text-xs font-bold text-gray-700 block mb-2">
@@ -1192,7 +1238,10 @@ export default function AdminArticlesPage() {
                   <label className="text-xs font-bold text-gray-700">Category</label>
                   <select
                     value={formData.categoryEn}
-                    onChange={(e) => setFormData({ ...formData, categoryEn: e.target.value })}
+                    onChange={(e) => {
+                      const pair = resolveArticleCategoryPair(e.target.value);
+                      setFormData({ ...formData, categoryEn: pair.en, categoryTa: pair.ta });
+                    }}
                     className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 cursor-pointer"
                   >
                     {CATEGORY_OPTIONS.map((c) => (

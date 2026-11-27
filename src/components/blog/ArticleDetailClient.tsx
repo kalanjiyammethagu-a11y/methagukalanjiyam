@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/Badge";
 import { useLanguage } from "@/context/LanguageContext";
 import { getBookBySlug, type BookItem } from "@/data/books";
 import { formatINR } from "@/lib/utils";
-import { sanitizeHtml } from "@/lib/sanitize";
+import { formatArticleBodyHtml } from "@/lib/blog-utils";
 import type { ArticleDetailData } from "@/data/articles";
 import { localized } from "@/lib/i18n";
 
@@ -110,9 +110,11 @@ export function ArticleDetailClient({ article }: ArticleDetailClientProps) {
             {title}
           </h1>
 
-          <p className="text-base sm:text-lg text-[#3a3a3a] dark:text-zinc-200 font-tamil leading-[1.75] text-pretty">
-            {subtitle}
-          </p>
+          {subtitle && (
+            <p className="text-base sm:text-lg text-[#3a3a3a] dark:text-zinc-200 font-tamil leading-[1.75] text-pretty">
+              {subtitle}
+            </p>
+          )}
 
           <div className="flex flex-wrap items-center gap-2.5 pt-1">
             <Badge variant="success" size="md" className="font-tamil">
@@ -166,14 +168,23 @@ export function ArticleDetailClient({ article }: ArticleDetailClientProps) {
           </div>
         </header>
 
-        {/* Hero Image */}
-        <div className="relative aspect-[16/9] w-full rounded-3xl overflow-hidden shadow-lg border border-black/10 dark:border-white/10 bg-black">
+        {/* Hero Image (adaptive frame with ambient blur so portrait & landscape covers never crop heads) */}
+        <div className="relative aspect-[16/9] max-h-[520px] w-full rounded-3xl overflow-hidden shadow-lg border border-black/10 dark:border-white/10 bg-zinc-900">
+          <Image
+            src={normalizedCoverSrc}
+            alt=""
+            fill
+            sizes="(max-width: 1024px) 100vw, 900px"
+            className="object-cover scale-110 blur-2xl opacity-55"
+            aria-hidden="true"
+            priority
+          />
           <Image
             src={normalizedCoverSrc}
             alt={coverAlt}
             fill
             sizes="(max-width: 1024px) 100vw, 900px"
-            className="object-cover"
+            className="object-contain relative z-10"
             priority
           />
         </div>
@@ -181,12 +192,12 @@ export function ArticleDetailClient({ article }: ArticleDetailClientProps) {
         {/* Article Body (Optimized Typography for Tamil & English) */}
         <div className="glass-panel rounded-3xl p-6 sm:p-10 lg:p-12 border border-black/10 dark:border-white/10 bg-white/95 dark:bg-[#1F1F23] shadow-sm max-w-4xl mx-auto">
           <div
-            className="prose prose-neutral dark:prose-invert max-w-none font-tamil text-[#222222] dark:text-zinc-200 text-base sm:text-lg leading-[1.85] space-y-6
+            className="prose prose-neutral dark:prose-invert max-w-none font-tamil text-[#222222] dark:text-zinc-200 text-base sm:text-lg leading-[1.85] space-y-5
               [&>h2]:text-xl sm:[&>h2]:text-2xl [&>h2]:font-bold [&>h2]:font-tamil-serif [&>h2]:text-[#111111] dark:[&>h2]:text-zinc-100 [&>h2]:pt-6 [&>h2]:border-b [&>h2]:border-black/8 dark:[&>h2]:border-white/10 [&>h2]:pb-2.5 [&>h2]:text-balance
               [&>p]:leading-[1.85] [&>p]:text-[#2c2c2c] dark:[&>p]:text-zinc-200 [&>p]:text-pretty
               [&>b]:text-[#111111] dark:[&>b]:text-white [&>strong]:text-[#111111] dark:[&>strong]:text-white [&>strong]:font-semibold
               [&_blockquote_p]:text-zinc-100 [&_blockquote_i]:text-amber-100 [&_blockquote_b]:text-white"
-            dangerouslySetInnerHTML={{ __html: sanitizeHtml(content) }}
+            dangerouslySetInnerHTML={{ __html: formatArticleBodyHtml(content) }}
           />
         </div>
 

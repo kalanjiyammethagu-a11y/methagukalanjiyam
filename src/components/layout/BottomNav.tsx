@@ -6,19 +6,17 @@ import { usePathname } from "next/navigation";
 import {
   Home,
   BookOpen,
-  Search,
+  User,
   Newspaper,
   ShoppingBag,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCart } from "@/context/CartContext";
-import { SearchBar } from "./SearchBar";
 
 export function BottomNav() {
   const pathname = usePathname();
   const { locale } = useLanguage();
   const { totalItems } = useCart();
-  const [searchOpen, setSearchOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -40,7 +38,14 @@ export function BottomNav() {
     return pathname.startsWith(href);
   };
 
-  const navItems = [
+  const navItems: Array<{
+    href: string;
+    labelTa: string;
+    labelEn: string;
+    icon: React.ComponentType<{ className?: string }>;
+    exact: boolean;
+    badge?: string | number | null;
+  }> = [
     {
       href: "/",
       labelTa: "முகப்பு",
@@ -56,17 +61,17 @@ export function BottomNav() {
       exact: false,
     },
     {
-      type: "search",
-      labelTa: "தேடல்",
-      labelEn: "Search",
-      icon: Search,
-      onClick: () => setSearchOpen(true),
-    },
-    {
       href: "/blog",
       labelTa: "பதிவுகள்",
       labelEn: "Articles",
       icon: Newspaper,
+      exact: false,
+    },
+    {
+      href: "/account",
+      labelTa: "கணக்கு",
+      labelEn: "Account",
+      icon: User,
       exact: false,
     },
     {
@@ -86,35 +91,15 @@ export function BottomNav() {
         className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/92 dark:bg-[#121110]/92 backdrop-blur-xl border-t border-black/[0.08] dark:border-white/[0.08] shadow-[0_-4px_25px_rgba(0,0,0,0.06)] px-2 pt-1 pb-[calc(0.35rem+env(safe-area-inset-bottom,0px))] transition-transform duration-300"
       >
         <div className="flex items-center justify-around max-w-md mx-auto">
-          {navItems.map((item, idx) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             const label = isTa ? item.labelTa : item.labelEn;
-
-            if (item.type === "search") {
-              return (
-                <button
-                  key="bottom-nav-search"
-                  type="button"
-                  onClick={item.onClick}
-                  aria-label={label}
-                  className="flex flex-col items-center justify-center py-1 px-2.5 rounded-2xl min-w-[56px] min-h-[50px] text-gray-600 dark:text-gray-300 hover:text-emerald-700 dark:hover:text-emerald-400 active:scale-92 transition-all cursor-pointer relative group"
-                >
-                  <div className="h-9 w-9 rounded-full flex items-center justify-center transition-all group-active:scale-90">
-                    <Icon className="h-5 w-5 stroke-[1.8] group-hover:stroke-[2.2]" />
-                  </div>
-                  <span className="text-[10px] font-medium mt-0.5 tracking-normal font-tamil leading-none">
-                    {label}
-                  </span>
-                </button>
-              );
-            }
-
-            const active = isActive(item.href!, item.exact);
+            const active = isActive(item.href, item.exact);
 
             return (
               <Link
                 key={item.href}
-                href={item.href!}
+                href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-2xl min-w-[56px] min-h-[50px] transition-all cursor-pointer relative ${
                   active
@@ -154,9 +139,6 @@ export function BottomNav() {
           })}
         </div>
       </nav>
-
-      {/* Instant Search modal bound to Search tab */}
-      <SearchBar isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
 }
