@@ -67,17 +67,26 @@ export function ArticleCard({
           className
         )}
       >
-        <div className="lg:col-span-7 relative aspect-[16/10] lg:aspect-auto lg:min-h-[380px] overflow-hidden bg-black/5 dark:bg-white/5">
+        <div className="lg:col-span-7 relative aspect-[16/10] lg:aspect-auto lg:min-h-[380px] overflow-hidden bg-[#F4F1EA] dark:bg-zinc-900">
+          <Image
+            src={normalizedCoverSrc}
+            alt=""
+            fill
+            sizes="(max-width: 1024px) 100vw, 60vw"
+            className="object-cover scale-110 blur-xl opacity-35 dark:opacity-25 pointer-events-none"
+            aria-hidden="true"
+            priority
+          />
           <Image
             src={normalizedCoverSrc}
             alt={coverAlt}
             fill
             sizes="(max-width: 1024px) 100vw, 60vw"
-            className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+            className="object-contain relative z-10 transition-transform duration-500 ease-out group-hover:scale-[1.03]"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent lg:hidden" />
-          <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent lg:hidden z-10 pointer-events-none" />
+          <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#0A6847] text-white shadow-sm flex items-center gap-1.5 font-tamil">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 animate-pulse" />
               {isTa ? "சிறப்பு ஆவணம்" : "Featured"}
@@ -139,15 +148,23 @@ export function ArticleCard({
       )}
     >
       {/* Cover Image */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-black/5 dark:bg-white/5 shrink-0">
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-[#F4F1EA] dark:bg-zinc-900 shrink-0">
+        <Image
+          src={normalizedCoverSrc}
+          alt=""
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="object-cover scale-110 blur-xl opacity-35 dark:opacity-25 pointer-events-none"
+          aria-hidden="true"
+        />
         <Image
           src={normalizedCoverSrc}
           alt={coverAlt}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+          className="object-contain relative z-10 transition-transform duration-500 ease-out group-hover:scale-[1.03]"
         />
-        <div className="absolute top-3 left-3 z-10">
+        <div className="absolute top-3 left-3 z-20">
           <Badge variant="glass" size="sm" className="font-tamil bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md shadow-xs">
             {category}
           </Badge>

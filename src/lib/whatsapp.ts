@@ -8,6 +8,16 @@ export interface DeliveryAddressInfo {
 }
 
 export const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "916384654946";
+export const DISPLAY_WHATSAPP_NUMBER = "6384654946";
+export const DISPLAY_PHONE = "+91 63846 54946";
+export const DISPLAY_WHATSAPP_LABEL_TA = "WhatsApp எண் : 6384654946";
+export const DISPLAY_WHATSAPP_LABEL_EN = "WhatsApp: 6384654946";
+
+export function buildWhatsAppDirectUrl(message?: string): string {
+  const cleanNumber = WHATSAPP_NUMBER.replace(/[^0-9]/g, "");
+  if (!message) return `https://wa.me/${cleanNumber}`;
+  return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
+}
 
 /**
  * Format delivery address cleanly without dangling labels or "undefined".

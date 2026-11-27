@@ -441,7 +441,7 @@ export default function OrderConfirmationPage() {
                 மேதகு களஞ்சியம் — கொள்முதல் ரசீது (Bill of Supply)
               </h2>
               <p className="text-xs text-neutral-600 dark:text-zinc-400 font-tamil mt-0.5">
-                தமிழ்நாடு, இந்தியா • தொடர்பு: +91 82486 54946
+                தமிழ்நாடு, இந்தியா • WhatsApp எண் : 6384654946 (+91 63846 54946)
               </p>
             </div>
             <div className="text-right">

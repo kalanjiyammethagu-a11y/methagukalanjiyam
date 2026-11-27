@@ -1,14 +1,17 @@
 import * as React from "react";
 import type { Metadata } from "next";
 import { BlogCatalogClient } from "@/components/blog/BlogCatalogClient";
-import { mapAnnouncementRecordToItem, type AnnouncementItem } from "@/lib/announcements";
+import { fetchActiveAnnouncements, type AnnouncementItem } from "@/lib/announcements";
+import { fetchBlogCategories, toArticleCategoryOptions } from "@/lib/blog-categories";
 import { safeJsonLdStringify } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/server";
 import type { ArticleCardData } from "@/components/blog/ArticleCard";
+import type { CategoryOption } from "@/components/ui/CategoryPills";
 import { resolveBilingualPair } from "@/lib/i18n";
 import {
   mergeBlogPostsAndLegacyBlogs,
   resolveArticleCategoryPair,
+  resolveArticleExcerpt,
   resolveBlogCoverUrl,
 } from "@/lib/blog-utils";
 
@@ -49,10 +52,11 @@ export const metadata: Metadata = {
 export default async function BlogPage() {
   let initialArticles: ArticleCardData[] | undefined;
   let initialAnnouncements: AnnouncementItem[] | undefined;
+  let initialCategories: CategoryOption[] | undefined;
 
   try {
     const supabase = await createClient();
-    const [{ data: dbPosts }, { data: legacyBlogs }, { data: dbAnnouncements, error: annErr }] =
+    const [{ data: dbPosts }, { data: legacyBlogs }, announcements, managedCategories] =
       await Promise.all([
         (supabase.from("blog_posts") as any)
           .select("*")
@@ -64,27 +68,17 @@ export default async function BlogPage() {
           .eq("is_published", true)
           .order("created_at", { ascending: false })
           .order("published_at", { ascending: false, nullsFirst: false }),
-        (supabase.from("announcements") as any)
-          .select("*")
-          .eq("is_active", true)
-          .order("sort_order", { ascending: true })
-          .order("created_at", { ascending: false }),
+        fetchActiveAnnouncements(supabase),
+        fetchBlogCategories(supabase),
       ]);
 
-    if (!annErr && Array.isArray(dbAnnouncements)) {
-      initialAnnouncements = dbAnnouncements.map(mapAnnouncementRecordToItem);
-    } else if (annErr) {
-      const { data: settingsRow } = await (supabase.from("site_settings") as any)
-        .select("value")
-        .eq("key", "recent_announcements")
-        .maybeSingle();
-      if (Array.isArray(settingsRow?.value)) {
-        initialAnnouncements = settingsRow.value
-          .filter((item: any) => item?.is_active !== false)
-          .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-          .map(mapAnnouncementRecordToItem);
-      }
-    }
+    initialAnnouncements = announcements;
+    initialCategories = toArticleCategoryOptions(managedCategories).map((opt) => ({
+      slug: opt.slug,
+      labelTa: opt.labelTa,
+      labelEn: opt.labelEn,
+      aliases: opt.aliases,
+    }));
 
     const combinedPosts = mergeBlogPostsAndLegacyBlogs(dbPosts || [], legacyBlogs || []);
 
@@ -100,13 +94,18 @@ export default async function BlogPage() {
           ta: p.excerpt_ta,
           legacy: p.excerpt,
         });
+        const bodyPair = resolveBilingualPair({
+          en: p.body_en,
+          ta: p.body_ta,
+          legacy: p.body,
+        });
         const catPair = resolveArticleCategoryPair(p.category_en, p.category_ta);
         return {
           slug: p.slug,
           titleTa: titlePair.ta || titlePair.en || p.title,
           titleEn: titlePair.en || titlePair.ta || p.title,
-          excerptTa: excerptPair.ta || excerptPair.en || "",
-          excerptEn: excerptPair.en || excerptPair.ta || "",
+          excerptTa: resolveArticleExcerpt(excerptPair.ta || excerptPair.en, bodyPair.ta || bodyPair.en),
+          excerptEn: resolveArticleExcerpt(excerptPair.en || excerptPair.ta, bodyPair.en || bodyPair.ta),
           coverImage: resolveBlogCoverUrl(p.cover_image_url || p.cover_image),
           coverAltTa: p.cover_alt_ta || undefined,
           coverAltEn: p.cover_alt_en || undefined,
@@ -167,6 +166,7 @@ export default async function BlogPage() {
       <BlogCatalogClient
         initialArticles={initialArticles}
         initialAnnouncements={initialAnnouncements}
+        initialCategories={initialCategories}
       />
     </>
   );

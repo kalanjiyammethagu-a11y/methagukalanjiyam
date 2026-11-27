@@ -3,13 +3,42 @@
  * Methagu Kalanjiyam Platform
  */
 
-import {
+import type {
   ERPConfig,
   ERPCustomer,
   ERPSalesOrder,
   ERPItem,
   ERPHealthStatus,
+  ERPBinStock,
 } from "@/types/erp";
+
+/**
+ * Extracts normalized lowercase book UUID when ERP item_code follows `BK-<UUID>`.
+ */
+export function extractBookIdFromERPItemCode(itemCode?: string | null): string | null {
+  const clean = (itemCode || "").trim();
+  if (!clean.toUpperCase().startsWith("BK-")) return null;
+  const idPart = clean.slice(3).trim().toLowerCase();
+  return idPart || null;
+}
+
+/**
+ * Aggregates ERPNext `Bin` warehouse rows into total non-negative integer stock per uppercase `item_code`.
+ */
+export function aggregateERPBinStock(bins: ERPBinStock[]): Map<string, number> {
+  const totals = new Map<string, number>();
+  for (const bin of bins) {
+    const code = (bin?.item_code || "").trim().toUpperCase();
+    if (!code) continue;
+    const rawQty = Number(bin.actual_qty ?? 0);
+    if (!Number.isFinite(rawQty)) continue;
+    totals.set(code, (totals.get(code) ?? 0) + rawQty);
+  }
+  for (const [code, qty] of totals.entries()) {
+    totals.set(code, Math.max(0, Math.floor(qty)));
+  }
+  return totals;
+}
 
 export class ERPNextClient {
   private config: ERPConfig;
@@ -371,6 +400,30 @@ export class ERPNextClient {
 
     const data = await res.json();
     return data.data || [];
+  }
+
+  /**
+   * Fetch live warehouse stock balances (`Bin`) from ERPNext.
+   */
+  public async fetchBinStock(limit = 500): Promise<ERPBinStock[]> {
+    const params = new URLSearchParams({
+      fields: JSON.stringify(["item_code", "warehouse", "actual_qty", "projected_qty", "reserved_qty"]),
+      limit_page_length: String(limit),
+    });
+
+    const res = await fetch(`${this.config.url}/api/resource/Bin?${params.toString()}`, {
+      headers: {
+        Authorization: this.getAuthHeader(),
+        Accept: "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to fetch ERP stock bins (${res.status}): ${await res.text()}`);
+    }
+
+    const data = await res.json();
+    return Array.isArray(data?.data) ? data.data : [];
   }
 }
 

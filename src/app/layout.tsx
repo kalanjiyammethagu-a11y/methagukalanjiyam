@@ -96,6 +96,9 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  other: {
+    google: "notranslate",
+  },
   alternates: {
     languages: {
       "ta-IN": "https://methagukalanjiyam.in",
@@ -155,10 +158,12 @@ export default function RootLayout({
   return (
     <html
       lang="ta"
+      translate="no"
       suppressHydrationWarning
-      className={`${inter.variable} ${fraunces.variable} ${notoTamil.variable} ${notoSerifTamil.variable}`}
+      className={`notranslate ${inter.variable} ${fraunces.variable} ${notoTamil.variable} ${notoSerifTamil.variable}`}
     >
       <head>
+        <meta name="google" content="notranslate" />
         {/* Dublin Core Archival Metadata (ISO 15836 Standard) */}
         <meta name="DC.title" content="மேதகு களஞ்சியம் — Rare Tamil Literature & National Archives" />
         <meta name="DC.creator" content="மேதகு களஞ்சியம் (Methagu Kalanjiyam)" />

@@ -86,3 +86,39 @@ export function mapAnnouncementRecordToItem(row: Record<string, any>): Announcem
 
 export const DEFAULT_ANNOUNCEMENTS: AnnouncementItem[] =
   DEFAULT_ANNOUNCEMENTS_RECORDS.map(mapAnnouncementRecordToItem);
+
+/**
+ * Fetches active announcements from `announcements`, falling back to `site_settings`
+ * (`recent_announcements`), and finally to `DEFAULT_ANNOUNCEMENTS`.
+ */
+export async function fetchActiveAnnouncements(supabase: any): Promise<AnnouncementItem[]> {
+  try {
+    const { data: tableRows, error } = await supabase
+      .from("announcements")
+      .select("*")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
+
+    if (!error && Array.isArray(tableRows)) {
+      return tableRows.map(mapAnnouncementRecordToItem);
+    }
+
+    const { data: fallbackSetting } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "recent_announcements")
+      .maybeSingle();
+
+    if (Array.isArray(fallbackSetting?.value)) {
+      return fallbackSetting.value
+        .filter((row: any) => row && row.is_active !== false)
+        .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+        .map(mapAnnouncementRecordToItem);
+    }
+  } catch {
+    // Fallback to default archival announcements
+  }
+
+  return DEFAULT_ANNOUNCEMENTS;
+}

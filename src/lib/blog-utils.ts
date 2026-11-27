@@ -265,3 +265,61 @@ export function formatArticleBodyHtml(rawContent?: string | null): string {
 
   return sanitizeHtml(htmlBlocks.join("\n"));
 }
+
+/**
+ * Resolves a non-empty plain-text excerpt, falling back to a clean stripped preview
+ * of the article body when excerpt is missing.
+ */
+export function resolveArticleExcerpt(excerpt?: string | null, body?: string | null, maxLen = 160): string {
+  const cleanExcerpt = (excerpt || "").trim();
+  if (cleanExcerpt) return cleanExcerpt;
+  const stripped = (body || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!stripped) return "";
+  if (stripped.length <= maxLen) return stripped;
+  return `${stripped.slice(0, maxLen).trim()}…`;
+}
+
+export interface SuggestableArticle {
+  slug: string;
+  categoryEn?: string | null;
+  categoryTa?: string | null;
+  publishedAt?: string | null;
+}
+
+/**
+ * Picks up to `limit` suggested articles for "Keep Reading", excluding the current slug,
+ * prioritizing articles matching the current category and then recency.
+ */
+export function pickSuggestedArticles<T extends SuggestableArticle>(
+  articles: T[],
+  currentSlug: string,
+  currentCategoryEn?: string | null,
+  currentCategoryTa?: string | null,
+  limit = 3
+): T[] {
+  const curEn = (currentCategoryEn || "").trim().toLowerCase();
+  const curTa = (currentCategoryTa || "").trim().toLowerCase();
+
+  return articles
+    .filter((item) => item && item.slug && item.slug !== currentSlug)
+    .map((item) => {
+      const itemEn = (item.categoryEn || "").trim().toLowerCase();
+      const itemTa = (item.categoryTa || "").trim().toLowerCase();
+      const sameCategory =
+        (Boolean(curEn) && itemEn === curEn) ||
+        (Boolean(curTa) && itemTa === curTa);
+      const time = new Date(item.publishedAt || 0).getTime() || 0;
+      return { item, sameCategory, time };
+    })
+    .sort((a, b) => {
+      if (a.sameCategory !== b.sameCategory) {
+        return a.sameCategory ? -1 : 1;
+      }
+      return b.time - a.time;
+    })
+    .slice(0, limit)
+    .map((entry) => entry.item);
+}

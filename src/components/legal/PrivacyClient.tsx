@@ -129,13 +129,15 @@ export function PrivacyClient() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <a
-                  href="tel:+918248654946"
+                  href="https://wa.me/916384654946"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-zinc-800 border border-black/10 dark:border-white/15 text-xs font-bold text-[#111111] dark:text-zinc-100 hover:text-[#0A6847] dark:hover:text-emerald-400 shadow-2xs min-h-[44px]"
                 >
                   <Phone className="h-3.5 w-3.5 text-[#0A6847] dark:text-emerald-400" />
-                  <span>+91 82486 54946</span>
+                  <span>{isTa ? "WhatsApp எண் : 6384654946" : "+91 63846 54946"}</span>
                 </a>
                 <a
                   href="mailto:methagukalanjiyam@gmail.com"

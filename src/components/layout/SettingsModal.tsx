@@ -66,7 +66,7 @@ export function SettingsModal() {
             <Globe className="h-4 w-4 text-[#0A6847] dark:text-emerald-400" />
             <span>{t("languageLabel")}</span>
           </label>
-          <div className="grid grid-cols-2 gap-3">
+          <div translate="no" className="notranslate grid grid-cols-2 gap-3">
             {[
               { code: "ta" as const, label: "தமிழ் (Tamil)", sub: "முதன்மை மொழி" },
               { code: "en" as const, label: "English", sub: "International" },

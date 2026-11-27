@@ -21,6 +21,7 @@ import {
   ArrowDown,
   Star,
   Tag,
+  RefreshCw,
 } from "lucide-react";
 import type { AdminBook, BookStatus } from "@/types/admin";
 
@@ -193,6 +194,7 @@ export default function AdminBooksPage() {
   const [saving, setSaving] = React.useState(false);
   const [formError, setFormError] = React.useState<string | null>(null);
   const [updatingStockId, setUpdatingStockId] = React.useState<string | null>(null);
+  const [syncingErpStock, setSyncingErpStock] = React.useState(false);
   const [activeLangTab, setActiveLangTab] = React.useState<AppLocale>("en");
   const initialLangSnapshotRef = React.useRef({
     en: { titleEn: "", authorEn: "", descriptionEn: "", publisherEn: "", quoteEn: "", coverAltEn: "" },
@@ -1075,6 +1077,26 @@ export default function AdminBooksPage() {
     }));
   }, [categoriesList]);
 
+  const handleFetchStockFromERP = async () => {
+    setSyncingErpStock(true);
+    try {
+      const res = await fetch("/api/admin/erp/sync-stock", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        showToast(
+          `ERP stock synced: matched ${data.matchedCount}/${data.totalBooks} books, updated ${data.updatedCount}.`
+        );
+        await fetchBooks();
+      } else {
+        showToast(data.error || "ERP server unavailable for stock sync.");
+      }
+    } catch {
+      showToast("Network error while fetching stock from ERP.");
+    } finally {
+      setSyncingErpStock(false);
+    }
+  };
+
   const filteredBooks = React.useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
     return books.filter((b) => {
@@ -1134,6 +1156,16 @@ export default function AdminBooksPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={handleFetchStockFromERP}
+            disabled={syncingErpStock}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-[#0A6847] text-xs font-bold transition-all shadow-2xs min-h-[44px] cursor-pointer disabled:opacity-60"
+            title="Fetch latest stock quantities from ERPNext"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncingErpStock ? "animate-spin" : ""}`} />
+            <span>{syncingErpStock ? "Fetching ERP Stock..." : "Sync Stock from ERP"}</span>
+          </button>
           <button
             type="button"
             onClick={openManageCategoriesModal}
@@ -2014,7 +2046,7 @@ export default function AdminBooksPage() {
                   type="text"
                   value={formData.whatsapp_link}
                   onChange={(e) => setFormData({ ...formData, whatsapp_link: e.target.value })}
-                  placeholder="https://wa.me/918248654946?text=..."
+                  placeholder="https://wa.me/916384654946?text=..."
                   className="w-full px-3 py-2 rounded-xl border border-gray-200 text-base sm:text-xs focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[44px]"
                 />
               </div>

@@ -990,7 +990,7 @@ export default function AdminSupportersPage() {
                         type="text"
                         value={formData.whatsappUrl}
                         onChange={(e) => setFormData({ ...formData, whatsappUrl: e.target.value })}
-                        placeholder="https://wa.me/918248654946"
+                        placeholder="https://wa.me/916384654946"
                         className="w-full pl-10 pr-3.5 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[44px]"
                       />
                     </div>

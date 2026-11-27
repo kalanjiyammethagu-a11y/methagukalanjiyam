@@ -2,15 +2,19 @@ import * as React from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArticleDetailClient } from "@/components/blog/ArticleDetailClient";
-import { getArticleBySlug, type ArticleDetailData } from "@/data/articles";
+import type { ArticleCardData } from "@/components/blog/ArticleCard";
+import { getAllArticleSlugs, getArticleBySlug, type ArticleDetailData } from "@/data/articles";
 import { allBooks, getBookBySlug, type BookItem } from "@/data/books";
 import { safeJsonLdStringify } from "@/lib/sanitize";
 import { createClient } from "@/lib/supabase/server";
 import { localized, resolveBilingualPair } from "@/lib/i18n";
 import { mapDbBookToBookItem } from "@/lib/book-mappers";
 import {
+  mergeBlogPostsAndLegacyBlogs,
   normalizeLegacyBlogRow,
+  pickSuggestedArticles,
   resolveArticleCategoryPair,
+  resolveArticleExcerpt,
   resolveBlogCoverUrl,
 } from "@/lib/blog-utils";
 
@@ -158,25 +162,100 @@ export default async function ArticleDetailPage({ params }: ArticlePageProps) {
     notFound();
   }
 
-  // Resolve live related books from Supabase (preserving static fallback)
+  // Resolve live related books + auto-suggested "Keep Reading" articles
   let relatedBooks: BookItem[] = (article.relatedBookSlugs || [])
     .map((bookSlug) => getBookBySlug(bookSlug))
     .filter((b): b is BookItem => Boolean(b));
+  let candidateArticles: ArticleCardData[] = getAllArticleSlugs()
+    .map((s) => getArticleBySlug(s))
+    .filter((item): item is ArticleDetailData => Boolean(item))
+    .map((item) => ({
+    slug: item.slug,
+    titleTa: item.titleTa,
+    titleEn: item.titleEn,
+    excerptTa: resolveArticleExcerpt(item.subtitleTa, item.htmlContentTa),
+    excerptEn: resolveArticleExcerpt(item.subtitleEn, item.htmlContentEn),
+    coverImage: resolveBlogCoverUrl(item.coverImage),
+    coverAltTa: item.coverAltTa,
+    coverAltEn: item.coverAltEn,
+    categoryTa: item.categoryTa,
+    categoryEn: item.categoryEn,
+    publishedAt: item.publishedAt,
+    readingTimeMinutes: item.readingTimeMinutes,
+  }));
+
   try {
     const supabase = await createClient();
-    const { data: dbRelated } = await (supabase.from("books") as any)
-      .select("*, categories(name_ta, name_en, slug)")
-      .eq("status", "published")
-      .in("slug", article.relatedBookSlugs || ["dhisai-thavara-kanai", "katunayake-attack-victory"])
-      .limit(3);
+    const [{ data: dbRelated }, { data: dbPosts }, { data: legacyBlogs }] = await Promise.all([
+      (supabase.from("books") as any)
+        .select("*, categories(name_ta, name_en, slug)")
+        .eq("status", "published")
+        .in("slug", article.relatedBookSlugs || ["dhisai-thavara-kanai", "katunayake-attack-victory"])
+        .limit(3),
+      (supabase.from("blog_posts") as any)
+        .select("*")
+        .eq("status", "published")
+        .order("created_at", { ascending: false })
+        .order("published_at", { ascending: false, nullsFirst: false }),
+      (supabase.from("blogs") as any)
+        .select("*")
+        .eq("is_published", true)
+        .order("created_at", { ascending: false })
+        .order("published_at", { ascending: false, nullsFirst: false }),
+    ]);
+
     if (Array.isArray(dbRelated) && dbRelated.length > 0) {
       relatedBooks = dbRelated.map((row: any) =>
         mapDbBookToBookItem(row, allBooks.find((sb) => sb.slug === row.slug))
       );
     }
+
+    const combinedPosts = mergeBlogPostsAndLegacyBlogs(dbPosts || [], legacyBlogs || []);
+    if (combinedPosts.length > 0) {
+      candidateArticles = combinedPosts.map((p: any) => {
+        const tPair = resolveBilingualPair({
+          en: p.title_en ?? p.seo_title,
+          ta: p.title_ta,
+          legacy: p.title,
+        });
+        const ePair = resolveBilingualPair({
+          en: p.excerpt_en ?? p.seo_description,
+          ta: p.excerpt_ta,
+          legacy: p.excerpt,
+        });
+        const bPair = resolveBilingualPair({
+          en: p.body_en,
+          ta: p.body_ta,
+          legacy: p.body,
+        });
+        const cPair = resolveArticleCategoryPair(p.category_en, p.category_ta);
+        return {
+          slug: p.slug,
+          titleTa: tPair.ta || tPair.en || p.title,
+          titleEn: tPair.en || tPair.ta || p.title,
+          excerptTa: resolveArticleExcerpt(ePair.ta || ePair.en, bPair.ta || bPair.en),
+          excerptEn: resolveArticleExcerpt(ePair.en || ePair.ta, bPair.en || bPair.ta),
+          coverImage: resolveBlogCoverUrl(p.cover_image_url || p.cover_image),
+          coverAltTa: p.cover_alt_ta || undefined,
+          coverAltEn: p.cover_alt_en || undefined,
+          categoryTa: cPair.ta,
+          categoryEn: cPair.en,
+          publishedAt: p.published_at ? p.published_at.split("T")[0] : "2026-08-01",
+          readingTimeMinutes: p.reading_time_mins || 5,
+        };
+      });
+    }
   } catch {
-    // Keep static related fallback
+    // Keep static fallback
   }
+
+  const suggestedArticles = pickSuggestedArticles(
+    candidateArticles,
+    article.slug,
+    article.categoryEn,
+    article.categoryTa,
+    3
+  );
 
   const articleSchema = {
     "@context": "https://schema.org",
@@ -245,7 +324,11 @@ export default async function ArticleDetailPage({ params }: ArticlePageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLdStringify(articleSchema) }}
       />
-      <ArticleDetailClient article={article} relatedBooks={relatedBooks} />
+      <ArticleDetailClient
+        article={article}
+        relatedBooks={relatedBooks}
+        suggestedArticles={suggestedArticles}
+      />
     </>
   );
 }

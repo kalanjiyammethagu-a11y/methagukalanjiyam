@@ -4,11 +4,20 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { RotateCcw, Phone } from "lucide-react";
+import { RotateCcw, Phone, MessageCircle } from "lucide-react";
 import { PostalSealIcon, ArchivalWaxSealIcon } from "@/components/ui/Icons";
+import { useLanguage } from "@/context/LanguageContext";
+import {
+  DISPLAY_PHONE,
+  DISPLAY_WHATSAPP_LABEL_EN,
+  DISPLAY_WHATSAPP_LABEL_TA,
+  WHATSAPP_NUMBER,
+} from "@/lib/whatsapp";
 
 export function Footer() {
   const pathname = usePathname();
+  const { locale } = useLanguage();
+  const isTa = locale === "ta";
 
   // If on admin routes, let the dedicated admin layout render instead
   if (pathname?.startsWith("/admin")) {
@@ -27,10 +36,12 @@ export function Footer() {
               </div>
               <div>
                 <h4 className="text-sm font-bold text-[#111111] dark:text-zinc-100 font-tamil">
-                  விரைவான அஞ்சல் சேவை
+                  {isTa ? "விரைவான அஞ்சல் சேவை" : "Fast Courier & Postal Dispatch"}
                 </h4>
                 <p className="text-xs text-[#444444] dark:text-zinc-300 mt-0.5 font-medium">
-                  ST கூரியர் & இந்திய அஞ்சல் வழியாக பாதுகாப்பான வழங்கல்
+                  {isTa
+                    ? "ST கூரியர் & இந்திய அஞ்சல் வழியாக பாதுகாப்பான வழங்கல்"
+                    : "Trusted delivery across India via ST Courier & India Post"}
                 </p>
               </div>
             </div>
@@ -41,10 +52,10 @@ export function Footer() {
               </div>
               <div>
                 <h4 className="text-sm font-bold text-[#111111] dark:text-zinc-100 font-tamil">
-                  உண்மையான அரிய ஆவணங்கள்
+                  {isTa ? "உண்மையான அரிய ஆவணங்கள்" : "Authentic Archival Volumes"}
                 </h4>
                 <p className="text-xs text-[#444444] dark:text-zinc-300 mt-0.5 font-medium">
-                  சரிபார்க்கப்பட்ட வரலாற்று பதிப்பக நூல்கள்
+                  {isTa ? "சரிபார்க்கப்பட்ட வரலாற்று பதிப்பக நூல்கள்" : "Verified primary-source historical editions"}
                 </p>
               </div>
             </div>
@@ -55,10 +66,12 @@ export function Footer() {
               </div>
               <div>
                 <h4 className="text-sm font-bold text-[#111111] dark:text-zinc-100 font-tamil">
-                  நேரடி உதவி & கண்காணிப்பு
+                  {isTa ? "நேரடி உதவி & கண்காணிப்பு" : "Direct Support & Tracking"}
                 </h4>
                 <p className="text-xs text-[#444444] dark:text-zinc-300 mt-0.5 font-medium">
-                  WhatsApp வழியாக உடனடி AWB டிராக்கிங் வசதி
+                  {isTa
+                    ? "WhatsApp வழியாக உடனடி AWB டிராக்கிங் வசதி"
+                    : "Instant AWB dispatch updates via WhatsApp"}
                 </p>
               </div>
             </div>
@@ -83,20 +96,31 @@ export function Footer() {
                 />
               </div>
               <span className="font-bold text-base font-tamil text-[#191614] dark:text-zinc-100">
-                மேதகு களஞ்சியம்
+                {isTa ? "மேதகு களஞ்சியம்" : "Methagu Kalanjiyam"}
               </span>
             </div>
             <p className="text-xs text-[#4A443E] dark:text-zinc-300 leading-relaxed font-tamil font-medium">
-              தமிழீழ விடுதலைப் போராட்ட வரலாறுகள், தேசிய ஆவணங்கள் மற்றும் அரிய தமிழ் இலக்கியப் பெட்டகம்.
+              {isTa
+                ? "தமிழீழ விடுதலைப் போராட்ட வரலாறுகள், தேசிய ஆவணங்கள் மற்றும் அரிய தமிழ் இலக்கியப் பெட்டகம்."
+                : "Preserving rare Tamil literature, liberation movement records, and historical archives."}
             </p>
-            <div>
+            <div className="space-y-1">
               <a
-                href="tel:+918248654946"
-                className="inline-flex items-center gap-2.5 text-xs font-bold text-[#191614] dark:text-zinc-100 hover:text-[#0D5C3A] dark:hover:text-emerald-400 transition-colors min-h-[44px]"
-                aria-label="Call +91 82486 54946"
+                href={`tel:${DISPLAY_PHONE.replace(/\s+/g, "")}`}
+                className="inline-flex items-center gap-2.5 text-xs font-bold text-[#191614] dark:text-zinc-100 hover:text-[#0D5C3A] dark:hover:text-emerald-400 transition-colors min-h-[36px]"
+                aria-label={`Call ${DISPLAY_PHONE}`}
               >
                 <Phone className="h-4 w-4 text-[#0D5C3A] dark:text-emerald-400" aria-hidden="true" />
-                <span>+91 82486 54946</span>
+                <span>{DISPLAY_PHONE}</span>
+              </a>
+              <a
+                href={`https://wa.me/${WHATSAPP_NUMBER}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2.5 text-xs font-bold text-[#0D5C3A] dark:text-emerald-400 hover:underline transition-colors min-h-[36px] font-tamil"
+              >
+                <MessageCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>{isTa ? DISPLAY_WHATSAPP_LABEL_TA : DISPLAY_WHATSAPP_LABEL_EN}</span>
               </a>
             </div>
           </div>
@@ -104,32 +128,32 @@ export function Footer() {
           {/* Quick Links */}
           <div className="space-y-3 font-tamil">
             <h5 className="text-xs font-bold uppercase tracking-wider text-[#191614] dark:text-zinc-100">
-              பிரிவுகள்
+              {isTa ? "பிரிவுகள்" : "Collections"}
             </h5>
             <ul className="space-y-1 text-xs text-[#2B2723] dark:text-zinc-300 font-medium">
               <li>
                 <Link href="/books?category=history" className="hover:text-[#0D5C3A] dark:hover:text-emerald-400 transition-colors py-1.5 block">
-                  வரலாறு & ஆவணங்கள்
+                  {isTa ? "வரலாறு & ஆவணங்கள்" : "History & Archives"}
                 </Link>
               </li>
               <li>
                 <Link href="/books?category=archives" className="hover:text-[#0D5C3A] dark:hover:text-emerald-400 transition-colors py-1.5 block">
-                  அரிய ஆவணத் தொகுப்புகள்
+                  {isTa ? "அரிய ஆவணத் தொகுப்புகள்" : "Rare Archival Volumes"}
                 </Link>
               </li>
               <li>
                 <Link href="/books?category=biographies" className="hover:text-[#0D5C3A] dark:hover:text-emerald-400 transition-colors py-1.5 block">
-                  தலைவர்கள் & வாழ்க்கை வரலாறு
+                  {isTa ? "தலைவர்கள் & வாழ்க்கை வரலாறு" : "Leaders & Biographies"}
                 </Link>
               </li>
               <li>
                 <Link href="/books?category=memoirs" className="hover:text-[#0D5C3A] dark:hover:text-emerald-400 transition-colors py-1.5 block">
-                  நினைவுக் குறிப்புகள்
+                  {isTa ? "நினைவுக் குறிப்புகள்" : "Memoirs"}
                 </Link>
               </li>
               <li>
                 <Link href="/blog" className="hover:text-[#0D5C3A] dark:hover:text-emerald-400 transition-colors py-1.5 block">
-                  களஞ்சியப் பதிவுகள்
+                  {isTa ? "களஞ்சியப் பதிவுகள்" : "Articles & News"}
                 </Link>
               </li>
             </ul>
@@ -138,22 +162,22 @@ export function Footer() {
           {/* Organization */}
           <div className="space-y-3 font-tamil">
             <h5 className="text-xs font-bold uppercase tracking-wider text-[#191614] dark:text-zinc-100">
-              நிறுவனம்
+              {isTa ? "நிறுவனம்" : "Organization"}
             </h5>
             <ul className="space-y-1 text-xs text-[#2B2723] dark:text-zinc-300 font-medium">
               <li>
                 <Link href="/supporters" className="hover:text-[#0D5C3A] dark:hover:text-emerald-400 transition-colors py-1.5 block">
-                  ஆதரவாளர்கள்
+                  {isTa ? "ஆதரவாளர்கள்" : "Supporters & Patrons"}
                 </Link>
               </li>
               <li>
                 <Link href="/certificate" className="hover:text-[#0D5C3A] dark:hover:text-emerald-400 transition-colors py-1.5 block">
-                  பதிவுச் சான்றிதழ்
+                  {isTa ? "பதிவுச் சான்றிதழ்" : "MSME Certificate"}
                 </Link>
               </li>
               <li>
                 <Link href="/videos" className="hover:text-[#0D5C3A] dark:hover:text-emerald-400 transition-colors py-1.5 block">
-                  காணொளி ஆவணங்கள்
+                  {isTa ? "காணொளி ஆவணங்கள்" : "Video Archives"}
                 </Link>
               </li>
             </ul>
@@ -162,17 +186,17 @@ export function Footer() {
           {/* Legal & Policies */}
           <div className="space-y-3 font-tamil">
             <h5 className="text-xs font-bold uppercase tracking-wider text-[#191614] dark:text-zinc-100">
-              கொள்கைகள்
+              {isTa ? "கொள்கைகள்" : "Policies"}
             </h5>
             <ul className="space-y-1 text-xs text-[#2B2723] dark:text-zinc-300 font-medium">
               <li>
                 <Link href="/privacy" className="hover:text-[#0D5C3A] dark:hover:text-emerald-400 transition-colors py-1.5 block">
-                  தனியுரிமைக் கொள்கை (Privacy)
+                  {isTa ? "தனியுரிமைக் கொள்கை (Privacy)" : "Privacy Policy"}
                 </Link>
               </li>
               <li>
                 <Link href="/terms" className="hover:text-[#0D5C3A] dark:hover:text-emerald-400 transition-colors py-1.5 block">
-                  விதிமுறைகள் & நிபந்தனைகள் (Terms)
+                  {isTa ? "விதிமுறைகள் & நிபந்தனைகள் (Terms)" : "Terms & Conditions"}
                 </Link>
               </li>
             </ul>
@@ -182,9 +206,12 @@ export function Footer() {
 
         {/* Copyright */}
         <div className="mt-12 pt-6 border-t border-black/8 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-medium text-[#4A443E] dark:text-zinc-300">
-          <p>© {new Date().getFullYear()} methagukalanjiyam.in. அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை.</p>
+          <p>
+            © {new Date().getFullYear()} methagukalanjiyam.in.{" "}
+            {isTa ? "அனைத்து உரிமைகளும் பாதுகாக்கப்பட்டவை." : "All rights reserved."}
+          </p>
           <p className="flex items-center gap-1.5 font-tamil">
-            <span>தமிழுக்கும் தமிழினத்திற்கும் சமர்ப்பணம்</span>
+            <span>{isTa ? "தமிழுக்கும் தமிழினத்திற்கும் சமர்ப்பணம்" : "Dedicated to Tamil Heritage & Historical Truth"}</span>
             <ArchivalWaxSealIcon className="h-3.5 w-3.5 text-[#0D5C3A] dark:text-emerald-400" aria-hidden="true" />
           </p>
         </div>

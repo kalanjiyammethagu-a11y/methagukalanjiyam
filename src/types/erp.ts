@@ -78,6 +78,24 @@ export interface ERPHealthStatus {
   checkedAt: string;
 }
 
+export interface ERPBinStock {
+  item_code: string;
+  warehouse?: string;
+  actual_qty: number;
+  projected_qty?: number;
+  reserved_qty?: number;
+}
+
+export interface ERPStockSyncItem {
+  bookId: string;
+  title: string;
+  itemCode: string;
+  previousStock: number;
+  newStock: number;
+  updated: boolean;
+}
+
+
 export interface ERPSyncQueueItem {
   id: string;
   orderId: string;

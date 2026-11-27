@@ -3,13 +3,18 @@ import { getSupabaseStorageUrl } from "@/lib/book-images";
 
 import * as React from "react";
 import Link from "next/link";
-import { Search, Bell, Newspaper } from "lucide-react";
+import { Search, Newspaper } from "lucide-react";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { CategoryPills, type CategoryOption } from "@/components/ui/CategoryPills";
 import { ArticleCard, type ArticleCardData } from "@/components/blog/ArticleCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useLanguage } from "@/context/LanguageContext";
-import { ARTICLE_CATEGORY_OPTIONS, matchesArticleCategory } from "@/lib/blog-utils";
+import {
+  ARTICLE_CATEGORY_OPTIONS,
+  matchesArticleCategory,
+  type ArticleCategoryOption,
+} from "@/lib/blog-utils";
+import { RecentAnnouncementsBanner } from "@/components/shared/RecentAnnouncementsBanner";
 import { DEFAULT_ANNOUNCEMENTS, type AnnouncementItem } from "@/lib/announcements";
 export type { AnnouncementItem };
 
@@ -94,12 +99,18 @@ const categoryOptions: CategoryOption[] = ARTICLE_CATEGORY_OPTIONS.map((opt) => 
   labelEn: opt.labelEn,
 }));
 
+export interface BlogCategoryFilterOption extends CategoryOption {
+  aliases?: string[];
+}
+
 export function BlogCatalogClient({
   initialArticles,
   initialAnnouncements,
+  initialCategories,
 }: {
   initialArticles?: ArticleCardData[];
   initialAnnouncements?: AnnouncementItem[];
+  initialCategories?: BlogCategoryFilterOption[];
 } = {}) {
   const { locale } = useLanguage();
   const isTa = locale === "ta";
@@ -111,10 +122,18 @@ export function BlogCatalogClient({
   const announcementsList =
     initialAnnouncements !== undefined ? initialAnnouncements : DEFAULT_ANNOUNCEMENTS;
 
+  const activeCategoryList = React.useMemo<BlogCategoryFilterOption[]>(() => {
+    if (initialCategories && initialCategories.length > 0) {
+      return initialCategories;
+    }
+    return categoryOptions;
+  }, [initialCategories]);
+
   const [search, setSearch] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState("all");
 
   const filteredArticles = React.useMemo(() => {
+    const selectedCatObj = activeCategoryList.find((c) => c.slug === selectedCategory);
     return articlesList.filter((article) => {
       const matchesSearch =
         search === "" ||
@@ -123,11 +142,26 @@ export function BlogCatalogClient({
         article.excerptTa.toLowerCase().includes(search.toLowerCase()) ||
         article.excerptEn.toLowerCase().includes(search.toLowerCase());
 
-      const matchesCategory = matchesArticleCategory(article, selectedCategory);
+      let matchesCategory = matchesArticleCategory(article, selectedCategory);
+      if (!matchesCategory && selectedCatObj) {
+        const catEn = (article.categoryEn || "").trim().toLowerCase();
+        const catTa = (article.categoryTa || "").trim().toLowerCase();
+        const customAliases = [
+          selectedCatObj.slug,
+          selectedCatObj.labelEn,
+          selectedCatObj.labelTa,
+          ...(selectedCatObj.aliases || []),
+        ]
+          .filter(Boolean)
+          .map((a) => a.toLowerCase());
+        matchesCategory = customAliases.some(
+          (alias) => catEn === alias || catTa === alias || catEn.includes(alias) || catTa.includes(alias)
+        );
+      }
 
       return matchesSearch && matchesCategory;
     });
-  }, [articlesList, search, selectedCategory]);
+  }, [articlesList, search, selectedCategory, activeCategoryList]);
 
   return (
     <div className="min-h-screen pb-24">
@@ -165,66 +199,7 @@ export function BlogCatalogClient({
         </div>
 
         {/* Live Announcements Ticker / Feed Banner */}
-        {announcementsList.length > 0 && (
-        <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-black/10 dark:border-white/10 bg-gradient-to-br from-[#0A6847]/8 via-[#0A6847]/4 to-transparent dark:from-emerald-950/60 dark:via-emerald-950/30 dark:to-transparent shadow-xs">
-          <div className="flex items-center gap-2.5 mb-4 text-[#0A6847] dark:text-emerald-400">
-            <Bell className="h-5 w-5 animate-pulse" />
-            <h2 className="text-sm sm:text-base font-bold font-tamil tracking-wide text-[#0A6847] dark:text-emerald-300">
-              {isTa ? "சமீபத்திய அறிவிப்புகள்" : "Recent Announcements"}
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {announcementsList.map((item, idx) => {
-              const cardContent = (
-                <>
-                  <span className="text-[11px] font-bold text-[#0A6847] dark:text-emerald-400 font-tamil block">
-                    {isTa ? item.dateLabelTa : item.dateLabelEn}
-                  </span>
-                  <h3 className="text-xs sm:text-sm font-bold text-[#111111] dark:text-zinc-100 font-tamil leading-snug">
-                    {isTa ? item.titleTa : item.titleEn}
-                  </h3>
-                  <p className="text-xs text-[#555555] dark:text-zinc-300 font-tamil line-clamp-2 leading-relaxed">
-                    {isTa ? item.descTa : item.descEn}
-                  </p>
-                </>
-              );
-
-              if (item.linkUrl) {
-                const isExternal = item.linkUrl.startsWith("http");
-                return isExternal ? (
-                  <a
-                    key={item.id || idx}
-                    href={item.linkUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-4 rounded-2xl bg-white/85 dark:bg-zinc-900/90 border border-black/8 dark:border-white/10 hover:border-[#0A6847]/40 shadow-2xs space-y-1.5 transition-all block"
-                  >
-                    {cardContent}
-                  </a>
-                ) : (
-                  <Link
-                    key={item.id || idx}
-                    href={item.linkUrl}
-                    className="p-4 rounded-2xl bg-white/85 dark:bg-zinc-900/90 border border-black/8 dark:border-white/10 hover:border-[#0A6847]/40 shadow-2xs space-y-1.5 transition-all block"
-                  >
-                    {cardContent}
-                  </Link>
-                );
-              }
-
-              return (
-                <div
-                  key={item.id || idx}
-                  className="p-4 rounded-2xl bg-white/85 dark:bg-zinc-900/90 border border-black/8 dark:border-white/10 shadow-2xs space-y-1.5"
-                >
-                  {cardContent}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        )}
+        <RecentAnnouncementsBanner announcements={announcementsList} />
 
         {/* Search & Category Filter Toolbar */}
         <div className="space-y-4">
@@ -251,7 +226,7 @@ export function BlogCatalogClient({
 
           {/* Category Filter Pills (Hick's Law) */}
           <CategoryPills
-            categories={categoryOptions}
+            categories={activeCategoryList}
             selected={selectedCategory}
             onSelect={setSelectedCategory}
             locale={locale}

@@ -27,6 +27,7 @@ export default function AdminERPPage() {
   const [testingConnection, setTestingConnection] = React.useState(false);
   const [flushingQueue, setFlushingQueue] = React.useState(false);
   const [syncingBooks, setSyncingBooks] = React.useState(false);
+  const [syncingStock, setSyncingStock] = React.useState(false);
   const [syncingOrderId, setSyncingOrderId] = React.useState<string | null>(null);
 
   const [activeTab, setActiveTab] = React.useState<"all" | "queued" | "synced" | "failed">("all");
@@ -147,6 +148,32 @@ export default function AdminERPPage() {
     }
   };
 
+  // Fetch live Bin stock from ERP -> Supabase books
+  const handleFetchStock = async () => {
+    setSyncingStock(true);
+    setNotification(null);
+    try {
+      const res = await fetch("/api/admin/erp/sync-stock", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        setNotification({
+          type: "success",
+          msg: `Fetched ERP Bin stock: matched ${data.matchedCount}/${data.totalBooks} books and updated ${data.updatedCount} stock quantities in catalog.`,
+        });
+      } else {
+        setNotification({
+          type: data.isTunnelOffline ? "info" : "error",
+          msg: data.error || "Could not fetch ERP stock quantities right now.",
+        });
+      }
+      await Promise.all([fetchStatus(), fetchQueue()]);
+    } catch (err: any) {
+      setNotification({ type: "error", msg: "ERP stock fetch failed: " + err.message });
+    } finally {
+      setSyncingStock(false);
+    }
+  };
+
   // Single order retry
   const handleSyncSingleOrder = async (item: ERPSyncQueueItem) => {
     setSyncingOrderId(item.id);
@@ -218,6 +245,17 @@ export default function AdminERPPage() {
           >
             <Database className={`h-4 w-4 text-blue-600 ${syncingBooks ? "animate-spin" : ""}`} />
             <span>{syncingBooks ? "Syncing..." : "Sync Books to Items"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleFetchStock}
+            disabled={syncingStock}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100/70 text-[#0A6847] text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer min-h-[44px]"
+            title="Fetch live Bin stock quantities from ERPNext and update catalog stock"
+          >
+            <Layers className={`h-4 w-4 text-[#0A6847] ${syncingStock ? "animate-spin" : ""}`} />
+            <span>{syncingStock ? "Fetching Stock..." : "Fetch Stock from ERP"}</span>
           </button>
 
           <button

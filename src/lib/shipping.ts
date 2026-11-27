@@ -18,7 +18,7 @@ export {
 export const DEFAULT_PUBLIC_GENERAL_CONFIG: StorePublicGeneralConfig = {
   site_name_ta: "மேதகு களஞ்சியம்",
   site_name_en: "Methagu Kalanjiyam",
-  contact_phone: "+91 82486 54946",
+  contact_phone: "+91 63846 54946",
   alt_phone: "+91 63846 54946",
   support_email: "contact@methagukalanjiyam.in",
   whatsapp_number: WHATSAPP_NUMBER,

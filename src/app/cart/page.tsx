@@ -900,7 +900,7 @@ export default function CartPage() {
                       onChange={(e) => handleAddressChange("phone", e.target.value)}
                       onBlur={() => handleBlur("phone")}
                       aria-invalid={Boolean(touched.phone && errors.phone)}
-                      placeholder="82486 54946"
+                      placeholder="63846 54946"
                       className={cn(
                         "w-full px-3.5 py-2 rounded-xl border bg-white dark:bg-zinc-900 text-base sm:text-sm font-mono text-[#111111] dark:text-zinc-100 placeholder:text-zinc-500 dark:placeholder:text-zinc-400 focus:outline-none focus:ring-2 min-h-[44px] transition-colors",
                         touched.phone && errors.phone

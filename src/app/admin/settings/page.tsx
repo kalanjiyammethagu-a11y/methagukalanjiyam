@@ -27,7 +27,7 @@ export default function AdminSettingsPage() {
   // Form states
   const [storeName, setStoreName] = React.useState("Methagu Kalanjiyam");
   const [storeNameTa, setStoreNameTa] = React.useState("மேதகு களஞ்சியம்");
-  const [phone, setPhone] = React.useState("+91 82486 54946");
+  const [phone, setPhone] = React.useState("+91 63846 54946");
   const [altPhone, setAltPhone] = React.useState("+91 63846 54946");
   const [tnShippingFee, setTnShippingFee] = React.useState(60);
   const [otherShippingFee, setOtherShippingFee] = React.useState(100);

@@ -19,6 +19,8 @@ import {
   ImageIcon,
   Loader2,
   Bell,
+  Tag,
+  EyeOff,
 } from "lucide-react";
 import type { AdminArticle, ArticleStatus } from "@/types/admin";
 import { AnnouncementsManager } from "@/components/admin/AnnouncementsManager";
@@ -38,6 +40,10 @@ import {
   resolveArticleCategoryPair,
   resolveBlogCoverUrl,
 } from "@/lib/blog-utils";
+import {
+  DEFAULT_MANAGED_BLOG_CATEGORIES,
+  type ManagedBlogCategory,
+} from "@/lib/blog-categories";
 
 const ARTICLE_REQUIRED_BILINGUAL_FIELDS = ["title", "body"];
 
@@ -167,6 +173,21 @@ export default function AdminArticlesPage() {
   const [selectedLangFilter, setSelectedLangFilter] = React.useState<"all" | "missing_tamil">("all");
   const [activeSection, setActiveSection] = React.useState<"articles" | "announcements">("articles");
   const [toastMessage, setToastMessage] = React.useState<string | null>(null);
+  const [blogCategories, setBlogCategories] = React.useState<ManagedBlogCategory[]>(
+    DEFAULT_MANAGED_BLOG_CATEGORIES
+  );
+
+  // Blog Category Management Modal State
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = React.useState(false);
+  const [editingBlogCat, setEditingBlogCat] = React.useState<ManagedBlogCategory | null>(null);
+  const [catSaving, setCatSaving] = React.useState(false);
+  const [catError, setCatError] = React.useState<string | null>(null);
+  const [catForm, setCatForm] = React.useState({
+    name_en: "",
+    name_ta: "",
+    slug: "",
+    sort_order: 10,
+  });
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = React.useState(false);
@@ -208,7 +229,16 @@ export default function AdminArticlesPage() {
   const fetchArticles = React.useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/articles");
+      const [res, catRes] = await Promise.all([
+        fetch("/api/admin/articles"),
+        fetch("/api/admin/article-categories"),
+      ]);
+      if (catRes.ok) {
+        const catData = await catRes.json().catch(() => ({}));
+        if (Array.isArray(catData.categories) && catData.categories.length > 0) {
+          setBlogCategories(catData.categories);
+        }
+      }
       if (res.ok) {
         const data = await res.json();
         if (data.articles && Array.isArray(data.articles)) {
@@ -228,6 +258,129 @@ export default function AdminArticlesPage() {
   React.useEffect(() => {
     fetchArticles().finally(() => setLoading(false));
   }, [fetchArticles]);
+
+  const openManageBlogCategoriesModal = () => {
+    setEditingBlogCat(null);
+    setCatError(null);
+    setCatForm({
+      name_en: "",
+      name_ta: "",
+      slug: "",
+      sort_order: blogCategories.length + 1,
+    });
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleEditBlogCategoryClick = (cat: ManagedBlogCategory) => {
+    setEditingBlogCat(cat);
+    setCatError(null);
+    setCatForm({
+      name_en: cat.name_en,
+      name_ta: cat.name_ta,
+      slug: cat.slug,
+      sort_order: cat.sort_order ?? 10,
+    });
+  };
+
+  const handleSaveBlogCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCatError(null);
+    if (!catForm.name_en.trim() || !catForm.name_ta.trim()) {
+      setCatError("Both English and Tamil category names are required.");
+      return;
+    }
+
+    setCatSaving(true);
+    try {
+      const generatedSlug =
+        catForm.slug.trim() || generateAsciiSlug(catForm.name_en, "blog-cat");
+      if (editingBlogCat) {
+        const res = await fetch("/api/admin/article-categories", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: editingBlogCat.id,
+            name_en: catForm.name_en.trim(),
+            name_ta: catForm.name_ta.trim(),
+            slug: generatedSlug,
+            sort_order: Number(catForm.sort_order) || 0,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setCatError(data.error || "Failed to update blog category.");
+          return;
+        }
+        if (Array.isArray(data.categories)) {
+          setBlogCategories(data.categories);
+        }
+        setEditingBlogCat(null);
+        setCatForm({ name_en: "", name_ta: "", slug: "", sort_order: blogCategories.length + 1 });
+        await fetchArticles();
+        showToast("Blog category updated.");
+      } else {
+        const res = await fetch("/api/admin/article-categories", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name_en: catForm.name_en.trim(),
+            name_ta: catForm.name_ta.trim(),
+            slug: generatedSlug,
+            sort_order: Number(catForm.sort_order) || 10,
+            is_active: true,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setCatError(data.error || "Failed to create blog category.");
+          return;
+        }
+        if (Array.isArray(data.categories)) {
+          setBlogCategories(data.categories);
+        }
+        setCatForm({ name_en: "", name_ta: "", slug: "", sort_order: blogCategories.length + 2 });
+        showToast(`Created blog category "${data.category?.name_en || catForm.name_en}".`);
+      }
+    } catch {
+      setCatError("Network error while saving blog category.");
+    } finally {
+      setCatSaving(false);
+    }
+  };
+
+  const handleToggleBlogCategoryActive = async (cat: ManagedBlogCategory) => {
+    try {
+      const res = await fetch("/api/admin/article-categories", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: cat.id, is_active: !cat.is_active }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && Array.isArray(data.categories)) {
+        setBlogCategories(data.categories);
+        showToast(`Category "${cat.name_en}" ${!cat.is_active ? "shown" : "hidden"}.`);
+      }
+    } catch {
+      showToast("Failed to update category visibility.");
+    }
+  };
+
+  const handleDeleteBlogCategory = async (cat: ManagedBlogCategory) => {
+    try {
+      const res = await fetch(`/api/admin/article-categories?id=${encodeURIComponent(cat.id)}`, {
+        method: "DELETE",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && Array.isArray(data.categories)) {
+        setBlogCategories(data.categories);
+        showToast(`Removed category "${cat.name_en}".`);
+      } else {
+        showToast(data.error || "Failed to remove blog category.");
+      }
+    } catch {
+      showToast("Failed to remove blog category.");
+    }
+  };
 
   // Lock scroll when modal is open
   React.useEffect(() => {
@@ -693,20 +846,32 @@ export default function AdminArticlesPage() {
             Articles &amp; Announcements Management
           </h2>
           <p className="text-xs text-gray-500 mt-1">
-            Publish historical features and manage Recent Announcements displayed on the `/blog` page
+            Publish historical features, manage blog categories, and edit Recent Announcements displayed on Home &amp; `/blog`
           </p>
         </div>
 
-        {activeSection === "articles" && (
-          <button
-            type="button"
-            onClick={handleOpenAddModal}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white text-xs font-bold shadow-sm transition-all active:scale-95 cursor-pointer min-h-[42px]"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Write New Article</span>
-          </button>
-        )}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {activeSection === "articles" && (
+            <>
+              <button
+                type="button"
+                onClick={openManageBlogCategoriesModal}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-gray-50 border border-gray-200 text-gray-800 text-xs font-bold shadow-2xs transition-all cursor-pointer min-h-[42px]"
+              >
+                <Tag className="h-4 w-4 text-[#0A6847]" />
+                <span>Manage Categories ({blogCategories.length})</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleOpenAddModal}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0A6847] hover:bg-[#085036] text-white text-xs font-bold shadow-sm transition-all active:scale-95 cursor-pointer min-h-[42px]"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Write New Article</span>
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Section Switcher: Articles vs Recent Announcements */}
@@ -798,9 +963,13 @@ export default function AdminArticlesPage() {
             className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 min-h-[40px] cursor-pointer"
           >
             <option value="all">All Categories</option>
-            {CATEGORY_OPTIONS.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
+            {blogCategories
+              .filter((c) => c.is_active)
+              .map((c) => (
+                <option key={c.slug} value={c.name_en}>
+                  {c.name_en} ({c.name_ta})
+                </option>
+              ))}
           </select>
 
           {/* Status Filter */}
@@ -1278,14 +1447,34 @@ export default function AdminArticlesPage() {
                   <select
                     value={formData.categoryEn}
                     onChange={(e) => {
-                      const pair = resolveArticleCategoryPair(e.target.value);
-                      setFormData({ ...formData, categoryEn: pair.en, categoryTa: pair.ta });
+                      const val = e.target.value;
+                      const managed = blogCategories.find(
+                        (c) => c.name_en.toLowerCase() === val.toLowerCase()
+                      );
+                      if (managed) {
+                        setFormData({
+                          ...formData,
+                          categoryEn: managed.name_en,
+                          categoryTa: managed.name_ta,
+                        });
+                      } else {
+                        const pair = resolveArticleCategoryPair(val);
+                        setFormData({ ...formData, categoryEn: pair.en, categoryTa: pair.ta });
+                      }
                     }}
                     className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs min-h-[44px] focus:outline-none focus:ring-2 focus:ring-[#0A6847]/30 cursor-pointer"
                   >
-                    {CATEGORY_OPTIONS.map((c) => (
-                      <option key={c} value={c}>{c}</option>
+                    {blogCategories.map((c) => (
+                      <option key={c.id} value={c.name_en}>
+                        {c.name_en} ({c.name_ta})
+                      </option>
                     ))}
+                    {!blogCategories.some(
+                      (c) => c.name_en.toLowerCase() === formData.categoryEn.toLowerCase()
+                    ) &&
+                      formData.categoryEn && (
+                        <option value={formData.categoryEn}>{formData.categoryEn}</option>
+                      )}
                   </select>
                 </div>
                 <div className="space-y-1">
@@ -1355,6 +1544,189 @@ export default function AdminArticlesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Manage Blog Categories Modal */}
+      {isCategoryModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-gray-100 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <Tag className="h-5 w-5 text-[#0A6847]" />
+                  <span>Blog Categories Management</span>
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Create, edit, or hide categories displayed in Articles filter pills and editor.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCategoryModalOpen(false)}
+                className="h-10 w-10 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <form
+                onSubmit={handleSaveBlogCategory}
+                className="p-4 rounded-2xl border border-gray-200 bg-gray-50/70 space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
+                    {editingBlogCat ? `Edit Category: ${editingBlogCat.name_en}` : "Create New Blog Category"}
+                  </h4>
+                  {editingBlogCat && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingBlogCat(null);
+                        setCatForm({ name_en: "", name_ta: "", slug: "", sort_order: blogCategories.length + 1 });
+                      }}
+                      className="text-xs font-semibold text-gray-500 hover:text-gray-800"
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                </div>
+
+                {catError && (
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-semibold">
+                    {catError}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-700">English Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={catForm.name_en}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCatForm((prev) => ({
+                          ...prev,
+                          name_en: val,
+                          slug: editingBlogCat ? prev.slug : generateAsciiSlug(val, "blog-cat"),
+                        }));
+                      }}
+                      placeholder="e.g. Speeches & Essays"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[42px]"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-700 font-tamil">Tamil Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={catForm.name_ta}
+                      onChange={(e) => setCatForm((prev) => ({ ...prev, name_ta: e.target.value }))}
+                      placeholder="உரைகள் & கட்டுரைகள்"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-tamil focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[42px]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-700">URL Slug</label>
+                    <input
+                      type="text"
+                      value={catForm.slug}
+                      onChange={(e) => setCatForm((prev) => ({ ...prev, slug: e.target.value.toLowerCase() }))}
+                      placeholder="speeches-essays"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-mono focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[42px]"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-700">Display Order</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={catForm.sort_order}
+                      onChange={(e) => setCatForm((prev) => ({ ...prev, sort_order: Number(e.target.value) }))}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-mono focus:ring-2 focus:ring-[#0A6847]/30 focus:outline-none min-h-[42px]"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={catSaving}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0A6847] hover:bg-[#085036] disabled:opacity-60 text-white text-xs font-bold min-h-[40px] cursor-pointer"
+                  >
+                    {catSaving ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : editingBlogCat ? (
+                      "Save Category"
+                    ) : (
+                      "Create Category"
+                    )}
+                  </button>
+                </div>
+              </form>
+
+              <div className="space-y-2.5">
+                <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                  Existing Blog Categories ({blogCategories.length})
+                </h4>
+                <div className="divide-y divide-gray-100 border border-gray-200 rounded-2xl overflow-hidden">
+                  {blogCategories.map((cat) => (
+                    <div
+                      key={cat.id}
+                      className="p-3.5 bg-white flex items-center justify-between gap-3"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-bold text-gray-900">{cat.name_en}</span>
+                          <span className="text-xs text-gray-600 font-tamil">({cat.name_ta})</span>
+                          {!cat.is_active && (
+                            <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 text-[10px] font-bold">
+                              Hidden
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] font-mono text-gray-400 mt-0.5">
+                          slug: {cat.slug} · order: {cat.sort_order}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleEditBlogCategoryClick(cat)}
+                          title="Edit Category"
+                          className="p-2 rounded-lg text-gray-500 hover:text-amber-700 hover:bg-amber-50 transition-colors"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleBlogCategoryActive(cat)}
+                          title={cat.is_active ? "Hide Category" : "Show Category"}
+                          className="p-2 rounded-lg text-gray-500 hover:text-[#0A6847] hover:bg-emerald-50 transition-colors"
+                        >
+                          {cat.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteBlogCategory(cat)}
+                          title="Delete Category"
+                          className="p-2 rounded-lg text-gray-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

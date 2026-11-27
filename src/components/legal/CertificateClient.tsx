@@ -196,12 +196,12 @@ export function CertificateClient() {
                 <p className="text-xs text-neutral-300 font-tamil">
                   {isTa ? "சான்றிதழ் மற்றும் வணிக விசாரணைகளுக்கு" : "Enterprise Verification Inquiries"}
                 </p>
-                <p className="text-sm font-bold text-white font-mono">+91 82486 54946 / +91 63846 54946</p>
+                <p className="text-sm font-bold text-white font-mono">WhatsApp எண் : 6384654946 (+91 63846 54946)</p>
               </div>
             </div>
 
             <a
-              href="tel:+918248654946"
+              href="tel:+916384654946"
               className="px-4 py-2 rounded-xl bg-[#0A6847] hover:bg-[#085237] text-white text-xs font-bold font-tamil transition-all min-h-[44px] flex items-center justify-center"
             >
               {isTa ? "நேரடித் தொடர்பு" : "Call Registry Desk"}

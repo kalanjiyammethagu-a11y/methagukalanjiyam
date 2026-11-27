@@ -214,8 +214,8 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Chart + Top Books */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-8 bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-w-0">
+        <div className="lg:col-span-8 bg-white rounded-2xl p-4 sm:p-6 border border-gray-200 shadow-sm space-y-5 min-w-0 overflow-hidden">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="font-bold text-base text-gray-900">Monthly Sales (Last 6 Months)</h3>
@@ -225,21 +225,21 @@ export default function AdminDashboardPage() {
               const latestMonth = revenueData[revenueData.length - 1];
               if (!latestMonth) return null;
               return (
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#0A6847]/10 text-[#0A6847] text-xs font-bold">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#0A6847]/10 text-[#0A6847] text-xs font-bold self-start sm:self-auto">
                   {latestMonth.month}: {formatINR(latestMonth.revenue)} (
                   {latestMonth.orders} orders)
                 </span>
               );
             })()}
           </div>
-          <div className="pt-2">
+          <div className="pt-2 overflow-x-auto">
             {loading ? (
               <div className="h-52 flex items-center justify-center text-xs text-gray-400">
                 <Loader2 className="h-5 w-5 animate-spin mr-2" />
                 Loading revenue data...
               </div>
             ) : (
-              <div className="h-52 flex items-end justify-between gap-3 sm:gap-5 px-2 border-b border-gray-200 pb-2">
+              <div className="h-52 min-w-[260px] flex items-end justify-between gap-2 sm:gap-5 px-1 sm:px-2 border-b border-gray-200 pb-2">
                 {revenueData.map((dp) => {
                   const heightPercent = Math.max(4, Math.round((dp.revenue / maxMonthRev) * 100));
                   return (

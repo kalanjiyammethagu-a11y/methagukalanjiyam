@@ -230,7 +230,7 @@ export function AnnouncementsManager({ onToast }: AnnouncementsManagerProps) {
         onToast("Failed to update visibility.");
         return;
       }
-      onToast(nextActive ? "Announcement is now live on /blog." : "Announcement hidden.");
+      onToast(nextActive ? "Announcement is now live on Home & /blog." : "Announcement hidden.");
     } catch {
       setAnnouncements((prev) =>
         prev.map((a) => (a.id === item.id ? { ...a, is_active: item.is_active } : a))

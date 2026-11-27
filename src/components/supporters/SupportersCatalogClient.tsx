@@ -19,7 +19,7 @@ const allSupporters: SupporterData[] = [
     roleEn: "Founder & Principal Director",
     image: getSupabaseStorageUrl("supporters", "harvin.webp"),
     instagramUrl: "https://www.instagram.com/harvin_72?igsh=MTI2bGhienR2ZHhhOA==",
-    whatsappUrl: "https://wa.me/918248654946",
+    whatsappUrl: "https://wa.me/916384654946",
   },
   {
     id: "2",
@@ -212,13 +212,13 @@ export function SupportersCatalogClient({
 
           <div className="pt-2 flex flex-wrap justify-center gap-3">
             <a
-              href="https://wa.me/918248654946"
+              href="https://wa.me/916384654946"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#0A6847] hover:bg-[#085237] text-white text-xs font-bold shadow-md transition-all min-h-[44px]"
             >
               <MessageCircle className="h-4 w-4" />
-              <span>{isTa ? "புலனத்தில் தொடர்பு கொள்ள" : "Contact via WhatsApp"}</span>
+              <span>{isTa ? "WhatsApp எண் : 6384654946" : "WhatsApp: 6384654946"}</span>
             </a>
 
             <Link

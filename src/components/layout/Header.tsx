@@ -184,8 +184,9 @@ export function Header({ onOpenSearch }: HeaderProps) {
               {/* 2. Micro-Segmented Language Switcher (Tablet >= md / Desktop) */}
               <div
                 role="group"
+                translate="no"
                 aria-label={isTa ? "மொழித் தேர்வு" : "Language Selector"}
-                className="hidden md:flex h-10 p-0.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.08] dark:border-white/[0.1] items-center gap-0.5 shrink-0 shadow-2xs"
+                className="notranslate hidden md:flex h-10 p-0.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.08] dark:border-white/[0.1] items-center gap-0.5 shrink-0 shadow-2xs"
               >
                 <button
                   type="button"
@@ -214,16 +215,38 @@ export function Header({ onOpenSearch }: HeaderProps) {
                 </button>
               </div>
 
-              {/* 2b. Mobile & Narrow Landscape Instant Language Toggle (< 768px) */}
-              <button
-                type="button"
-                onClick={() => setLocale(isTa ? "en" : "ta")}
-                aria-label={isTa ? "Switch language to English" : "தமிழுக்கு மாற்றுக"}
-                className="md:hidden min-h-[44px] min-w-[38px] sm:min-w-[44px] h-9 sm:h-10 px-2 sm:px-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.08] dark:border-white/[0.1] text-xs font-bold text-[var(--color-ink-primary)] flex items-center justify-center gap-1 active:scale-95 transition-all shadow-2xs font-tamil cursor-pointer shrink-0"
+              {/* 2b. Mobile & Narrow Landscape Segmented Language Toggle (< 768px) */}
+              <div
+                role="group"
+                translate="no"
+                aria-label={isTa ? "மொழித் தேர்வு" : "Language Selector"}
+                className="notranslate md:hidden flex h-9 sm:h-10 p-0.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.08] dark:border-white/[0.1] items-center gap-0.5 shrink-0 shadow-2xs"
               >
-                <span className="text-[var(--color-accent)] font-extrabold">{isTa ? "EN" : "அ"}</span>
-                <span className="hidden min-[430px]:inline text-[11px] font-semibold">{isTa ? "English" : "தமிழ்"}</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setLocale("ta")}
+                  aria-pressed={isTa}
+                  aria-label="தமிழுக்கு மாற்றுக"
+                  className={`min-h-[32px] h-full px-2 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center font-tamil cursor-pointer ${isTa
+                    ? "bg-[var(--color-surface-card)] text-[var(--color-accent)] shadow-2xs ring-1 ring-black/5"
+                    : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink-primary)]"
+                    }`}
+                >
+                  த
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLocale("en")}
+                  aria-pressed={!isTa}
+                  aria-label="Switch to English"
+                  className={`min-h-[32px] h-full px-2 rounded-lg text-[11px] font-bold transition-all flex items-center justify-center font-sans cursor-pointer ${!isTa
+                    ? "bg-[var(--color-surface-card)] text-[var(--color-accent)] shadow-2xs ring-1 ring-black/5"
+                    : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink-primary)]"
+                    }`}
+                >
+                  EN
+                </button>
+              </div>
 
               {/* 3. Ghost Settings Icon Button (Available in Mobile Drawer on mobile viewports) */}
               <button

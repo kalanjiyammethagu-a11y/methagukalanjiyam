@@ -19,14 +19,20 @@ import { getBookBySlug, type BookItem } from "@/data/books";
 import { formatINR } from "@/lib/utils";
 import { formatArticleBodyHtml } from "@/lib/blog-utils";
 import type { ArticleDetailData } from "@/data/articles";
+import { ArticleCard, type ArticleCardData } from "@/components/blog/ArticleCard";
 import { localized } from "@/lib/i18n";
 
 interface ArticleDetailClientProps {
   article: ArticleDetailData;
   relatedBooks?: BookItem[];
+  suggestedArticles?: ArticleCardData[];
 }
 
-export function ArticleDetailClient({ article, relatedBooks: propRelatedBooks }: ArticleDetailClientProps) {
+export function ArticleDetailClient({
+  article,
+  relatedBooks: propRelatedBooks,
+  suggestedArticles = [],
+}: ArticleDetailClientProps) {
   const { locale } = useLanguage();
   const isTa = locale === "ta";
 
@@ -292,6 +298,42 @@ export function ArticleDetailClient({ article, relatedBooks: propRelatedBooks }:
             </Link>
           </div>
         </div>
+
+        {/* Auto-Suggested "Keep Reading" Section */}
+        {suggestedArticles.length > 0 && (
+          <section className="pt-4 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-3 border-b border-black/8 dark:border-white/10">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-[#111111] dark:text-zinc-100 font-tamil-serif">
+                  {isTa ? "தொடர்ந்து வாசியுங்கள்" : "Keep Reading"}
+                </h2>
+                <p className="text-xs text-[#555555] dark:text-zinc-300 font-tamil mt-0.5">
+                  {isTa
+                    ? "இந்தத் தலைப்புடன் தொடர்புடைய பிற வரலாற்றுக் கட்டுரைகள்"
+                    : "Recommended historical essays and archival dispatches related to this topic"}
+                </p>
+              </div>
+              <Link
+                href="/blog"
+                className="text-xs font-bold text-[#0A6847] dark:text-emerald-400 hover:underline inline-flex items-center gap-1 font-tamil min-h-[36px]"
+              >
+                <span>{isTa ? "அனைத்துப் பதிவுகளும்" : "All Articles"}</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {suggestedArticles.map((suggested) => (
+                <ArticleCard
+                  key={suggested.slug}
+                  article={suggested}
+                  locale={locale}
+                  variant="standard"
+                />
+              ))}
+            </div>
+          </section>
+        )}
       </article>
     </div>
   );
